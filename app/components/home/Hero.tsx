@@ -16,7 +16,7 @@ export default function Hero() {
         <p className={`text-2xl font-medium animate-fade-in-left animate-delay-100 ${theme === "dark" ? "text-white" : "text-blue-950"}`}>{t("hero.welcome")}</p>
         <h1 className="text-7xl font-bold leading-tight">
           <span className={`animate-fade-in-left animate-delay-200 ${theme === "dark" ? "text-blue-400" : "text-blue-600"} drop-shadow-[0_0_8px_rgba(96,165,250,0.8)] [text-shadow:2px_2px_4px_rgba(255,255,255,0.3)]`}>
-            LB
+            LP
           </span>{" "}
           <span className={`animate-fade-in-left animate-delay-300 ${theme === "dark" ? "text-white" : "text-blue-950"}`}>{t("hero.company")}</span>
         </h1>

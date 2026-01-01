@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import HomeContent from "./components/home/HomeContent";
 
 export const metadata: Metadata = {
-  title: "LB Company - Your All-in-One Learning Platform",
+  title: "LP Company - Your All-in-One Learning Platform",
   description:
-    "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels - primary, middle school, high school, and university.",
+    "LP Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels - primary, middle school, high school, and university.",
   keywords: [
-    "LB Company",
+    "LP Company",
     "educational platform",
     "private lessons",
     "online courses",
@@ -17,20 +17,20 @@ export const metadata: Metadata = {
     "university courses",
     "online learning",
   ],
-  authors: [{ name: "LB Company" }],
+  authors: [{ name: "LP Company" }],
   openGraph: {
-    title: "LB Company - Your All-in-One Learning Platform",
+    title: "LP Company - Your All-in-One Learning Platform",
     description:
-      "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
+      "LP Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
     type: "website",
     locale: "ar_SA",
-    siteName: "LB Company",
+    siteName: "LP Company",
   },
   twitter: {
     card: "summary_large_image",
-    title: "LB Company - Your All-in-One Learning Platform",
+    title: "LP Company - Your All-in-One Learning Platform",
     description:
-      "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
+      "LP Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
   },
   robots: {
     index: true,

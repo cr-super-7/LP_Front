@@ -5,8 +5,8 @@
     "tagline": "Your All-in-One Learning Platform"
   },
   "educationalPlatform": {
-    "title": "Educational LB Platform",
-    "description1": "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels - primary, middle school, high school, and university. Our mission is to provide every learner with a smooth, engaging, and effective learning experience tailored to every age group and academic need.",
+    "title": "Educational LP Platform",
+    "description1": "LP Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels - primary, middle school, high school, and university. Our mission is to provide every learner with a smooth, engaging, and effective learning experience tailored to every age group and academic need.",
     "description2": "The platform brings together a wide selection of top teachers, subject experts, and university professors, ensuring high-quality lessons and professional guidance for all students."
   },
   "properties": {
@@ -14,7 +14,8 @@
     "subtitle": "go to one property to see details.",
     "courses": "Courses",
     "privateLessons": "Private lessons",
-    "inquiry": "Inquiry"
+    "inquiry": "Inquiry",
+    "research": "Research"
   },
   "blogs": {
     "title": "Our Blogs",

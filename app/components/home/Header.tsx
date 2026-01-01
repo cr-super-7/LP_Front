@@ -6,7 +6,7 @@ export default function Header() {
     <header className="flex items-center justify-between px-8 py-6">
       {/* Logo */}
       <div className="text-3xl font-bold text-white">
-        <span className="tracking-tight">LB</span>
+        <span className="tracking-tight">LP</span>
       </div>
 
       {/* Right side - Language selector and Theme toggle */}

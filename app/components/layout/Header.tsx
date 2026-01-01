@@ -31,7 +31,7 @@ export default function Header() {
     >
       {/* Logo */}
       <div className={`text-3xl font-bold ${theme === "dark" ? "text-white" : "text-blue-950"}`}>
-        <span className="tracking-tight">LB</span>
+        <span className="tracking-tight">LP</span>
       </div>
 
       {/* Right side - Language selector and Theme toggle */}

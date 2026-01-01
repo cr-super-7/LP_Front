@@ -17,11 +17,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "LB Company - Your All-in-One Learning Platform",
-    template: "%s | LB Company",
+    default: "LP Company - Your All-in-One Learning Platform",
+    template: "%s | LP Company",
   },
   description:
-    "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
+    "LP Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels.",
 };
 
 export default function RootLayout({
