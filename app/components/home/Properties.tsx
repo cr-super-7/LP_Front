@@ -1,20 +1,26 @@
+"use client";
+
+import { useLanguage } from "../../contexts/LanguageContext";
+
 export default function Properties() {
+  const { t } = useLanguage();
+
   const properties = [
     {
       id: 1,
-      label: "Courses",
+      labelKey: "properties.courses",
       position: "top-left",
       imageBg: "from-brown-200 to-brown-400",
     },
     {
       id: 2,
-      label: "Private lessons",
+      labelKey: "properties.privateLessons",
       position: "bottom-center",
       imageBg: "from-blue-200 to-blue-400",
     },
     {
       id: 3,
-      label: "Inquiry",
+      labelKey: "properties.inquiry",
       position: "top-right",
       imageBg: "from-gray-200 to-gray-400",
     },
@@ -23,8 +29,8 @@ export default function Properties() {
   return (
     <section className="px-8 py-16">
       <div className="flex flex-col items-center gap-4">
-        <h2 className="text-4xl font-bold text-white">Our Properties</h2>
-        <p className="text-lg text-white">go to one property to see details.</p>
+        <h2 className="text-4xl font-bold text-white">{t("properties.title")}</h2>
+        <p className="text-lg text-white">{t("properties.subtitle")}</p>
 
         {/* Triangular layout for properties */}
         <div className="relative mt-16 h-96 w-full max-w-4xl">
@@ -36,7 +42,7 @@ export default function Properties() {
                 <div className="h-full w-full bg-gray-200"></div>
               </div>
               <div className="absolute right-2 top-8 rounded-full bg-blue-400 px-4 py-2">
-                <span className="text-sm font-medium text-white">Courses</span>
+                <span className="text-sm font-medium text-white">{t(properties[0].labelKey)}</span>
               </div>
             </div>
           </div>
@@ -49,7 +55,7 @@ export default function Properties() {
                 <div className="h-full w-full bg-gray-200"></div>
               </div>
               <div className="absolute right-2 top-8 rounded-full bg-blue-400 px-4 py-2">
-                <span className="text-sm font-medium text-white">Private lessons</span>
+                <span className="text-sm font-medium text-white">{t(properties[1].labelKey)}</span>
               </div>
             </div>
           </div>
@@ -62,7 +68,7 @@ export default function Properties() {
                 <div className="h-full w-full bg-gray-200"></div>
               </div>
               <div className="absolute right-2 top-8 rounded-full bg-blue-400 px-4 py-2">
-                <span className="text-sm font-medium text-white">Inquiry</span>
+                <span className="text-sm font-medium text-white">{t(properties[2].labelKey)}</span>
               </div>
             </div>
           </div>

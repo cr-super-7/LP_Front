@@ -1,0 +1,35 @@
+{
+  "hero": {
+    "welcome": "Welcome to",
+    "company": "Company",
+    "tagline": "Your All-in-One Learning Platform"
+  },
+  "educationalPlatform": {
+    "title": "Educational LB Platform",
+    "description1": "LB Company is a comprehensive educational platform offering private lessons and specialized courses for all academic levels - primary, middle school, high school, and university. Our mission is to provide every learner with a smooth, engaging, and effective learning experience tailored to every age group and academic need.",
+    "description2": "The platform brings together a wide selection of top teachers, subject experts, and university professors, ensuring high-quality lessons and professional guidance for all students."
+  },
+  "properties": {
+    "title": "Our Properties",
+    "subtitle": "go to one property to see details.",
+    "courses": "Courses",
+    "privateLessons": "Private lessons",
+    "inquiry": "Inquiry"
+  },
+  "blogs": {
+    "title": "Our Blogs",
+    "blog1": {
+      "title": "Quantum Computing: Almost Here. Almost Useful.",
+      "snippet": "Imagine designing life-saving drugs in weeks, instantly cracking the toughest encryptions and a general artificial intelligence way beyond today's limits. Quantum computing promises..."
+    },
+    "blog2": {
+      "title": "Blockchain Beyond Bitcoin: The Revolution We Overlooked",
+      "snippet": "We got distracted. Somewhere between the promise of decentralization and the rise of digital gold, we fixated on cryptocurrency. It became the..."
+    },
+    "blog3": {
+      "title": "Financial Risk in the Age of AI: A Double-Edged Sword",
+      "snippet": "Markets crash, businesses default and new AI accelerators both risk and reward. Deepfakes, identity theft and algorithmic failures cause new vulnerabilities, making..."
+    }
+  }
+}
+

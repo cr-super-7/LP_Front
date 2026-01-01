@@ -1,24 +1,27 @@
+"use client";
+
+import { useLanguage } from "../../contexts/LanguageContext";
+
 export default function Blogs() {
+  const { t } = useLanguage();
+
   const blogs = [
     {
       id: 1,
-      title: "Quantum Computing: Almost Here. Almost Useful.",
-      snippet:
-        "Imagine designing life-saving drugs in weeks, instantly cracking the toughest encryptions and a general artificial intelligence way beyond today's limits. Quantum computing promises...",
+      titleKey: "blogs.blog1.title",
+      snippetKey: "blogs.blog1.snippet",
       imageBg: "from-yellow-400 to-yellow-600",
     },
     {
       id: 2,
-      title: "Blockchain Beyond Bitcoin: The Revolution We Overlooked",
-      snippet:
-        "We got distracted. Somewhere between the promise of decentralization and the rise of digital gold, we fixated on cryptocurrency. It became the...",
+      titleKey: "blogs.blog2.title",
+      snippetKey: "blogs.blog2.snippet",
       imageBg: "from-yellow-300 to-yellow-500",
     },
     {
       id: 3,
-      title: "Financial Risk in the Age of AI: A Double-Edged Sword",
-      snippet:
-        "Markets crash, businesses default and new AI accelerators both risk and reward. Deepfakes, identity theft and algorithmic failures cause new vulnerabilities, making...",
+      titleKey: "blogs.blog3.title",
+      snippetKey: "blogs.blog3.snippet",
       imageBg: "from-blue-300 to-blue-500",
     },
   ];
@@ -26,7 +29,7 @@ export default function Blogs() {
   return (
     <section className="px-8 py-16">
       <div className="flex flex-col items-center gap-8">
-        <h2 className="text-4xl font-bold text-white">Our Blogs</h2>
+        <h2 className="text-4xl font-bold text-white">{t("blogs.title")}</h2>
 
         {/* Blog cards */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -44,8 +47,8 @@ export default function Blogs() {
 
               {/* Blog content */}
               <div className="flex flex-col gap-3 p-6">
-                <h3 className="text-xl font-semibold text-white">{blog.title}</h3>
-                <p className="text-sm leading-relaxed text-white/80">{blog.snippet}</p>
+                <h3 className="text-xl font-semibold text-white">{t(blog.titleKey)}</h3>
+                <p className="text-sm leading-relaxed text-white/80">{t(blog.snippetKey)}</p>
               </div>
             </div>
           ))}

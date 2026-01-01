@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import Header from "./components/home/Header";
+import type { Metadata, Viewport } from "next";
+import Header from "./components/layout/Header";
 import Hero from "./components/home/Hero";
 import EducationalPlatform from "./components/home/EducationalPlatform";
 import Properties from "./components/home/Properties";
@@ -47,11 +47,12 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
 };
 
 export default function Home() {

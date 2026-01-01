@@ -1,6 +1,11 @@
+"use client";
+
 import Image from "next/image";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative flex min-h-[600px] items-center justify-between px-8 py-16">
       {/* Background decorative lines */}
@@ -34,12 +39,12 @@ export default function Hero() {
       {/* Left side - Text content */}
       <div className="relative z-10 flex flex-col gap-4">
         <h1 className="text-6xl font-bold text-white">
-          Welcome to{" "}
+          {t("hero.welcome")}{" "}
           <span className="text-blue-300">LB</span>{" "}
-          <span className="text-white">Company</span>
+          <span className="text-white">{t("hero.company")}</span>
         </h1>
         <p className="text-2xl text-white">
-          Your All-in-One Learning Platform
+          {t("hero.tagline")}
         </p>
       </div>
 
