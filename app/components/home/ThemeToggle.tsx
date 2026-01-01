@@ -8,7 +8,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className={`flex items-center justify-center rounded-lg border p-2 transition-colors ${
+      className={`flex items-center justify-center rounded-lg border p-1.5 md:p-2 transition-colors ${
         theme === "dark"
           ? "border-white/20 bg-white/5 text-white hover:bg-white/10"
           : "border-blue-950/20 bg-blue-950/5 text-blue-950 hover:bg-blue-950/10"
@@ -18,7 +18,7 @@ export default function ThemeToggle() {
       {theme === "dark" ? (
         // Sun icon for light mode (when dark mode is active, show sun to switch to light)
         <svg
-          className="h-5 w-5"
+          className="h-4 w-4 md:h-5 md:w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -33,7 +33,7 @@ export default function ThemeToggle() {
       ) : (
         // Moon icon for dark mode (when light mode is active, show moon to switch to dark)
         <svg
-          className="h-5 w-5"
+          className="h-4 w-4 md:h-5 md:w-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

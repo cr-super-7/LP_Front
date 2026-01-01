@@ -21,7 +21,7 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-6 transition-all duration-300  ${
         isScrolled
           ? theme === "dark"
             ? "bg-blue-950/85 backdrop-blur-md shadow-lg"

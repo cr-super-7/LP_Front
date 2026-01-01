@@ -20,17 +20,17 @@ export default function LanguageSelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors ${
+        className={`flex items-center gap-1.5 md:gap-2 rounded-lg border px-3 md:px-4 py-1.5 md:py-2 transition-colors ${
           theme === "dark"
             ? "border-white/20 bg-white/5 text-white hover:bg-white/10"
             : "border-blue-950/20 bg-blue-950/5 text-blue-950 hover:bg-blue-950/10"
         }`}
       >
-        <span className="text-sm font-medium">
+        <span className="text-xs md:text-sm font-medium">
           {currentLang.code === "en" ? "En" : "Ar"}
         </span>
         <svg
-          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 md:h-4 md:w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
