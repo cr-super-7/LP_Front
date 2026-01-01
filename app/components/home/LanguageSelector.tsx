@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
+  const { theme } = useTheme();
 
   const languages = [
     { code: "en" as const, name: "English" },
@@ -18,7 +20,11 @@ export default function LanguageSelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white transition-colors hover:bg-white/10"
+        className={`flex items-center gap-2 rounded-lg border px-4 py-2 transition-colors ${
+          theme === "dark"
+            ? "border-white/20 bg-white/5 text-white hover:bg-white/10"
+            : "border-blue-950/20 bg-blue-950/5 text-blue-950 hover:bg-blue-950/10"
+        }`}
       >
         <span className="text-sm font-medium">
           {currentLang.code === "en" ? "En" : "Ar"}
@@ -44,7 +50,13 @@ export default function LanguageSelector() {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-full z-20 mt-2 min-w-[120px] rounded-lg border border-white/20 bg-blue-900/95 backdrop-blur-sm shadow-lg">
+          <div className={`absolute top-full z-20 mt-2 min-w-[140px] rounded-lg border backdrop-blur-sm shadow-lg ${
+            language === "ar" ? "left-0" : "right-0"
+          } ${
+            theme === "dark"
+              ? "border-white/20 bg-blue-900/95"
+              : "border-blue-950/20 bg-white/95"
+          }`}>
             {languages.map((lang) => (
               <button
                 key={lang.code}
@@ -52,10 +64,12 @@ export default function LanguageSelector() {
                   setLanguage(lang.code);
                   setIsOpen(false);
                 }}
-                className={`w-full px-4 py-2 text-left text-sm text-white transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                  language === lang.code
-                    ? "bg-white/10 font-medium"
-                    : "hover:bg-white/5"
+                className={`w-full px-4 py-2 text-sm transition-colors first:rounded-t-lg last:rounded-b-lg ${
+                  language === "ar" ? "text-right" : "text-left"
+                } ${
+                  theme === "dark"
+                    ? `text-white ${language === lang.code ? "bg-white/10 font-medium" : "hover:bg-white/5"}`
+                    : `text-blue-950 ${language === lang.code ? "bg-blue-950/10 font-medium" : "hover:bg-blue-950/5"}`
                 }`}
               >
                 {lang.name}

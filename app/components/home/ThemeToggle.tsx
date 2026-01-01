@@ -1,52 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // Check initial theme
-    const theme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const darkMode = theme === "dark" || (!theme && prefersDark);
-    
-    setIsDark(darkMode);
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    
-    if (newTheme) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  };
-
-  if (!mounted) {
-    return (
-      <div className="h-9 w-9 rounded-lg border border-white/20 bg-white/5" />
-    );
-  }
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <button
       onClick={toggleTheme}
-      className="flex items-center justify-center rounded-lg border border-white/20 bg-white/5 p-2 text-white transition-colors hover:bg-white/10"
+      className={`flex items-center justify-center rounded-lg border p-2 transition-colors ${
+        theme === "dark"
+          ? "border-white/20 bg-white/5 text-white hover:bg-white/10"
+          : "border-blue-950/20 bg-blue-950/5 text-blue-950 hover:bg-blue-950/10"
+      }`}
       aria-label="Toggle theme"
     >
-      {isDark ? (
+      {theme === "dark" ? (
         // Sun icon for light mode (when dark mode is active, show sun to switch to light)
         <svg
           className="h-5 w-5"

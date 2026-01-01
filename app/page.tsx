@@ -1,9 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import Header from "./components/layout/Header";
-import Hero from "./components/home/Hero";
-import EducationalPlatform from "./components/home/EducationalPlatform";
-import Properties from "./components/home/Properties";
-import Blogs from "./components/home/Blogs";
+import HomeContent from "./components/home/HomeContent";
 
 export const metadata: Metadata = {
   title: "LB Company - Your All-in-One Learning Platform",
@@ -56,13 +52,5 @@ export const viewport: Viewport = {
 };
 
 export default function Home() {
-  return (
-    <div className="min-h-screen bg-linear-to-b from-blue-900 via-blue-800 to-blue-900">
-      <Header />
-      <Hero />
-      <EducationalPlatform />
-      <Properties />
-      <Blogs />
-    </div>
-  );
+  return <HomeContent />;
 }

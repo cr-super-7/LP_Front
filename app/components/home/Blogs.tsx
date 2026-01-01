@@ -1,9 +1,11 @@
 "use client";
 
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function Blogs() {
   const { t } = useLanguage();
+  const { theme } = useTheme();
 
   const blogs = [
     {
@@ -29,7 +31,7 @@ export default function Blogs() {
   return (
     <section className="px-8 py-16">
       <div className="flex flex-col items-center gap-8">
-        <h2 className="text-4xl font-bold text-white">{t("blogs.title")}</h2>
+        <h2 className={`text-4xl font-bold ${theme === "dark" ? "text-white" : "text-blue-950"}`}>{t("blogs.title")}</h2>
 
         {/* Blog cards */}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -47,8 +49,8 @@ export default function Blogs() {
 
               {/* Blog content */}
               <div className="flex flex-col gap-3 p-6">
-                <h3 className="text-xl font-semibold text-white">{t(blog.titleKey)}</h3>
-                <p className="text-sm leading-relaxed text-white/80">{t(blog.snippetKey)}</p>
+                <h3 className={`text-xl font-semibold ${theme === "dark" ? "text-white" : "text-blue-950"}`}>{t(blog.titleKey)}</h3>
+                <p className={`text-sm leading-relaxed ${theme === "dark" ? "text-white/80" : "text-gray-600"}`}>{t(blog.snippetKey)}</p>
               </div>
             </div>
           ))}
