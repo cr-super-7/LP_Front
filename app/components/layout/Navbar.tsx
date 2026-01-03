@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { logout } from "../../store/slice/authSlice";
+import { useAppSelector } from "../../store/hooks";
 import LanguageSelector from "../home/LanguageSelector";
 import ThemeToggle from "../home/ThemeToggle";
 import LoginModal from "../auth/LoginModal";
@@ -14,51 +12,16 @@ import type { RootState } from "../../store/store";
 export default function Navbar() {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
-  const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
+  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
   const isRTL = language === "ar";
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Fix hydration mismatch by only showing auth-dependent content after mount
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Close user menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-
-    if (isUserMenuOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isUserMenuOpen]);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    setIsUserMenuOpen(false);
-    router.push("/");
-  };
-
-  // Get user initials for avatar
-  const getUserInitials = () => {
-    if (user?.email) {
-      return user.email.charAt(0).toUpperCase();
-    }
-    return "U";
-  };
 
   return (
     <nav
@@ -189,130 +152,7 @@ export default function Navbar() {
           >
             {t("navbar.login")}
           </button>
-        ) : (
-          <div className="relative" ref={userMenuRef}>
-            <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
-              }`}
-              aria-label="User Menu"
-            >
-              {/* User Avatar */}
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
-                {user?.email ? (
-                  <span>{getUserInitials()}</span>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                )}
-              </div>
-              <span className={`hidden md:block text-sm font-medium ${
-                theme === "dark" ? "text-white" : "text-gray-700"
-              }`}>
-                {user?.email?.split("@")[0] || "User"}
-              </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`transition-transform ${isUserMenuOpen ? "rotate-180" : ""} ${
-                  theme === "dark" ? "text-white" : "text-gray-700"
-                }`}
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-
-            {/* User Dropdown Menu */}
-            {isUserMenuOpen && (
-              <div
-                className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg z-50 ${
-                  theme === "dark"
-                    ? "bg-blue-900 border border-blue-800"
-                    : "bg-white border border-gray-200"
-                }`}
-              >
-                <div className="py-2">
-                  {/* User Info */}
-                  <div className={`px-4 py-3 border-b ${
-                    theme === "dark" ? "border-blue-800" : "border-gray-200"
-                  }`}>
-                    <p className={`text-sm font-semibold ${
-                      theme === "dark" ? "text-white" : "text-gray-900"
-                    }`}>
-                      {user?.email || "User"}
-                    </p>
-                    <p className={`text-xs mt-1 ${
-                      theme === "dark" ? "text-gray-400" : "text-gray-500"
-                    }`}>
-                      {user?.role === "instructor" ? t("auth.instructor") : t("auth.student")}
-                    </p>
-                  </div>
-
-                  {/* Menu Items */}
-                  <button
-                    onClick={() => {
-                      setIsUserMenuOpen(false);
-                      // Add profile navigation here if needed
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      theme === "dark"
-                        ? "text-gray-300 hover:bg-blue-800"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t("navbar.profile")}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsUserMenuOpen(false);
-                      // Add settings navigation here if needed
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      theme === "dark"
-                        ? "text-gray-300 hover:bg-blue-800"
-                        : "text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t("navbar.settings")}
-                  </button>
-                  <div className={`border-t my-1 ${
-                    theme === "dark" ? "border-blue-800" : "border-gray-200"
-                  }`}></div>
-                  <button
-                    onClick={handleLogout}
-                    className={`w-full text-left px-4 py-2 text-sm transition-colors ${
-                      theme === "dark"
-                        ? "text-red-400 hover:bg-blue-800"
-                        : "text-red-600 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t("navbar.logout")}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        ) : null}
         <ThemeToggle />
       </div>
 

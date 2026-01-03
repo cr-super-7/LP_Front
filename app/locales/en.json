@@ -59,10 +59,23 @@
   "sidebar": {
     "home": "Home",
     "category": "Category",
+    "webDevelopment": "Web Development",
+    "flutter": "Flutter",
+    "uxUiDesign": "UX/UI Design",
+    "ai": "Ai",
+    "courses": "Courses",
+    "coursesDashboard": "Courses Dashboard",
     "myCourses": "My Courses",
+    "privateLessons": "Private Lessons",
+    "lessonsDashboard": "Lessons Dashboard",
+    "myPrivateLessons": "My Private Lessons",
+    "myAppointments": "My appointments",
+    "report": "Report",
     "liked": "Liked",
     "profile": "Profile",
-    "help": "Help"
+    "settings": "Settings",
+    "help": "Help",
+    "logout": "Log out"
   },
   "navbar": {
     "searchPlaceholder": "Search courses...",
@@ -125,6 +138,30 @@
     "hours": "h",
     "instructor": "Instructor",
     "installmentsAvailable": "Installments Available"
+  },
+  "profile": {
+    "title": "Profile",
+    "loading": "Loading profile...",
+    "email": "Email",
+    "phone": "Phone",
+    "notProvided": "Not provided",
+    "updateProfile": "Update Profile",
+    "bio": "Biography",
+    "bioPlaceholder": "Tell us about yourself...",
+    "location": "Location",
+    "locationPlaceholder": "Enter your location",
+    "saveChanges": "Save Changes",
+    "updating": "Updating...",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "currentPasswordPlaceholder": "Enter your current password",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Enter your new password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your new password",
+    "changing": "Changing...",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters"
   }
 }
 

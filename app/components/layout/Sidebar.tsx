@@ -1,34 +1,166 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { logout } from "../../store/slice/authSlice";
+import type { RootState } from "../../store/store";
+import {
+  Home,
+  Grid3x3,
+  BookOpen,
+  Heart,
+  User,
+  Settings,
+  HelpCircle,
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+  GraduationCap,
+  BarChart3,
+} from "lucide-react";
 
 export default function Sidebar() {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
   const isRTL = language === "ar";
+  const [mounted, setMounted] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
-  const menuItems = [
-    { key: "home", href: "/", icon: "🏠" },
-    { key: "category", href: "/courses", icon: "📚" },
-    { key: "myCourses", href: "/courses/my-courses", icon: "🎓" },
-    { key: "liked", href: "/courses/liked", icon: "❤️" },
-    { key: "profile", href: "/courses/profile", icon: "👤" },
-    { key: "help", href: "/courses/help", icon: "❓" },
+  // Fix hydration mismatch by only showing auth-dependent content after mount
+  // This pattern is necessary in Next.js to prevent SSR/client mismatch
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
+    );
+  };
+
+  const handleLogout = () => {
+    dispatch(logout());
+    router.push("/");
+  };
+
+  const isStudent = user?.role === "student";
+  const isInstructor = user?.role === "instructor";
+
+  // Student menu items
+  const studentMenuItems = [
+    {
+      key: "home",
+      href: "/",
+      icon: Home,
+      label: t("sidebar.home"),
+    },
+    {
+      key: "category",
+      href: "/courses",
+      icon: Grid3x3,
+      label: t("sidebar.category"),
+      hasSubmenu: true,
+      subItems: [
+        { key: "webDevelopment", href: "/courses/web-development", label: t("sidebar.webDevelopment") },
+        { key: "flutter", href: "/courses/flutter", label: t("sidebar.flutter") },
+        { key: "uxUiDesign", href: "/courses/ux-ui-design", label: t("sidebar.uxUiDesign") },
+        { key: "ai", href: "/courses/ai", label: t("sidebar.ai") },
+      ],
+    },
+    {
+      key: "myCourses",
+      href: "/courses/my-courses",
+      icon: BookOpen,
+      label: t("sidebar.myCourses"),
+    },
+    {
+      key: "liked",
+      href: "/courses/liked",
+      icon: Heart,
+      label: t("sidebar.liked"),
+    },
+    {
+      key: "profile",
+      href: "/courses/profile",
+      icon: User,
+      label: t("sidebar.profile"),
+    },
+    {
+      key: "settings",
+      href: "/courses/settings",
+      icon: Settings,
+      label: t("sidebar.settings"),
+    },
   ];
+
+  // Instructor menu items
+  const instructorMenuItems = [
+    {
+      key: "courses",
+      href: "/courses",
+      icon: BookOpen,
+      label: t("sidebar.courses"),
+      hasSubmenu: true,
+      subItems: [
+        { key: "coursesDashboard", href: "/courses/dashboard", label: t("sidebar.coursesDashboard") },
+        { key: "myCourses", href: "/courses/my-courses", label: t("sidebar.myCourses") },
+      ],
+    },
+    {
+      key: "privateLessons",
+      href: "/private-lessons",
+      icon: GraduationCap,
+      label: t("sidebar.privateLessons"),
+      hasSubmenu: true,
+      subItems: [
+        { key: "lessonsDashboard", href: "/private-lessons/dashboard", label: t("sidebar.lessonsDashboard") },
+        { key: "myPrivateLessons", href: "/private-lessons/my-lessons", label: t("sidebar.myPrivateLessons") },
+        { key: "myAppointments", href: "/private-lessons/appointments", label: t("sidebar.myAppointments") },
+      ],
+    },
+    {
+      key: "report",
+      href: "/courses/report",
+      icon: BarChart3,
+      label: t("sidebar.report"),
+    },
+    {
+      key: "profile",
+      href: "/courses/profile",
+      icon: User,
+      label: t("sidebar.profile"),
+    },
+    {
+      key: "settings",
+      href: "/courses/settings",
+      icon: Settings,
+      label: t("sidebar.settings"),
+    },
+  ];
+
+  const menuItems = mounted && isAuthenticated ? (isStudent ? studentMenuItems : isInstructor ? instructorMenuItems : []) : studentMenuItems;
+
+  const helpItem = {
+    key: "help",
+    href: "/courses/help",
+    icon: HelpCircle,
+    label: t("sidebar.help"),
+  };
 
   return (
     <aside
-      className={`fixed top-0 h-full w-64 z-40 transition-all duration-300 backdrop-blur-md ${
-        isRTL ? "right-0" : "left-0"
-      } ${
-        theme === "dark" 
-          ? "bg-blue-950/30 border-blue-800/50" 
-          : "bg-white/30 border-gray-200/50"
-      } ${isRTL ? "border-l" : "border-r"}`}
+      className={`fixed top-0 h-full w-64 z-40 transition-all duration-300 ${
+        theme === "dark" ? "bg-blue-950" : "bg-white"
+      } ${isRTL ? "right-0 border-l border-blue-800/50" : "left-0 border-r border-blue-800/50"}`}
     >
       <div className="flex flex-col h-full p-6">
         {/* Logo */}
@@ -40,34 +172,124 @@ export default function Sidebar() {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1">
-          <ul className="space-y-2">
+        <nav className="flex-1 overflow-y-auto">
+          <ul className="space-y-1">
             {menuItems.map((item) => {
+              const Icon = item.icon;
               const isActive = pathname === item.href || (item.href === "/courses" && pathname?.startsWith("/courses"));
+              const isExpanded = expandedCategories.includes(item.key);
+              const hasActiveSubItem = item.subItems?.some((subItem) => pathname === subItem.href);
+
               return (
                 <li key={item.key}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? theme === "dark"
-                          ? "bg-blue-900 text-blue-400"
-                          : "bg-blue-50 text-blue-600"
-                        : theme === "dark"
-                        ? "text-gray-300 hover:bg-blue-900/50"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="font-medium">{t(`sidebar.${item.key}`)}</span>
-                  </Link>
+                  {item.hasSubmenu ? (
+                    <>
+                      <button
+                        onClick={() => toggleCategory(item.key)}
+                        className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-colors ${
+                          isActive || hasActiveSubItem
+                            ? theme === "dark"
+                              ? "bg-blue-900 text-blue-400"
+                              : "bg-blue-50 text-blue-600"
+                            : theme === "dark"
+                            ? "text-gray-300 hover:bg-blue-900/50"
+                            : "text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon size={20} className="shrink-0" />
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                        {isExpanded ? (
+                          <ChevronUp size={16} className="shrink-0" />
+                        ) : (
+                          <ChevronDown size={16} className="shrink-0" />
+                        )}
+                      </button>
+                      {isExpanded && item.subItems && (
+                        <ul className={`mt-1 space-y-1 ${isRTL ? "pr-4" : "pl-4"}`}>
+                          {item.subItems.map((subItem) => {
+                            const isSubActive = pathname === subItem.href;
+                            return (
+                              <li key={subItem.key}>
+                                <Link
+                                  href={subItem.href}
+                                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm ${
+                                    isSubActive
+                                      ? theme === "dark"
+                                        ? "text-blue-400"
+                                        : "text-blue-600"
+                                      : theme === "dark"
+                                      ? "text-gray-400 hover:text-gray-300"
+                                      : "text-gray-600 hover:text-gray-900"
+                                  }`}
+                                >
+                                  <span className="w-1 h-1 rounded-full bg-current"></span>
+                                  <span>{subItem.label}</span>
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive
+                          ? theme === "dark"
+                            ? "bg-blue-900 text-blue-400"
+                            : "bg-blue-50 text-blue-600"
+                          : theme === "dark"
+                          ? "text-gray-300 hover:bg-blue-900/50"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <Icon size={20} className="shrink-0" />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  )}
                 </li>
               );
             })}
           </ul>
         </nav>
+
+        {/* Help Item */}
+        <div className="mt-auto pt-4 border-t border-blue-800/50">
+          <Link
+            href={helpItem.href}
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              pathname === helpItem.href
+                ? theme === "dark"
+                  ? "bg-blue-900 text-blue-400"
+                  : "bg-blue-50 text-blue-600"
+                : theme === "dark"
+                ? "text-gray-300 hover:bg-blue-900/50"
+                : "text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <HelpCircle size={20} className="shrink-0" />
+            <span className="font-medium">{helpItem.label}</span>
+          </Link>
+
+          {/* Logout Button (only if authenticated and mounted) */}
+          {mounted && isAuthenticated && (
+            <button
+              onClick={handleLogout}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors font-medium mt-2 ${
+                theme === "dark"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+            >
+              <LogOut size={20} className="shrink-0" />
+              <span>{t("sidebar.logout")}</span>
+            </button>
+          )}
+        </div>
       </div>
     </aside>
   );
 }
-

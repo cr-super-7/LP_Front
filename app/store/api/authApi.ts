@@ -1,7 +1,8 @@
 import api from "../utils/api";
 import { setIsLoading, setError, setAuth } from "../slice/authSlice";
 import { AppDispatch } from "../store";
-import type { RegisterRequest } from "../interface/auth.interface";
+import type { RegisterRequest, UserProfile, UpdateProfileRequest, ChangePasswordRequest } from "../interface/auth.interface";
+import toast from "react-hot-toast";
 
 // Define error response interface
 interface ErrorResponse {
@@ -96,8 +97,104 @@ const login = async (email: string, password: string, dispatch: AppDispatch) => 
     }
 };
 
+const getUserProfile = async (userId: string, dispatch: AppDispatch): Promise<UserProfile> => {
+    try {
+        dispatch(setIsLoading(true));
+        const { data } = await api.get(`/auth/user/${userId}`);
+        const userProfile = (data.result || data) as UserProfile;
+        dispatch(setIsLoading(false));
+        return userProfile;
+    } catch (error: unknown) {
+        let errorMessage = 'Failed to fetch user profile';
+        const err = error as ErrorResponse;
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        } else if (err.response?.data?.error) {
+            errorMessage = err.response.data.error;
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+        dispatch(setError(errorMessage));
+        dispatch(setIsLoading(false));
+        throw new Error(errorMessage);
+    } finally {
+        dispatch(setIsLoading(false));
+    }
+};
+
+const updateProfile = async (profileData: UpdateProfileRequest, dispatch: AppDispatch) => {
+    try {
+        dispatch(setIsLoading(true));
+        const formData = new FormData();
+        
+        if (profileData.bio !== undefined) {
+            formData.append('bio', profileData.bio);
+        }
+        if (profileData.location !== undefined) {
+            formData.append('location', profileData.location);
+        }
+        if (profileData.profilePicture) {
+            formData.append('profilePicture', profileData.profilePicture);
+        }
+        
+        const { data } = await api.put('/auth/profile', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        
+        dispatch(setIsLoading(false));
+        toast.success(data.message || 'Profile updated successfully');
+        return data;
+    } catch (error: unknown) {
+        let errorMessage = 'Failed to update profile';
+        const err = error as ErrorResponse;
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        } else if (err.response?.data?.error) {
+            errorMessage = err.response.data.error;
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+        dispatch(setError(errorMessage));
+        toast.error(errorMessage);
+        dispatch(setIsLoading(false));
+        throw new Error(errorMessage);
+    } finally {
+        dispatch(setIsLoading(false));
+    }
+};
+
+const changePassword = async (passwordData: ChangePasswordRequest, dispatch: AppDispatch) => {
+    try {
+        dispatch(setIsLoading(true));
+        const { data } = await api.post('/auth/change-password', passwordData);
+        dispatch(setIsLoading(false));
+        toast.success(data.message || 'Password changed successfully');
+        return data;
+    } catch (error: unknown) {
+        let errorMessage = 'Failed to change password';
+        const err = error as ErrorResponse;
+        if (err.response?.data?.message) {
+            errorMessage = err.response.data.message;
+        } else if (err.response?.data?.error) {
+            errorMessage = err.response.data.error;
+        } else if (err.message) {
+            errorMessage = err.message;
+        }
+        dispatch(setError(errorMessage));
+        toast.error(errorMessage);
+        dispatch(setIsLoading(false));
+        throw new Error(errorMessage);
+    } finally {
+        dispatch(setIsLoading(false));
+    }
+};
+
 export {
     register,
     login,
-   
+    getUserProfile,
+    updateProfile,
+    changePassword,
 };

@@ -35,3 +35,25 @@ export interface AuthState {
   error: string | null;
 }
 
+export interface UserProfile {
+  _id: string;
+  email: string;
+  phone: string;
+  role: "student" | "instructor" | "teacher";
+  createdAt: string;
+  bio?: string;
+  location?: string;
+  profilePicture?: string;
+}
+
+export interface UpdateProfileRequest {
+  bio?: string;
+  location?: string;
+  profilePicture?: File;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
