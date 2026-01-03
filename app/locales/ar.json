@@ -55,6 +55,29 @@
     "settings": "الإعدادات",
     "social": "اجتماعي",
     "copyright": "© 2025 شركة LP. جميع الحقوق محفوظة."
+  },
+  "sidebar": {
+    "home": "الرئيسية",
+    "category": "الفئات",
+    "myCourses": "دوراتي",
+    "liked": "المفضلة",
+    "profile": "الملف الشخصي",
+    "help": "المساعدة"
+  },
+  "navbar": {
+    "searchPlaceholder": "ابحث عن الدورات..."
+  },
+  "courses": {
+    "continueLearning": "متابعة التعلم",
+    "recentlyAdded": "المضافة حديثاً",
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "advanced": "متقدم",
+    "lessons": "درس",
+    "students": "طالب",
+    "hours": "ساعة",
+    "instructor": "المدرب",
+    "installmentsAvailable": "تقسيط متاح"
   }
 }
 

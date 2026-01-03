@@ -55,6 +55,29 @@
     "settings": "Settings",
     "social": "Social",
     "copyright": "© 2025 LP Company. All rights reserved."
+  },
+  "sidebar": {
+    "home": "Home",
+    "category": "Category",
+    "myCourses": "My Courses",
+    "liked": "Liked",
+    "profile": "Profile",
+    "help": "Help"
+  },
+  "navbar": {
+    "searchPlaceholder": "Search courses..."
+  },
+  "courses": {
+    "continueLearning": "Continue Learning",
+    "recentlyAdded": "Recently added",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "lessons": "Lessons",
+    "students": "Std",
+    "hours": "h",
+    "instructor": "Instructor",
+    "installmentsAvailable": "Installments Available"
   }
 }
 

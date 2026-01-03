@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -84,13 +85,8 @@ export default function Properties() {
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
         >
-          {properties.map((property) => (
-            <motion.div
-              key={property.id}
-              className="w-full flex justify-center"
-              variants={itemVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            >
+          {properties.map((property) => {
+            const MobileCircleContent = (
               <motion.div
                 className={`relative h-40 w-40 cursor-pointer`}
                 whileHover={{ scale: 1.1 }}
@@ -142,8 +138,23 @@ export default function Properties() {
                   <span className={`text-xs font-medium ${theme === "dark" ? "text-white" : "text-white"}`}>{t(property.labelKey)}</span>
                 </motion.div>
               </motion.div>
-            </motion.div>
-          ))}
+            );
+
+            return (
+              <motion.div
+                key={property.id}
+                className="w-full flex justify-center"
+                variants={itemVariants}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                {property.id === 1 ? (
+                  <Link href="/courses">{MobileCircleContent}</Link>
+                ) : (
+                  MobileCircleContent
+                )}
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         {/* Tablet and Desktop: Grid layout for properties - 4 circles */}
@@ -166,18 +177,12 @@ export default function Properties() {
               positionClasses = "absolute bottom-0 right-0";
             }
 
-            return (
+            const CircleContent = (
               <motion.div
-                key={property.id}
-                className={positionClasses}
-                variants={itemVariants}
-                transition={{ duration: 0.6, ease: "easeOut" }}
+                className={`relative h-32 w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 cursor-pointer`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
-                <motion.div
-                  className={`relative h-32 w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 cursor-pointer`}
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                >
                   <motion.div
                     className={`absolute inset-0 rounded-full border-2 border-dashed ${theme === "dark" ? "border-white" : "border-blue-950"}`}
                     initial={{ opacity: 0, scale: 0.9, rotate: 0 }}
@@ -224,6 +229,20 @@ export default function Properties() {
                     <span className={`text-xs md:text-sm font-medium ${theme === "dark" ? "text-white" : "text-white"}`}>{t(property.labelKey)}</span>
                   </motion.div>
                 </motion.div>
+            );
+
+            return (
+              <motion.div
+                key={property.id}
+                className={positionClasses}
+                variants={itemVariants}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              >
+                {property.id === 1 ? (
+                  <Link href="/courses">{CircleContent}</Link>
+                ) : (
+                  CircleContent
+                )}
               </motion.div>
             );
           })}
