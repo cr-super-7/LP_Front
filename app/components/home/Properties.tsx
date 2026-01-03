@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -15,6 +16,7 @@ export default function Properties() {
       position: "top-left",
       imageBg: "from-amber-200 to-amber-400",
       delay: 0.1,
+      image: "/home/course.png",
     },
     {
       id: 2,
@@ -22,6 +24,7 @@ export default function Properties() {
       position: "bottom-left",
       imageBg: "from-blue-200 to-blue-400",
       delay: 0.2,
+      image: "/home/privet_lessons.png",
     },
     {
       id: 3,
@@ -29,6 +32,7 @@ export default function Properties() {
       position: "top-right",
       imageBg: "from-gray-200 to-gray-400",
       delay: 0.3,
+      image: "/home/inquiring.png",
     },
     {
       id: 4,
@@ -117,7 +121,17 @@ export default function Properties() {
                   animate="visible"
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 >
-                  <div className="h-full w-full bg-gray-200"></div>
+                  {property.image ? (
+                    <Image
+                      src={property.image}
+                      alt={t(property.labelKey)}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 160px, 192px"
+                    />
+                  ) : (
+                    <div className="h-full w-full bg-gray-200"></div>
+                  )}
                 </motion.div>
                 <motion.div
                   className={`absolute right-2 top-8 rounded-full ${theme === "dark" ? "bg-blue-400" : "bg-blue-500"} px-3 py-1.5 shadow-lg`}
@@ -189,10 +203,20 @@ export default function Properties() {
                     animate="visible"
                     transition={{ duration: 0.8, ease: "easeOut" }}
                   >
-                    <div className="h-full w-full bg-gray-200"></div>
+                    {property.image ? (
+                      <Image
+                        src={property.image}
+                        alt={t(property.labelKey)}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-gray-200"></div>
+                    )}
                   </motion.div>
                   <motion.div
-                    className={`absolute right-2 top-6 md:top-8 rounded-full ${theme === "dark" ? "bg-blue-400" : "bg-blue-500"} px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 shadow-lg`}
+                    className={`absolute -right-5 top-6 md:top-8 rounded-full ${theme === "dark" ? "bg-blue-400" : "bg-blue-500"} px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 shadow-lg`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: property.delay + 0.3, duration: 0.5 }}

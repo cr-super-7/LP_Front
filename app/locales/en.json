@@ -31,6 +31,30 @@
       "title": "Financial Risk in the Age of AI: A Double-Edged Sword",
       "snippet": "Markets crash, businesses default and new AI accelerators both risk and reward. Deepfakes, identity theft and algorithmic failures cause new vulnerabilities, making..."
     }
+  },
+  "statistics": {
+    "students": "Students",
+    "courses": "Courses",
+    "instructor": "Instructor"
+  },
+  "footer": {
+    "description": "Your All-in-One Learning Platform offering comprehensive educational services for all academic levels.",
+    "product": "Product",
+    "overview": "Overview",
+    "features": "Features",
+    "solutions": "Solutions",
+    "pricing": "Pricing",
+    "company": "Company",
+    "aboutUs": "About us",
+    "contact": "Contact",
+    "legal": "Legal",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "cookies": "Cookies",
+    "licenses": "Licenses",
+    "settings": "Settings",
+    "social": "Social",
+    "copyright": "© 2025 LP Company. All rights reserved."
   }
 }
 

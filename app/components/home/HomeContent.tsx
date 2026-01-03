@@ -3,10 +3,12 @@
 import { useTheme } from "../../contexts/ThemeContext";
 import Header from "../layout/Header";
 import Background from "../layout/Background";
+import Footer from "../layout/Footer";
 import Hero from "./Hero";
 import EducationalPlatform from "./EducationalPlatform";
 import Properties from "./Properties";
 import Blogs from "./Blogs";
+import Statistics from "./Statistics";
 
 export default function HomeContent() {
   const { theme } = useTheme();
@@ -26,6 +28,8 @@ export default function HomeContent() {
         <EducationalPlatform />
         <Properties />
         <Blogs />
+        <Statistics />
+        <Footer />
       </div>
     </div>
   );
