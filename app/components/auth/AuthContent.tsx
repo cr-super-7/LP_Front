@@ -65,7 +65,7 @@ export default function AuthContent() {
       await login(email, password, dispatch);
       
       // Redirect to home
-      router.push("/");
+      router.push("/courses");
     } catch (error: unknown) {
       // Error is already handled by the login function
       console.error("Login error:", error);
@@ -89,8 +89,13 @@ export default function AuthContent() {
         role: selectedRole,
       }, dispatch);
       
-      // Redirect to home
-      router.push("/");
+      // Redirect to login page after successful registration
+      setIsLogin(true);
+      // Clear sign up form
+      setSignUpEmail("");
+      setPhoneNumber("");
+      setSignUpPassword("");
+      setAgreeToTerms(false);
     } catch (error: unknown) {
       // Error is already handled by the register function
       console.error("Registration error:", error);

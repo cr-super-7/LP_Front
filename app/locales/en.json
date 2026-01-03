@@ -66,7 +66,10 @@
   },
   "navbar": {
     "searchPlaceholder": "Search courses...",
-    "login": "Login"
+    "login": "Login",
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout"
   },
   "login": {
     "title": "Welcome Back",
