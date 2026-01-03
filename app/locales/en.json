@@ -65,7 +65,49 @@
     "help": "Help"
   },
   "navbar": {
-    "searchPlaceholder": "Search courses..."
+    "searchPlaceholder": "Search courses...",
+    "login": "Login"
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Sign in to your account to continue",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "submit": "Sign In",
+    "loading": "Signing in...",
+    "or": "OR",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "phoneNumber": "Phone number",
+    "phonePlaceholder": "Enter your phone number",
+    "selectRole": "Select Your Role",
+    "student": "Student",
+    "instructor": "Instructor",
+    "agreeTerms": "you agree to our Terms & Conditions and Privacy Policy.",
+    "forgotPassword": "Forgot Password?",
+    "loading": "Loading...",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "loginMessage": "Welcome back! Access your courses and continue learning.",
+    "signUpMessage": "Join us today! Start your learning journey with LP Academy.",
+    "selectType": "Select Your Type",
+    "selectTypeDescription": "Choose whether you are a student or an instructor",
+    "studentDescription": "Access courses, track your progress, and learn at your own pace",
+    "instructorDescription": "Create and manage courses, teach students, and grow your audience",
+    "loginSubtitle": "Sign in to continue your learning journey",
+    "signUpSubtitle": "Create your account and start learning today"
   },
   "courses": {
     "continueLearning": "Continue Learning",

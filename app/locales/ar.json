@@ -65,7 +65,49 @@
     "help": "المساعدة"
   },
   "navbar": {
-    "searchPlaceholder": "ابحث عن الدورات..."
+    "searchPlaceholder": "ابحث عن الدورات...",
+    "login": "تسجيل الدخول"
+  },
+  "login": {
+    "title": "مرحباً بعودتك",
+    "subtitle": "سجل الدخول إلى حسابك للمتابعة",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "rememberMe": "تذكرني",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "submit": "تسجيل الدخول",
+    "loading": "جاري تسجيل الدخول...",
+    "or": "أو",
+    "noAccount": "ليس لديك حساب؟",
+    "signUp": "إنشاء حساب"
+  },
+  "auth": {
+    "logIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "emailPlaceholder": "أدخل بريدك الإلكتروني",
+    "password": "كلمة المرور",
+    "passwordPlaceholder": "أدخل كلمة المرور",
+    "phoneNumber": "رقم الهاتف",
+    "phonePlaceholder": "أدخل رقم هاتفك",
+    "selectRole": "اختر دورك",
+    "student": "طالب",
+    "instructor": "مدرب",
+    "agreeTerms": "أنت توافق على شروطنا وأحكامنا وسياسة الخصوصية.",
+    "forgotPassword": "نسيت كلمة المرور؟",
+    "loading": "جاري التحميل...",
+    "noAccount": "ليس لديك حساب؟",
+    "haveAccount": "لديك حساب بالفعل؟",
+    "loginMessage": "مرحباً بعودتك! الوصول إلى دوراتك ومتابعة التعلم.",
+    "signUpMessage": "انضم إلينا اليوم! ابدأ رحلتك التعليمية مع أكاديمية LP.",
+    "selectType": "اختر نوعك",
+    "selectTypeDescription": "اختر ما إذا كنت طالباً أم مدرباً",
+    "studentDescription": "الوصول إلى الدورات، تتبع تقدمك، وتعلم بوتيرتك الخاصة",
+    "instructorDescription": "إنشاء وإدارة الدورات، تدريس الطلاب، وتنمية جمهورك",
+    "loginSubtitle": "سجل الدخول لمتابعة رحلتك التعليمية",
+    "signUpSubtitle": "أنشئ حسابك وابدأ التعلم اليوم"
   },
   "courses": {
     "continueLearning": "متابعة التعلم",

@@ -5,11 +5,13 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import LanguageSelector from "../home/LanguageSelector";
 import ThemeToggle from "../home/ThemeToggle";
+import LoginModal from "../auth/LoginModal";
 
 export default function Navbar() {
   const { t } = useLanguage();
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   return (
     <nav
@@ -124,17 +126,21 @@ export default function Navbar() {
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
         <button
-          className={`p-2 rounded-lg transition-colors ${
-            theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
+          onClick={() => setIsLoginModalOpen(true)}
+          className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+            theme === "dark"
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
-          aria-label="Profile"
+          aria-label="Login"
         >
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-            U
-          </div>
+          {t("navbar.login")}
         </button>
         <ThemeToggle />
       </div>
+
+      {/* Login Modal */}
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
     </nav>
   );
 }
