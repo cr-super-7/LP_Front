@@ -110,7 +110,9 @@
     "studentDescription": "الوصول إلى الدورات، تتبع تقدمك، وتعلم بوتيرتك الخاصة",
     "instructorDescription": "إنشاء وإدارة الدورات، تدريس الطلاب، وتنمية جمهورك",
     "loginSubtitle": "سجل الدخول لمتابعة رحلتك التعليمية",
-    "signUpSubtitle": "أنشئ حسابك وابدأ التعلم اليوم"
+    "signUpSubtitle": "أنشئ حسابك وابدأ التعلم اليوم",
+    "registrationSuccessful": "تم التسجيل بنجاح",
+    "loginSuccessful": "تم تسجيل الدخول بنجاح"
   },
   "courses": {
     "continueLearning": "متابعة التعلم",

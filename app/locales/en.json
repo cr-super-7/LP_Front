@@ -110,7 +110,9 @@
     "studentDescription": "Access courses, track your progress, and learn at your own pace",
     "instructorDescription": "Create and manage courses, teach students, and grow your audience",
     "loginSubtitle": "Sign in to continue your learning journey",
-    "signUpSubtitle": "Create your account and start learning today"
+    "signUpSubtitle": "Create your account and start learning today",
+    "registrationSuccessful": "Registration successful",
+    "loginSuccessful": "Login successful"
   },
   "courses": {
     "continueLearning": "Continue Learning",

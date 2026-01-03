@@ -87,7 +87,7 @@ export default function Footer() {
 
   return (
     <footer className={`${theme === "dark" ? "bg-blue-950" : "bg-white"} text-white`}>
-      <div className=" px-4 md:px-8 py-12 md:py-16 border-t border-blue-400">
+      <div className=" px-4 md:px-8 pt-12 md:pt-16 pb-5 border-t border-blue-400">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12">
           {/* Logo */}
           <div className="lg:col-span-1">

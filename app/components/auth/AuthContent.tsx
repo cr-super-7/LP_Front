@@ -9,8 +9,10 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { clearError } from "../../store/slice/authSlice";
 import { register, login } from "../../store/api/authApi";
+import Background from "../layout/Background";
 
 import type { RootState } from "../../store/store";
+import toast from "react-hot-toast";
 
 export default function AuthContent() {
   const { t } = useLanguage();
@@ -63,8 +65,8 @@ export default function AuthContent() {
     
     try {
       await login(email, password, dispatch);
-      
-      // Redirect to home
+      toast.success(t("auth.loginSuccessful"));
+      // Redirect to courses page after showing toast
       router.push("/courses");
     } catch (error: unknown) {
       // Error is already handled by the login function
@@ -89,6 +91,7 @@ export default function AuthContent() {
         role: selectedRole,
       }, dispatch);
       
+     
       // Redirect to login page after successful registration
       setIsLogin(true);
       // Clear sign up form
@@ -107,23 +110,9 @@ export default function AuthContent() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-blue-950">
-      {/* Background with abstract lines */}
-      <div className="absolute inset-0 bg-blue-950">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full">
-            <svg className="w-full h-full" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0,200 Q300,150 600,200 T1200,200" stroke="#60A5FA" strokeWidth="2" fill="none" opacity="0.3"/>
-              <path d="M0,400 Q300,350 600,400 T1200,400" stroke="#60A5FA" strokeWidth="2" fill="none" opacity="0.3"/>
-              <path d="M0,600 Q300,550 600,600 T1200,600" stroke="#60A5FA" strokeWidth="2" fill="none" opacity="0.3"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Curved overlay on left */}
-      <div className="absolute left-0 top-0 bottom-0 w-1/2 bg-blue-400/10 rounded-r-full blur-3xl"></div>
-
+    <div className="relative min-h-screen flex overflow-x-hidden bg-blue-950">
+      <Background />
+      
       {/* Main Content */}
       <div className="relative z-10 w-full flex">
         {/* Left Side - Form */}
@@ -403,6 +392,7 @@ export default function AuthContent() {
                 className="object-cover"
                 sizes="50vw"
                 priority
+                loading="eager"
               />
               <motion.div
                 initial={{ opacity: 0 }}

@@ -2,7 +2,7 @@ import api from "../utils/api";
 import { setIsLoading, setError, setAuth } from "../slice/authSlice";
 import { AppDispatch } from "../store";
 import type { RegisterRequest } from "../interface/auth.interface";
-import toast from 'react-hot-toast'
+
 // Define error response interface
 interface ErrorResponse {
     response?: {
@@ -22,7 +22,7 @@ const register = async (user: RegisterRequest, dispatch: AppDispatch) => {
         console.log('Register response:', data);
         console.log('Register result:', data.result);
         dispatch(setIsLoading(false));
-        toast.success(data.message);
+       
         return data;
     } catch (error: unknown) {
         // Extract meaningful error message from server response
@@ -76,7 +76,7 @@ const login = async (email: string, password: string, dispatch: AppDispatch) => 
         // Use setAuth to save both user data and token
         dispatch(setAuth({ user: userData.user || userData, token }));
         dispatch(setIsLoading(false));
-        toast.success(data.message || 'Login successful');
+       
         return data;        
     } catch (error: unknown) {
         let errorMessage = 'An error occurred during login';

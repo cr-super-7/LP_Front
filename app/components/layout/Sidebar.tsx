@@ -6,9 +6,10 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export default function Sidebar() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
   const pathname = usePathname();
+  const isRTL = language === "ar";
 
   const menuItems = [
     { key: "home", href: "/", icon: "🏠" },
@@ -21,9 +22,13 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full w-64 z-40 transition-all duration-300 ${
-        theme === "dark" ? "bg-blue-950" : "bg-white"
-      } border-r ${theme === "dark" ? "border-blue-800" : "border-gray-200"}`}
+      className={`fixed top-0 h-full w-64 z-40 transition-all duration-300 backdrop-blur-md ${
+        isRTL ? "right-0" : "left-0"
+      } ${
+        theme === "dark" 
+          ? "bg-blue-950/30 border-blue-800/50" 
+          : "bg-white/30 border-gray-200/50"
+      } ${isRTL ? "border-l" : "border-r"}`}
     >
       <div className="flex flex-col h-full p-6">
         {/* Logo */}

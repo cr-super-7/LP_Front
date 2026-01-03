@@ -12,15 +12,22 @@ import LoginModal from "../auth/LoginModal";
 import type { RootState } from "../../store/store";
 
 export default function Navbar() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
+  const isRTL = language === "ar";
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Fix hydration mismatch by only showing auth-dependent content after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -55,7 +62,9 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 right-0 left-64 h-16 z-30 flex items-center justify-between px-6 border-b ${
+      className={`fixed top-0 h-16 z-30 flex items-center justify-between px-6 border-b ${
+        isRTL ? "left-0 right-64" : "right-0 left-64"
+      } ${
         theme === "dark" ? "bg-blue-950 border-blue-800" : "bg-white border-gray-200"
       }`}
     >
@@ -165,7 +174,10 @@ export default function Navbar() {
           </svg>
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
         </button>
-        {!isAuthenticated ? (
+        {!mounted ? (
+          // Show placeholder during SSR to prevent hydration mismatch
+          <div className="w-20 h-10"></div>
+        ) : !isAuthenticated ? (
           <button
             onClick={() => setIsLoginModalOpen(true)}
             className={`px-4 py-2 rounded-lg transition-colors font-medium ${
