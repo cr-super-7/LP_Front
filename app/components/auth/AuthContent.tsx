@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { setLoading, setError, clearError, setCredentials } from "../../store/slice/authSlice";
-import { authApi } from "../../store/api/authApi";
+import { clearError } from "../../store/slice/authSlice";
+import { register, login } from "../../store/api/authApi";
+
 import type { RootState } from "../../store/store";
 
 export default function AuthContent() {
@@ -59,27 +60,15 @@ export default function AuthContent() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     dispatch(clearError());
-    dispatch(setLoading(true));
     
     try {
-      const response = await authApi.login({
-        email,
-        password,
-      });
-      
-      // Set credentials in Redux
-      dispatch(setCredentials(response));
+      await login(email, password, dispatch);
       
       // Redirect to home
       router.push("/");
     } catch (error: unknown) {
-      // Set error in Redux
-      const errorMessage = 
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Login failed. Please check your credentials.";
-      dispatch(setError(errorMessage));
-    } finally {
-      dispatch(setLoading(false));
+      // Error is already handled by the login function
+      console.error("Login error:", error);
     }
   };
 
@@ -91,29 +80,20 @@ export default function AuthContent() {
     }
 
     dispatch(clearError());
-    dispatch(setLoading(true));
     
     try {
-      const response = await authApi.register({
+      await register({
         email: signUpEmail,
         phone: phoneNumber,
         password: signUpPassword,
         role: selectedRole,
-      });
-      
-      // Set credentials in Redux
-      dispatch(setCredentials(response));
+      }, dispatch);
       
       // Redirect to home
       router.push("/");
     } catch (error: unknown) {
-      // Set error in Redux
-      const errorMessage = 
-        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        "Registration failed. Please try again.";
-      dispatch(setError(errorMessage));
-    } finally {
-      dispatch(setLoading(false));
+      // Error is already handled by the register function
+      console.error("Registration error:", error);
     }
   };
 
