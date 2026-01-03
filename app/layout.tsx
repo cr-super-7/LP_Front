@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import ReduxProvider from "./providers/ReduxProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -155,11 +156,13 @@ export default function RootLayout({
             `,
           }}
         />
-        <ThemeProvider>
-          <LanguageProvider>
-            {children}
-          </LanguageProvider>
-        </ThemeProvider>
+        <ReduxProvider>
+          <ThemeProvider>
+            <LanguageProvider>
+              {children}
+            </LanguageProvider>
+          </ThemeProvider>
+        </ReduxProvider>
       </body>
     </html>
   );

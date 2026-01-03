@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { setLoading, setError, clearError, setCredentials } from "../../store/slice/authSlice";
+import { authApi } from "../../store/api/authApi";
+import type { RootState } from "../../store/store";
 
 export default function AuthContent() {
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const dispatch = useAppDispatch();
+  const { isLoading, error, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  
   const [isLogin, setIsLogin] = useState(true);
   
   // Get role from URL query parameter, default to "student"
@@ -30,30 +38,83 @@ export default function AuthContent() {
   const [signUpPassword, setSignUpPassword] = useState("");
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  
-  const [isLoading, setIsLoading] = useState(false);
 
   // Get image based on selected role
   const getImageSrc = () => {
     return selectedRole === "student" ? "/home/course.png" : "/home/privet_lessons.png";
   };
 
+  // Clear error when switching forms
+  useEffect(() => {
+    dispatch(clearError());
+  }, [isLogin, dispatch]);
+
+  // Redirect if authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: Add login logic here
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    dispatch(clearError());
+    dispatch(setLoading(true));
+    
+    try {
+      const response = await authApi.login({
+        email,
+        password,
+      });
+      
+      // Set credentials in Redux
+      dispatch(setCredentials(response));
+      
+      // Redirect to home
+      router.push("/");
+    } catch (error: unknown) {
+      // Set error in Redux
+      const errorMessage = 
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Login failed. Please check your credentials.";
+      dispatch(setError(errorMessage));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // TODO: Add sign up logic here
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
+    
+    if (!agreeToTerms) {
+      return;
+    }
+
+    dispatch(clearError());
+    dispatch(setLoading(true));
+    
+    try {
+      const response = await authApi.register({
+        email: signUpEmail,
+        phone: phoneNumber,
+        password: signUpPassword,
+        role: selectedRole,
+      });
+      
+      // Set credentials in Redux
+      dispatch(setCredentials(response));
+      
+      // Redirect to home
+      router.push("/");
+    } catch (error: unknown) {
+      // Set error in Redux
+      const errorMessage = 
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Registration failed. Please try again.";
+      dispatch(setError(errorMessage));
+    } finally {
+      dispatch(setLoading(false));
+    }
   };
 
   const switchForm = () => {
@@ -162,6 +223,13 @@ export default function AuthContent() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                      <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm">
+                        {error}
+                      </div>
+                    )}
 
                     {/* Forgot Password */}
                     <div className="flex justify-end">
@@ -278,6 +346,13 @@ export default function AuthContent() {
                         {selectedRole === "student" ? t("auth.student") : t("auth.instructor")}
                       </div>
                     </div>
+
+                    {/* Error Message */}
+                    {error && (
+                      <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-300 text-sm">
+                        {error}
+                      </div>
+                    )}
 
                     {/* Terms & Conditions */}
                     <div className="flex items-start">
