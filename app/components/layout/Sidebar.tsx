@@ -59,13 +59,13 @@ export default function Sidebar() {
   const studentMenuItems = [
     {
       key: "home",
-      href: "/",
+      href: "/courses",
       icon: Home,
       label: t("sidebar.home"),
     },
     {
       key: "category",
-      href: "/courses",
+      href: "",
       icon: Grid3x3,
       label: t("sidebar.category"),
       hasSubmenu: true,
@@ -90,16 +90,11 @@ export default function Sidebar() {
     },
     {
       key: "profile",
-      href: "/courses/profile",
+      href: "/profile",
       icon: User,
       label: t("sidebar.profile"),
     },
-    {
-      key: "settings",
-      href: "/courses/settings",
-      icon: Settings,
-      label: t("sidebar.settings"),
-    },
+
   ];
 
   // Instructor menu items
@@ -135,16 +130,11 @@ export default function Sidebar() {
     },
     {
       key: "profile",
-      href: "/courses/profile",
+      href: "/profile",
       icon: User,
       label: t("sidebar.profile"),
     },
-    {
-      key: "settings",
-      href: "/courses/settings",
-      icon: Settings,
-      label: t("sidebar.settings"),
-    },
+  
   ];
 
   const menuItems = mounted && isAuthenticated ? (isStudent ? studentMenuItems : isInstructor ? instructorMenuItems : []) : studentMenuItems;
