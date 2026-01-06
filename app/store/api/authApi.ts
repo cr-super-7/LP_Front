@@ -101,7 +101,9 @@ const getUserProfile = async (userId: string, dispatch: AppDispatch): Promise<Us
     try {
         dispatch(setIsLoading(true));
         const { data } = await api.get(`/auth/user/${userId}`);
-        const userProfile = (data.result || data) as UserProfile;
+        // API response shape:
+        // { message: string, user: { ...UserProfile } }
+        const userProfile = (data.user || data.result?.user || data) as UserProfile;
         dispatch(setIsLoading(false));
         return userProfile;
     } catch (error: unknown) {

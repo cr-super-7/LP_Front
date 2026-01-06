@@ -1,25 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { Phone, Pencil } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import Sidebar from "../../layout/Sidebar";
 import Navbar from "../../layout/Navbar";
 import Background from "../../layout/Background";
 import Footer from "../../layout/Footer";
+import { useAppDispatch } from "../../../store/hooks";
+import { updateProfile } from "../../../store/api/authApi";
+import type { UserProfile } from "../../../store/interface/auth.interface";
+import type { UpdateProfileRequest } from "../../../store/interface/auth.interface";
 
-export type UserProfile = {
-  id?: string;
-  fullName?: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  role?: "student" | "instructor" | "teacher" | string;
-  roleName?: string;
-  avatarUrl?: string;
-  bio?: string;
-  location?: string;
-  createdAt?: string;
+type TeacherProfileData = UserProfile & {
   totalCourses?: number;
   cartCount?: number;
   inProgressCount?: number;
@@ -27,29 +22,65 @@ export type UserProfile = {
 };
 
 type TeacherProfileProps = {
-  user?: UserProfile | null;
+  user: TeacherProfileData;
+  onUpdate?: () => void;
 };
 
-export default function TeacherProfile({ user }: TeacherProfileProps) {
+export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
+  const dispatch = useAppDispatch();
   const isRTL = language === "ar";
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [formData, setFormData] = useState<UpdateProfileRequest>({
+    bio: user.bio || "",
+    location: user.location || "",
+  });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const textAlign = isRTL ? "text-right" : "text-left";
-  const normalizedRole = (user?.role || user?.roleName || "").toLowerCase();
-  const isTeacherRole =
-    normalizedRole === "teacher" ||
-    normalizedRole === "instructor" ||
-    normalizedRole === "معلم" ||
-    normalizedRole === "مدرس";
-  const roleLabel =
-    language === "ar"
-      ? isTeacherRole
-        ? "المعلّم"
-        : "الطالب"
-      : isTeacherRole
-      ? "Teacher"
-      : "Student";
+  const roleLabel = language === "ar" ? "المعلّم" : "Teacher";
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const updateData: UpdateProfileRequest = {
+        bio: formData.bio,
+        location: formData.location,
+      };
+
+      if (selectedFile) {
+        updateData.profilePicture = selectedFile;
+      }
+
+      await updateProfile(updateData, dispatch);
+      setIsEditModalOpen(false);
+      if (onUpdate) {
+        onUpdate();
+      }
+      // Reset file selection
+      setSelectedFile(null);
+      setPreviewUrl(null);
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -66,7 +97,7 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
         <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
           <div className="max-w-7xl mx-auto space-y-10">
             {/* Profile header */}
-            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 shadow-2xl px-6 py-10 sm:px-10 sm:py-12">
+            <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-700 via-blue-800 to-indigo-900 shadow-2xl px-6 py-10 sm:px-10 sm:py-12">
               {/* subtle waves */}
               <div className="pointer-events-none absolute inset-0 opacity-40">
                 <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-500 blur-3xl" />
@@ -78,14 +109,18 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
                 <div className="relative h-32 w-32 shrink-0 rounded-full border-4 border-blue-300 bg-blue-900/50 shadow-xl">
                   <Image
                     src={
-                      user?.avatarUrl || "/images/profile/teacher-placeholder.jpg"
+                      user.profilePicture || "/home/privet_lessons.png"
                     }
                     alt="Teacher avatar"
                     fill
                     className="rounded-full object-cover"
                   />
-                  <button className="absolute bottom-0 right-0 rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-md hover:bg-blue-400">
-                    Edit
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="absolute bottom-0 right-0 flex items-center gap-1 rounded-full bg-blue-500 px-3 py-1 text-xs font-semibold text-white shadow-md hover:bg-blue-400"
+                  >
+                    <Pencil className="h-3 w-3" />
+                    {language === "ar" ? "تعديل" : "Edit"}
                   </button>
                 </div>
 
@@ -96,16 +131,35 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
                       {roleLabel.toUpperCase()}
                     </p>
                     <h1 className="text-2xl font-bold text-white sm:text-3xl">
-                      {user?.email ||
-                        user?.fullName ||
-                        user?.name ||
-                        "DR. Linda Tromp"}
+                      {user.email}
                     </h1>
-                    {(user?.bio || user?.location) && (
-                      <p className="mt-1 text-sm text-blue-100 line-clamp-2">
-                        {user?.bio || user?.location}
-                      </p>
-                    )}
+                    
+                    {/* User Details */}
+                    <div className="mt-3 space-y-2">
+                      {user.phone && (
+                        <div className="flex items-center gap-2 text-sm text-blue-100">
+                          <Phone className="h-4 w-4 text-blue-300" />
+                          <span>{user.phone}</span>
+                        </div>
+                      )}
+                      {user.bio && (
+                        <p className="text-sm text-blue-100 line-clamp-2">
+                          <span className="text-blue-300 font-medium">
+                            {language === "ar" ? "نبذة: " : "Bio: "}
+                          </span>
+                          {user.bio}
+                        </p>
+                      )}
+                      {user.location && (
+                        <p className="text-sm text-blue-100">
+                          <span className="text-blue-300 font-medium">
+                            {language === "ar" ? "الموقع: " : "Location: "}
+                          </span>
+                          {user.location}
+                        </p>
+                      )}
+                      
+                    </div>
                   </div>
 
                   <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
@@ -114,7 +168,7 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
                         {language === "ar" ? "جميع الدورات" : "All Courses"}
                       </p>
                       <p className="text-3xl font-extrabold text-white">
-                        {user?.totalCourses ?? 11}
+                        {user.totalCourses ?? 11}
                       </p>
                     </div>
 
@@ -122,17 +176,17 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
                       <ProfileStat
                         color="orange"
                         label={language === "ar" ? "في السلة" : "Cart"}
-                        value={String(user?.cartCount ?? 3)}
+                        value={String(user.cartCount ?? 3)}
                       />
                       <ProfileStat
                         color="indigo"
                         label={language === "ar" ? "قيد التقدّم" : "In Progress"}
-                        value={String(user?.inProgressCount ?? 3)}
+                        value={String(user.inProgressCount ?? 3)}
                       />
                       <ProfileStat
                         color="green"
                         label={language === "ar" ? "مكتملة" : "Completed"}
-                        value={String(user?.completedCount ?? 6)}
+                        value={String(user.completedCount ?? 6)}
                       />
                     </div>
                   </div>
@@ -172,6 +226,164 @@ export default function TeacherProfile({ user }: TeacherProfileProps) {
           <Footer />
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsEditModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div
+            className={`relative w-full max-w-2xl rounded-2xl shadow-2xl ${
+              theme === "dark" ? "bg-blue-950" : "bg-white"
+            } p-6 sm:p-8`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} p-2 rounded-full ${
+                theme === "dark" ? "bg-white/10 hover:bg-white/20" : "bg-gray-100 hover:bg-gray-200"
+              } transition-colors`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={theme === "dark" ? "text-white" : "text-gray-700"}
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            {/* Modal Header */}
+            <h2
+              className={`text-2xl font-bold mb-6 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {language === "ar" ? "تعديل البروفايل" : "Edit Profile"}
+            </h2>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Profile Picture */}
+              <div className="space-y-2">
+                <label
+                  className={`block text-sm font-medium ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-700"
+                  }`}
+                >
+                  {language === "ar" ? "صورة البروفايل" : "Profile Picture"}
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-20 w-20 rounded-full overflow-hidden border-2 border-blue-500">
+                    <Image
+                      src={previewUrl || user.profilePicture || "/home/privet_lessons.png"}
+                      alt="Profile preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className={`block w-full text-sm ${
+                      theme === "dark"
+                        ? "text-blue-200 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:cursor-pointer"
+                        : "text-gray-700 file:bg-blue-600 file:text-white file:border-0 file:rounded-lg file:px-4 file:py-2 file:cursor-pointer"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-2">
+                <label
+                  className={`block text-sm font-medium ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-700"
+                  }`}
+                >
+                  {language === "ar" ? "نبذة" : "Bio"}
+                </label>
+                <textarea
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  rows={4}
+                  className={`w-full rounded-lg border px-4 py-2 ${
+                    theme === "dark"
+                      ? "bg-blue-900 border-blue-700 text-white placeholder-blue-300"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "أدخل نبذتك الشخصية..." : "Enter your bio..."}
+                />
+              </div>
+
+              {/* Location */}
+              <div className="space-y-2">
+                <label
+                  className={`block text-sm font-medium ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-700"
+                  }`}
+                >
+                  {language === "ar" ? "الموقع" : "Location"}
+                </label>
+                <input
+                  type="text"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className={`w-full rounded-lg border px-4 py-2 ${
+                    theme === "dark"
+                      ? "bg-blue-900 border-blue-700 text-white placeholder-blue-300"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "أدخل موقعك..." : "Enter your location..."}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-white hover:bg-gray-600"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {language === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting
+                    ? language === "ar"
+                      ? "جاري الحفظ..."
+                      : "Saving..."
+                    : language === "ar"
+                    ? "حفظ"
+                    : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

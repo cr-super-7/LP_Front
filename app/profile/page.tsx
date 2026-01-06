@@ -58,25 +58,34 @@ export default function ProfilePage() {
     return <NoUserProfile />;
   }
 
+  const handleProfileUpdate = async () => {
+    const authIds = authUser as { id?: string; _id?: string } | null;
+    const userId = authIds?.id || authIds?._id;
+    if (userId) {
+      try {
+        const updatedProfile = await getUserProfile(userId, dispatch);
+        setProfile(updatedProfile);
+      } catch (err) {
+        console.error("Failed to refresh profile:", err);
+      }
+    }
+  };
+
   const isTeacher = profile.role === "instructor";
 
   return isTeacher ? (
     <TeacherProfile
       user={{
-        id: profile._id,
-        fullName: authUser?.email || profile.email,
-        role: profile.role,
-        avatarUrl: profile.profilePicture,
+        ...profile,
       }}
+      onUpdate={handleProfileUpdate}
     />
   ) : (
     <StudentProfile
       user={{
-        id: profile._id,
-        fullName: authUser?.email || profile.email,
-        role: profile.role,
-        avatarUrl: profile.profilePicture,
+        ...profile,
       }}
+      onUpdate={handleProfileUpdate}
     />
   );
 }
