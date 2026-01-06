@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Phone, Pencil } from "lucide-react";
+import { Phone, Pencil, Lock } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import Sidebar from "../../layout/Sidebar";
@@ -10,9 +10,9 @@ import Navbar from "../../layout/Navbar";
 import Background from "../../layout/Background";
 import Footer from "../../layout/Footer";
 import { useAppDispatch } from "../../../store/hooks";
-import { updateProfile } from "../../../store/api/authApi";
+import { updateProfile, changePassword } from "../../../store/api/authApi";
 import type { UserProfile } from "../../../store/interface/auth.interface";
-import type { UpdateProfileRequest } from "../../../store/interface/auth.interface";
+import type { UpdateProfileRequest, ChangePasswordRequest } from "../../../store/interface/auth.interface";
 
 type TeacherProfileData = UserProfile & {
   totalCourses?: number;
@@ -33,13 +33,19 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
   const isRTL = language === "ar";
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     bio: user.bio || "",
     location: user.location || "",
   });
+  const [passwordData, setPasswordData] = useState<ChangePasswordRequest>({
+    oldPassword: "",
+    newPassword: "",
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const textAlign = isRTL ? "text-right" : "text-left";
   const roleLabel = language === "ar" ? "المعلّم" : "Teacher";
@@ -82,6 +88,21 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
     }
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsChangingPassword(true);
+
+    try {
+      await changePassword(passwordData, dispatch);
+      setIsChangePasswordModalOpen(false);
+      setPasswordData({ oldPassword: "", newPassword: "" });
+    } catch (error) {
+      console.error("Failed to change password:", error);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div
       className={`relative min-h-screen overflow-x-hidden ${
@@ -97,16 +118,36 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
         <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
           <div className="max-w-7xl mx-auto space-y-10">
             {/* Profile header */}
-            <section className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-700 via-blue-800 to-indigo-900 shadow-2xl px-6 py-10 sm:px-10 sm:py-12">
+            <section
+              className={`relative overflow-hidden rounded-3xl shadow-2xl px-6 py-10 sm:px-10 sm:py-12 ${
+                theme === "dark"
+                  ? "bg-linear-to-br from-blue-700 via-blue-800 to-indigo-900"
+                  : "bg-linear-to-br from-blue-100 via-blue-200 to-indigo-100"
+              }`}
+            >
               {/* subtle waves */}
               <div className="pointer-events-none absolute inset-0 opacity-40">
-                <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-blue-500 blur-3xl" />
-                <div className="absolute -right-16 top-10 h-64 w-64 rounded-full bg-indigo-500 blur-3xl" />
+                <div
+                  className={`absolute -left-10 -top-10 h-40 w-40 rounded-full blur-3xl ${
+                    theme === "dark" ? "bg-blue-500" : "bg-blue-300"
+                  }`}
+                />
+                <div
+                  className={`absolute -right-16 top-10 h-64 w-64 rounded-full blur-3xl ${
+                    theme === "dark" ? "bg-indigo-500" : "bg-indigo-300"
+                  }`}
+                />
               </div>
 
               <div className="relative flex flex-col items-center gap-6 text-center sm:flex-row sm:text-left">
                 {/* Avatar */}
-                <div className="relative h-32 w-32 shrink-0 rounded-full border-4 border-blue-300 bg-blue-900/50 shadow-xl">
+                <div
+                  className={`relative h-32 w-32 shrink-0 rounded-full border-4 shadow-xl ${
+                    theme === "dark"
+                      ? "border-blue-300 bg-blue-900/50"
+                      : "border-blue-400 bg-blue-50"
+                  }`}
+                >
                   <Image
                     src={
                       user.profilePicture || "/home/privet_lessons.png"
@@ -127,47 +168,95 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
                 {/* Name + stats */}
                 <div className="flex-1 space-y-4">
                   <div className={textAlign}>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-blue-200">
+                    <p
+                      className={`text-sm font-semibold uppercase tracking-wide ${
+                        theme === "dark" ? "text-blue-200" : "text-blue-700"
+                      }`}
+                    >
                       {roleLabel.toUpperCase()}
                     </p>
-                    <h1 className="text-2xl font-bold text-white sm:text-3xl">
+                    <h1
+                      className={`text-2xl font-bold sm:text-3xl ${
+                        theme === "dark" ? "text-white" : "text-gray-900"
+                      }`}
+                    >
                       {user.email}
                     </h1>
                     
                     {/* User Details */}
                     <div className="mt-3 space-y-2">
                       {user.phone && (
-                        <div className="flex items-center gap-2 text-sm text-blue-100">
-                          <Phone className="h-4 w-4 text-blue-300" />
+                        <div
+                          className={`flex items-center gap-2 text-sm ${
+                            theme === "dark" ? "text-blue-100" : "text-gray-700"
+                          }`}
+                        >
+                          <Phone
+                            className={`h-4 w-4 ${
+                              theme === "dark" ? "text-blue-300" : "text-blue-600"
+                            }`}
+                          />
                           <span>{user.phone}</span>
                         </div>
                       )}
                       {user.bio && (
-                        <p className="text-sm text-blue-100 line-clamp-2">
-                          <span className="text-blue-300 font-medium">
+                        <p
+                          className={`text-sm line-clamp-2 ${
+                            theme === "dark" ? "text-blue-100" : "text-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`font-medium ${
+                              theme === "dark" ? "text-blue-300" : "text-blue-600"
+                            }`}
+                          >
                             {language === "ar" ? "نبذة: " : "Bio: "}
                           </span>
                           {user.bio}
                         </p>
                       )}
                       {user.location && (
-                        <p className="text-sm text-blue-100">
-                          <span className="text-blue-300 font-medium">
+                        <p
+                          className={`text-sm ${
+                            theme === "dark" ? "text-blue-100" : "text-gray-700"
+                          }`}
+                        >
+                          <span
+                            className={`font-medium ${
+                              theme === "dark" ? "text-blue-300" : "text-blue-600"
+                            }`}
+                          >
                             {language === "ar" ? "الموقع: " : "Location: "}
                           </span>
                           {user.location}
                         </p>
                       )}
                       
+                      {/* Change Password Button */}
+                      <button
+                        onClick={() => setIsChangePasswordModalOpen(true)}
+                        className="mt-3 flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                      >
+                        <Lock className="h-4 w-4" />
+                        {language === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+                      </button>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                     <div className={`space-y-1 ${textAlign}`}>
-                      <p className="text-sm font-medium text-blue-200">
+                      <p
+                        className={`text-sm font-medium ${
+                          theme === "dark" ? "text-blue-200" : "text-blue-700"
+                        }`}
+                      >
                         {language === "ar" ? "جميع الدورات" : "All Courses"}
                       </p>
-                      <p className="text-3xl font-extrabold text-white">
+                      <p
+                        className={`text-3xl font-extrabold ${
+                          theme === "dark" ? "text-white" : "text-gray-900"
+                        }`}
+                      >
                         {user.totalCourses ?? 11}
                       </p>
                     </div>
@@ -384,6 +473,153 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
           </div>
         </div>
       )}
+
+      {/* Change Password Modal */}
+      {isChangePasswordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsChangePasswordModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div
+            className={`relative w-full max-w-md rounded-2xl shadow-2xl ${
+              theme === "dark" ? "bg-blue-950" : "bg-white"
+            } p-6 sm:p-8`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsChangePasswordModalOpen(false)}
+              className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} p-2 rounded-full ${
+                theme === "dark" ? "bg-white/10 hover:bg-white/20" : "bg-gray-100 hover:bg-gray-200"
+              } transition-colors`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={theme === "dark" ? "text-white" : "text-gray-700"}
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+
+            {/* Modal Header */}
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Lock className={`h-6 w-6 ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`} />
+                <h2
+                  className={`text-2xl font-bold ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {language === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+                </h2>
+              </div>
+              <p className={`text-sm ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>
+                {language === "ar"
+                  ? "أدخل كلمة المرور الحالية والجديدة"
+                  : "Enter your current password and new password"}
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              {/* Current Password */}
+              <div className="space-y-2">
+                <label
+                  className={`block text-sm font-medium ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-700"
+                  }`}
+                >
+                  {language === "ar" ? "كلمة المرور الحالية" : "Current Password"}
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.oldPassword}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, oldPassword: e.target.value })
+                  }
+                  required
+                  className={`w-full rounded-lg border px-4 py-2 ${
+                    theme === "dark"
+                      ? "bg-blue-900 border-blue-700 text-white placeholder-blue-300"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "أدخل كلمة المرور الحالية..." : "Enter current password..."}
+                />
+              </div>
+
+              {/* New Password */}
+              <div className="space-y-2">
+                <label
+                  className={`block text-sm font-medium ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-700"
+                  }`}
+                >
+                  {language === "ar" ? "كلمة المرور الجديدة" : "New Password"}
+                </label>
+                <input
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) =>
+                    setPasswordData({ ...passwordData, newPassword: e.target.value })
+                  }
+                  required
+                  minLength={6}
+                  className={`w-full rounded-lg border px-4 py-2 ${
+                    theme === "dark"
+                      ? "bg-blue-900 border-blue-700 text-white placeholder-blue-300"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "أدخل كلمة المرور الجديدة..." : "Enter new password..."}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsChangePasswordModalOpen(false);
+                    setPasswordData({ oldPassword: "", newPassword: "" });
+                  }}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-white hover:bg-gray-600"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  {language === "ar" ? "إلغاء" : "Cancel"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isChangingPassword}
+                  className="px-6 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isChangingPassword
+                    ? language === "ar"
+                      ? "جاري التغيير..."
+                      : "Changing..."
+                    : language === "ar"
+                    ? "تغيير"
+                    : "Change"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -406,7 +642,7 @@ function ProfileStat({ label, value, color }: ProfileStatProps) {
 
   return (
     <div
-      className={`inline-flex min-w-[140px] items-center justify-center gap-2 rounded-full border bg-gradient-to-r px-5 py-2 text-sm font-semibold text-white shadow-lg ${colorClasses[color]}`}
+      className={`inline-flex min-w-[140px] items-center justify-center gap-2 rounded-full border bg-linear-to-r px-5 py-2 text-sm font-semibold text-white shadow-lg ${colorClasses[color]}`}
     >
       <span>{value}</span>
       <span>{label}</span>
@@ -427,7 +663,7 @@ function CourseCard({ highlight }: CourseCardProps) {
     >
       <div className="relative h-40 w-full">
         <Image
-          src="/images/courses/course-placeholder.jpg"
+          src="/home/privet_lessons.png"
           alt="Course image"
           fill
           className="object-cover"

@@ -8,17 +8,22 @@ import LanguageSelector from "../home/LanguageSelector";
 import ThemeToggle from "../home/ThemeToggle";
 import LoginModal from "../auth/LoginModal";
 import type { RootState } from "../../store/store";
+import { Search } from "lucide-react";
 
 export default function Navbar() {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
-  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
   const isRTL = language === "ar";
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // Check if user is a teacher/instructor
+  const isTeacher = user?.role === "instructor";
+
   // Fix hydration mismatch by only showing auth-dependent content after mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -45,61 +50,64 @@ export default function Navbar() {
                 : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500"
             } focus:outline-none focus:ring-2 focus:ring-blue-500`}
           />
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"><Search className="h-4 w-4 text-gray-400" /></span>
         </div>
       </div>
 
       {/* Right Side Icons */}
       <div className="flex items-center gap-4">
         <LanguageSelector />
-        <button
-          className={`p-2 rounded-lg transition-colors ${
-            theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
-          }`}
-          aria-label="Cart"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            className={theme === "dark" ? "text-white" : "text-gray-700"}
+        {/* Hide Cart icon if user is a teacher/instructor */}
+        {!isTeacher && (
+          <button
+            className={`p-2 rounded-lg transition-colors ${
+              theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
+            }`}
+            aria-label="Cart"
           >
-            <path
-              d="M1.66663 1.66406H3.11663C4.01663 1.66406 4.72496 2.43906 4.64996 3.33073L3.95829 11.6307C3.84163 12.9891 4.91662 14.1557 6.28329 14.1557H15.1583C16.3583 14.1557 17.4083 13.1724 17.5 11.9807L17.95 5.73073C18.05 4.3474 17 3.22239 15.6083 3.22239H4.84997"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M13.5417 18.3333C14.117 18.3333 14.5833 17.867 14.5833 17.2917C14.5833 16.7164 14.117 16.25 13.5417 16.25C12.9664 16.25 12.5 16.7164 12.5 17.2917C12.5 17.867 12.9664 18.3333 13.5417 18.3333Z"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M6.87504 18.3333C7.45034 18.3333 7.91671 17.867 7.91671 17.2917C7.91671 16.7164 7.45034 16.25 6.87504 16.25C6.29974 16.25 5.83337 16.7164 5.83337 17.2917C5.83337 17.867 6.29974 18.3333 6.87504 18.3333Z"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M7.5 6.66406H17.5"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              className={theme === "dark" ? "text-white" : "text-gray-700"}
+            >
+              <path
+                d="M1.66663 1.66406H3.11663C4.01663 1.66406 4.72496 2.43906 4.64996 3.33073L3.95829 11.6307C3.84163 12.9891 4.91662 14.1557 6.28329 14.1557H15.1583C16.3583 14.1557 17.4083 13.1724 17.5 11.9807L17.95 5.73073C18.05 4.3474 17 3.22239 15.6083 3.22239H4.84997"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M13.5417 18.3333C14.117 18.3333 14.5833 17.867 14.5833 17.2917C14.5833 16.7164 14.117 16.25 13.5417 16.25C12.9664 16.25 12.5 16.7164 12.5 17.2917C12.5 17.867 12.9664 18.3333 13.5417 18.3333Z"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6.87504 18.3333C7.45034 18.3333 7.91671 17.867 7.91671 17.2917C7.91671 16.7164 7.45034 16.25 6.87504 16.25C6.29974 16.25 5.83337 16.7164 5.83337 17.2917C5.83337 17.867 6.29974 18.3333 6.87504 18.3333Z"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M7.5 6.66406H17.5"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                strokeMiterlimit="10"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
         <button
           className={`p-2 rounded-lg transition-colors relative ${
             theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
