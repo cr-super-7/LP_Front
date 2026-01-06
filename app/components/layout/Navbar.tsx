@@ -23,6 +23,7 @@ export default function Navbar() {
   const isTeacher = user?.role === "instructor";
 
   // Fix hydration mismatch by only showing auth-dependent content after mount
+  // This pattern is necessary in Next.js to prevent SSR/client mismatch
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setMounted(true);
@@ -57,8 +58,8 @@ export default function Navbar() {
       {/* Right Side Icons */}
       <div className="flex items-center gap-4">
         <LanguageSelector />
-        {/* Hide Cart icon if user is a teacher/instructor */}
-        {!isTeacher && (
+        {/* Hide Cart icon if user is a teacher/instructor - Only render after mount to prevent hydration mismatch */}
+        {mounted && !isTeacher && (
           <button
             className={`p-2 rounded-lg transition-colors ${
               theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
