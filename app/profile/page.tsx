@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import TeacherProfile from "../components/profile/teacher/TeacherProfile";
 import StudentProfile from "../components/profile/student/StudentProfile";
+import NoUserProfile from "../components/profile/NoUserProfile";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getUserProfile } from "../store/api/authApi";
 import type { UserProfile } from "../store/interface/auth.interface";
@@ -25,7 +26,8 @@ export default function ProfilePage() {
         const userId = authIds?.id || authIds?._id;
 
         if (!userId) {
-          setError("لا يوجد مستخدم مسجل الدخول.");
+          setError(null);
+          setProfile(null);
           setLoading(false);
           return;
         }
@@ -47,21 +49,16 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-        <p>جاري تحميل بيانات البروفايل...</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
       </div>
     );
   }
 
   if (error || !profile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-900 text-white">
-        <p>{error || "تعذر تحميل بيانات المستخدم."}</p>
-      </div>
-    );
+    return <NoUserProfile />;
   }
 
-  const isTeacher =
-    profile.role === "instructor" ;
+  const isTeacher = profile.role === "instructor";
 
   return isTeacher ? (
     <TeacherProfile
@@ -83,4 +80,3 @@ export default function ProfilePage() {
     />
   );
 }
-
