@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -11,7 +12,10 @@ import {
   Clock,
   RefreshCw,
   ExternalLink,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
+import CourseTypeModal from "./CourseTypeModal";
 
 interface Course {
   id: number;
@@ -28,7 +32,7 @@ interface Course {
 export default function MyCoursesTeacherContent() {
   const { language } = useLanguage();
   const { theme } = useTheme();
-  const isRTL = language === "ar";
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Mock data - سيتم استبدالها بالبيانات من API
   const continueCreatingCourses: Course[] = [
@@ -188,17 +192,22 @@ export default function MyCoursesTeacherContent() {
               </p>
             </div>
             <button
-              className={`px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap shadow-lg ${
+              onClick={() => setIsModalOpen(true)}
+              className={`px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap shadow-lg flex items-center gap-2 ${
                 theme === "dark"
                   ? "bg-blue-500 hover:bg-blue-600 text-white"
                   : "bg-blue-500 hover:bg-blue-600 text-white"
               }`}
             >
-              {language === "ar" ? "إنشاء دورة جديدة >" : "Create new Course >"}
+              <span>{language === "ar" ? "إنشاء دورة جديدة" : "Create new Course"}</span>
+              {language === "ar" ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Course Type Modal */}
+      <CourseTypeModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
       {/* Continue Creating Section */}
       <div className="space-y-6">
@@ -269,8 +278,6 @@ interface CourseCardProps {
 }
 
 function CourseCard({ course, theme, language, isPublished = false }: CourseCardProps) {
-  const isRTL = language === "ar";
-
   return (
     <div
       className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl ${

@@ -1,0 +1,165 @@
+"use client";
+
+import { useLanguage } from "../../contexts/LanguageContext";
+import { useTheme } from "../../contexts/ThemeContext";
+import { X, GraduationCap, Briefcase } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+interface CourseTypeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function CourseTypeModal({ isOpen, onClose }: CourseTypeModalProps) {
+  const { language } = useLanguage();
+  const { theme } = useTheme();
+  const router = useRouter();
+
+  if (!isOpen) return null;
+
+  const handleSelectType = (type: "university" | "professional") => {
+    onClose();
+    router.push(`/create-course?type=${type}`);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div
+        className={`relative w-full max-w-md rounded-2xl shadow-2xl ${
+          theme === "dark"
+            ? "bg-blue-900/95 backdrop-blur-sm border border-blue-800/50"
+            : "bg-white border border-gray-200"
+        }`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-blue-800/30">
+          <h2
+            className={`text-xl font-bold ${
+              theme === "dark" ? "text-white" : "text-blue-950"
+            }`}
+          >
+            {language === "ar" ? "اختر نوع الدورة" : "Select Course Type"}
+          </h2>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-lg transition-colors ${
+              theme === "dark"
+                ? "hover:bg-blue-800/50 text-blue-300"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          <p
+            className={`text-sm mb-6 ${
+              theme === "dark" ? "text-blue-200" : "text-gray-600"
+            }`}
+          >
+            {language === "ar"
+              ? "اختر نوع الدورة التي تريد إنشاءها"
+              : "Choose the type of course you want to create"}
+          </p>
+
+          {/* University Course Option */}
+          <button
+            onClick={() => handleSelectType("university")}
+            className={`w-full p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105 ${
+              theme === "dark"
+                ? "border-blue-700 bg-blue-800/30 hover:border-blue-600 hover:bg-blue-800/50"
+                : "border-blue-200 bg-blue-50 hover:border-blue-300 hover:bg-blue-100"
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={`p-3 rounded-lg ${
+                  theme === "dark" ? "bg-blue-700/50" : "bg-blue-100"
+                }`}
+              >
+                <GraduationCap
+                  className={`h-8 w-8 ${
+                    theme === "dark" ? "text-blue-300" : "text-blue-600"
+                  }`}
+                />
+              </div>
+              <div className="flex-1 text-left">
+                <h3
+                  className={`text-lg font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "كورسات جامعات" : "University Courses"}
+                </h3>
+                <p
+                  className={`text-sm ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-600"
+                  }`}
+                >
+                  {language === "ar"
+                    ? "دورات أكاديمية تابعة للجامعات والمؤسسات التعليمية"
+                    : "Academic courses affiliated with universities and educational institutions"}
+                </p>
+              </div>
+            </div>
+          </button>
+
+          {/* Professional Course Option */}
+          <button
+            onClick={() => handleSelectType("professional")}
+            className={`w-full p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105 ${
+              theme === "dark"
+                ? "border-blue-700 bg-blue-800/30 hover:border-blue-600 hover:bg-blue-800/50"
+                : "border-blue-200 bg-blue-50 hover:border-blue-300 hover:bg-blue-100"
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className={`p-3 rounded-lg ${
+                  theme === "dark" ? "bg-blue-700/50" : "bg-blue-100"
+                }`}
+              >
+                <Briefcase
+                  className={`h-8 w-8 ${
+                    theme === "dark" ? "text-blue-300" : "text-blue-600"
+                  }`}
+                />
+              </div>
+              <div className="flex-1 text-left">
+                <h3
+                  className={`text-lg font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar"
+                    ? "كورسات مهنية/تقنية"
+                    : "Professional/Technical Courses"}
+                </h3>
+                <p
+                  className={`text-sm ${
+                    theme === "dark" ? "text-blue-200" : "text-gray-600"
+                  }`}
+                >
+                  {language === "ar"
+                    ? "دورات مهنية وتقنية خارجية للتدريب والتطوير المهني"
+                    : "External professional and technical courses for training and professional development"}
+                </p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

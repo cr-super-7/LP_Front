@@ -16,6 +16,8 @@ import {
   Trash2,
   Check,
   Grid3x3,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import type { RootState } from "../../store/store";
 
@@ -202,13 +204,14 @@ export default function CourseDashboardContent() {
             </span>
           </div>
           <button
-            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+            className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
               theme === "dark"
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-blue-600 hover:bg-blue-700 text-white"
             }`}
           >
-            {language === "ar" ? "إنشاء دورة جديدة >" : "Create new Course >"}
+            <span>{language === "ar" ? "إنشاء دورة جديدة" : "Create new Course"}</span>
+            {language === "ar" ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
           </button>
         </div>
       </div>
