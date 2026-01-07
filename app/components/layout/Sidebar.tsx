@@ -101,13 +101,13 @@ export default function Sidebar() {
   const instructorMenuItems = [
     {
       key: "courses",
-      href: "/courses",
+      href: "",
       icon: BookOpen,
       label: t("sidebar.courses"),
       hasSubmenu: true,
       subItems: [
-        { key: "coursesDashboard", href: "/courses/dashboard", label: t("sidebar.coursesDashboard") },
-        { key: "myCourses", href: "/courses/my-courses", label: t("sidebar.myCourses") },
+        { key: "coursesDashboard", href: "/courseDashboard", label: t("sidebar.coursesDashboard") },
+        { key: "myCourses", href: "/myCoursesTeacher", label: t("sidebar.myCourses") },
       ],
     },
     {
@@ -124,7 +124,7 @@ export default function Sidebar() {
     },
     {
       key: "report",
-      href: "/courses/report",
+      href: "/report",
       icon: BarChart3,
       label: t("sidebar.report"),
     },
