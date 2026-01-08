@@ -11,7 +11,7 @@ export interface Course {
   description: LocalizedText;
   teacher: string;
   category: string;
-  courseType: "university" | "professional";
+  courseType: "university" | "others";
   department?: string;
   othersPlace?: string;
   level: "beginner" | "intermediate" | "advanced";
@@ -32,7 +32,7 @@ export interface CreateCourseRequest {
   "description.en": string;
   Teacher: string;
   category: string;
-  courseType: "university" | "professional";
+  courseType: "university" | "others";
   department?: string;
   othersPlace?: string;
   level: "beginner" | "intermediate" | "advanced";

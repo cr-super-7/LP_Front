@@ -35,12 +35,19 @@ const createCourse = async (courseData: CreateCourseRequest, dispatch: AppDispat
     formData.append("currency", courseData.currency);
     formData.append("durationHours", courseData.durationHours.toString());
     
-    // Add optional fields
-    if (courseData.department) {
-      formData.append("department", courseData.department);
-    }
-    if (courseData.othersPlace) {
-      formData.append("othersPlace", courseData.othersPlace);
+    // Add department or othersPlace based on courseType (required by API)
+    if (courseData.courseType === "university") {
+      if (courseData.department) {
+        formData.append("department", courseData.department);
+      } else {
+        throw new Error("Department is required for university courses");
+      }
+    } else if (courseData.courseType === "others") {
+      if (courseData.othersPlace && courseData.othersPlace.trim() !== "") {
+        formData.append("othersPlace", courseData.othersPlace);
+      } else {
+        throw new Error("othersPlace is required for others courses");
+      }
     }
     if (courseData.totalLessons !== undefined) {
       formData.append("totalLessons", courseData.totalLessons.toString());

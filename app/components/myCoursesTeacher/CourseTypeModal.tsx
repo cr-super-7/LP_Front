@@ -17,7 +17,7 @@ export default function CourseTypeModal({ isOpen, onClose }: CourseTypeModalProp
 
   if (!isOpen) return null;
 
-  const handleSelectType = (type: "university" | "professional") => {
+  const handleSelectType = (type: "university" | "others") => {
     onClose();
     router.push(`/create-course?type=${type}`);
   };
@@ -116,7 +116,7 @@ export default function CourseTypeModal({ isOpen, onClose }: CourseTypeModalProp
 
           {/* Professional Course Option */}
           <button
-            onClick={() => handleSelectType("professional")}
+            onClick={() => handleSelectType("others")}
             className={`w-full p-6 rounded-xl border-2 transition-all duration-200 hover:scale-105 ${
               theme === "dark"
                 ? "border-blue-700 bg-blue-800/30 hover:border-blue-600 hover:bg-blue-800/50"

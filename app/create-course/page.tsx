@@ -19,8 +19,8 @@ export default function CreateCoursePage() {
 
   const courseType = useMemo(() => {
     const type = searchParams.get("type");
-    if (type === "university" || type === "professional") {
-      return type as "university" | "professional";
+    if (type === "university" || type === "others") {
+      return type as "university" | "others";
     }
     return null;
   }, [searchParams]);

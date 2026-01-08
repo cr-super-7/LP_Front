@@ -16,11 +16,11 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { createCourse } from "../../store/api/courseApi";
 import { getCategories } from "../../store/api/categoryApi";
 import { getDepartments } from "../../store/api/departmentApi";
-import { getUniversities } from "../../store/api/universityApi";
+import { getOthersPlaces } from "../../store/api/othersPlaceApi";
 import type { CreateCourseRequest } from "../../store/interface/courseInterface";
 
 interface CreateCourseContentProps {
-  courseType: "university" | "professional";
+  courseType: "university" | "others";
 }
 
 export default function CreateCourseContent({ courseType }: CreateCourseContentProps) {
@@ -31,7 +31,7 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
   const { user } = useAppSelector((state) => state.auth);
   const { categories } = useAppSelector((state) => state.category);
   const { departments } = useAppSelector((state) => state.department);
-  const { universities } = useAppSelector((state) => state.university);
+  const { othersPlaces } = useAppSelector((state) => state.othersPlace);
   const { isLoading } = useAppSelector((state) => state.course);
 
   const [formData, setFormData] = useState({
@@ -60,8 +60,8 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
         if (courseType === "university") {
           await getDepartments(dispatch);
         }
-        if (courseType === "professional") {
-          await getUniversities(dispatch);
+        if (courseType === "others") {
+          await getOthersPlaces(dispatch);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -69,12 +69,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
     };
     loadData();
   }, [dispatch, courseType]);
-
-  // Debug: Log categories when they change
-  useEffect(() => {
-    console.log("Categories in Redux:", categories);
-    console.log("Categories length:", categories?.length);
-  }, [categories]);
 
   const courseLevels = [
     { value: "beginner", label: language === "ar" ? "مبتدئ" : "Beginner" },
@@ -140,7 +134,7 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
       alert(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
       return;
     }
-    if (courseType === "professional" && !formData.othersPlace) {
+    if (courseType === "others" && !formData.othersPlace) {
       alert(language === "ar" ? "يرجى اختيار المكان" : "Please select place");
       return;
     }
@@ -170,7 +164,7 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
       if (courseType === "university" && formData.department) {
         courseData.department = formData.department;
       }
-      if (courseType === "professional" && formData.othersPlace) {
+      if (courseType === "others" && formData.othersPlace) {
         courseData.othersPlace = formData.othersPlace;
       }
       if (formData.totalLessons) {
@@ -658,8 +652,8 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 </div>
               )}
 
-              {/* Others Place (for professional courses) */}
-              {courseType === "professional" && (
+              {/* Others Place (for others courses) */}
+              {courseType === "others" && (
                 <div>
                   <label
                     className={`block text-sm font-semibold mb-2 ${
@@ -685,13 +679,13 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                       <option value="">
                         {language === "ar" ? "اختر المكان" : "Select place"}
                       </option>
-                      {universities.map((uni) => (
-                        <option key={uni._id} value={uni._id}>
-                          {typeof uni.name === "string"
-                            ? uni.name
+                      {othersPlaces.map((place) => (
+                        <option key={place._id} value={place._id}>
+                          {typeof place.name === "string"
+                            ? place.name
                             : language === "ar"
-                            ? uni.name.ar
-                            : uni.name.en}
+                            ? place.name.ar
+                            : place.name.en}
                         </option>
                       ))}
                     </select>
