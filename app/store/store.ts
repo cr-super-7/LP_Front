@@ -7,6 +7,7 @@ import collegeReducer from "./slice/collegeSlice";
 import categoryReducer from "./slice/categorySlice";
 import courseReducer from "./slice/courseSlice";
 import othersPlaceReducer from "./slice/othersPlaceSlice";
+import lessonReducer from "./slice/lessonSlice";
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     category: categoryReducer,
     course: courseReducer,
     othersPlace: othersPlaceReducer,
+    lesson: lessonReducer,
   },
 });
 
