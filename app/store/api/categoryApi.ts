@@ -20,10 +20,31 @@ const getCategories = async (dispatch: AppDispatch): Promise<Category[]> => {
     dispatch(setLoading(true));
     const { data } = await api.get("/categories");
 
+    // Debug: Log the raw response
+    console.log("Raw categories API response:", data);
+
     // API response shape:
     // { categories: Category[] }
     const categoriesResponse: CategoriesResponse = data;
-    const categories = categoriesResponse.categories || data.result?.categories || [];
+    
+    // Try different response structures
+    let categories = categoriesResponse.categories || data.result?.categories || data.categories || [];
+    
+    // If categories is nested (categories inside categories), flatten it
+    if (Array.isArray(categories) && categories.length > 0 && categories[0]?.categories) {
+      // Flatten nested structure
+      const flattenedCategories: Category[] = [];
+      categories.forEach((cat: any) => {
+        if (cat.categories && Array.isArray(cat.categories)) {
+          flattenedCategories.push(...cat.categories);
+        } else {
+          flattenedCategories.push(cat);
+        }
+      });
+      categories = flattenedCategories;
+    }
+
+    console.log("Processed categories:", categories);
 
     dispatch(setCategories(categories));
     dispatch(setLoading(false));

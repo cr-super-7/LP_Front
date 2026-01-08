@@ -5,6 +5,7 @@ import departmentReducer from "./slice/departmentSlice";
 import universityReducer from "./slice/universitySlice";
 import collegeReducer from "./slice/collegeSlice";
 import categoryReducer from "./slice/categorySlice";
+import courseReducer from "./slice/courseSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     university: universityReducer,
     college: collegeReducer,
     category: categoryReducer,
+    course: courseReducer,
   },
 });
 

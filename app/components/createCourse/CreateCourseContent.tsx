@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -12,6 +12,12 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { createCourse } from "../../store/api/courseApi";
+import { getCategories } from "../../store/api/categoryApi";
+import { getDepartments } from "../../store/api/departmentApi";
+import { getUniversities } from "../../store/api/universityApi";
+import type { CreateCourseRequest } from "../../store/interface/courseInterface";
 
 interface CreateCourseContentProps {
   courseType: "university" | "professional";
@@ -21,22 +27,64 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
   const { language } = useLanguage();
   const { theme } = useTheme();
   const router = useRouter();
-  const isRTL = language === "ar";
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { categories } = useAppSelector((state) => state.category);
+  const { departments } = useAppSelector((state) => state.department);
+  const { universities } = useAppSelector((state) => state.university);
+  const { isLoading } = useAppSelector((state) => state.course);
 
   const [formData, setFormData] = useState({
-    courseName: "",
-    courseLevel: "",
-    coursePrice: "",
-    courseHours: "",
-    description: "",
+    titleAr: "",
+    titleEn: "",
+    descriptionAr: "",
+    descriptionEn: "",
+    category: "",
+    level: "",
+    price: "",
+    currency: "SAR",
+    durationHours: "",
+    totalLessons: "",
+    department: "",
+    othersPlace: "",
     coverImage: null as File | null,
     coverImagePreview: null as string | null,
   });
+
+  // Load categories, departments, and universities on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await getCategories(dispatch);
+        if (courseType === "university") {
+          await getDepartments(dispatch);
+        }
+        if (courseType === "professional") {
+          await getUniversities(dispatch);
+        }
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    };
+    loadData();
+  }, [dispatch, courseType]);
+
+  // Debug: Log categories when they change
+  useEffect(() => {
+    console.log("Categories in Redux:", categories);
+    console.log("Categories length:", categories?.length);
+  }, [categories]);
 
   const courseLevels = [
     { value: "beginner", label: language === "ar" ? "مبتدئ" : "Beginner" },
     { value: "intermediate", label: language === "ar" ? "متوسط" : "Intermediate" },
     { value: "advanced", label: language === "ar" ? "متقدم" : "Advanced" },
+  ];
+
+  const currencies = [
+    { value: "SAR", label: "SAR" },
+    { value: "USD", label: "USD" },
+    { value: "EUR", label: "EUR" },
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -63,10 +111,76 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log("Form submitted:", { ...formData, courseType });
+
+    // Validation
+    if (!formData.titleAr || !formData.titleEn) {
+      alert(language === "ar" ? "يرجى إدخال عنوان الدورة" : "Please enter course title");
+      return;
+    }
+    if (!formData.descriptionAr || !formData.descriptionEn) {
+      alert(language === "ar" ? "يرجى إدخال وصف الدورة" : "Please enter course description");
+      return;
+    }
+    if (!formData.category) {
+      alert(language === "ar" ? "يرجى اختيار الفئة" : "Please select category");
+      return;
+    }
+    if (!formData.level) {
+      alert(language === "ar" ? "يرجى اختيار المستوى" : "Please select level");
+      return;
+    }
+    if (!formData.price || !formData.durationHours) {
+      alert(language === "ar" ? "يرجى إدخال السعر وساعات الدورة" : "Please enter price and duration hours");
+      return;
+    }
+    if (courseType === "university" && !formData.department) {
+      alert(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
+      return;
+    }
+    if (courseType === "professional" && !formData.othersPlace) {
+      alert(language === "ar" ? "يرجى اختيار المكان" : "Please select place");
+      return;
+    }
+
+    const userId = (user as { id?: string; _id?: string })?.id || (user as { id?: string; _id?: string })?._id;
+    if (!userId) {
+      alert(language === "ar" ? "يرجى تسجيل الدخول" : "Please login");
+      return;
+    }
+
+    try {
+      const courseData: CreateCourseRequest = {
+        "title.ar": formData.titleAr,
+        "title.en": formData.titleEn,
+        "description.ar": formData.descriptionAr,
+        "description.en": formData.descriptionEn,
+        Teacher: userId,
+        category: formData.category,
+        courseType: courseType,
+        level: formData.level as "beginner" | "intermediate" | "advanced",
+        price: parseFloat(formData.price),
+        currency: formData.currency,
+        durationHours: parseFloat(formData.durationHours),
+        thumbnail: formData.coverImage || undefined,
+      };
+
+      if (courseType === "university" && formData.department) {
+        courseData.department = formData.department;
+      }
+      if (courseType === "professional" && formData.othersPlace) {
+        courseData.othersPlace = formData.othersPlace;
+      }
+      if (formData.totalLessons) {
+        courseData.totalLessons = parseInt(formData.totalLessons);
+      }
+
+      await createCourse(courseData, dispatch);
+      router.push("/myCoursesTeacher");
+    } catch (error) {
+      console.error("Failed to create course:", error);
+    }
   };
 
   return (
@@ -116,13 +230,24 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
             </button>
             <button
               onClick={handleSubmit}
+              disabled={isLoading}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              } ${
                 theme === "dark"
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "bg-blue-600 hover:bg-blue-700 text-white"
               }`}
             >
-              {language === "ar" ? "التالي >" : "Next >"}
+              {isLoading
+                ? language === "ar"
+                  ? "جاري الإنشاء..."
+                  : "Creating..."
+                : language === "ar"
+                ? "التالي >"
+                : "Next >"}
             </button>
           </div>
         </div>
@@ -206,28 +331,108 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
 
             {/* Course Details - Two Columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Course Name */}
+              {/* Course Name Arabic */}
               <div>
                 <label
                   className={`block text-sm font-semibold mb-2 ${
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
-                  {language === "ar" ? "اسم الدورة" : "Course Name"}
+                  {language === "ar" ? "عنوان الدورة بالعربية" : "Course Title (Arabic)"}
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
                   type="text"
-                  name="courseName"
-                  value={formData.courseName}
+                  name="titleAr"
+                  value={formData.titleAr}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 rounded-lg border ${
                     theme === "dark"
                       ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
                       : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder={language === "ar" ? "أدخل اسم الدورة" : "Enter course name"}
+                  placeholder={language === "ar" ? "أدخل عنوان الدورة بالعربية" : "Enter course title in Arabic"}
                 />
+              </div>
+
+              {/* Course Name English */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "عنوان الدورة بالإنجليزية" : "Course Title (English)"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="titleEn"
+                  value={formData.titleEn}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "Enter course title in English" : "Enter course title in English"}
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "الفئة" : "Category"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, category: e.target.value }))
+                    }
+                    className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                      theme === "dark"
+                        ? "bg-blue-800/30 border-blue-700 text-white"
+                        : "bg-gray-50 border-gray-300 text-gray-900"
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  >
+                    <option value="">
+                      {language === "ar" ? "اختر الفئة" : "Select category"}
+                    </option>
+                    {categories && categories.length > 0 ? (
+                      categories.map((cat) => {
+                        // Handle different name structures
+                        const categoryName = 
+                          typeof cat.name === "string" 
+                            ? cat.name 
+                            : language === "ar" 
+                            ? cat.name?.ar || cat.name?.en || "Unknown"
+                            : cat.name?.en || cat.name?.ar || "Unknown";
+                        
+                        return (
+                          <option key={cat._id} value={cat._id}>
+                            {categoryName}
+                          </option>
+                        );
+                      })
+                    ) : (
+                      <option value="" disabled>
+                        {language === "ar" ? "لا توجد فئات متاحة" : "No categories available"}
+                      </option>
+                    )}
+                  </select>
+                  <ChevronDown
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                      theme === "dark" ? "text-blue-300" : "text-gray-500"
+                    }`}
+                  />
+                </div>
               </div>
 
               {/* Course Level */}
@@ -242,10 +447,10 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 </label>
                 <div className="relative">
                   <select
-                    name="courseLevel"
-                    value={formData.courseLevel}
+                    name="level"
+                    value={formData.level}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, courseLevel: e.target.value }))
+                      setFormData((prev) => ({ ...prev, level: e.target.value }))
                     }
                     className={`w-full px-4 py-3 rounded-lg border appearance-none ${
                       theme === "dark"
@@ -281,17 +486,54 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
-                  type="text"
-                  name="coursePrice"
-                  value={formData.coursePrice}
+                  type="number"
+                  name="price"
+                  value={formData.price}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 rounded-lg border ${
                     theme === "dark"
                       ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
                       : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder={language === "ar" ? "1300 SR" : "1300 SR"}
+                  placeholder="299"
                 />
+              </div>
+
+              {/* Currency */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "العملة" : "Currency"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    name="currency"
+                    value={formData.currency}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, currency: e.target.value }))
+                    }
+                    className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                      theme === "dark"
+                        ? "bg-blue-800/30 border-blue-700 text-white"
+                        : "bg-gray-50 border-gray-300 text-gray-900"
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  >
+                    {currencies.map((curr) => (
+                      <option key={curr.value} value={curr.value}>
+                        {curr.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                      theme === "dark" ? "text-blue-300" : "text-gray-500"
+                    }`}
+                  />
+                </div>
               </div>
 
               {/* Course Hours */}
@@ -305,46 +547,188 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
-                  type="text"
-                  name="courseHours"
-                  value={formData.courseHours}
+                  type="number"
+                  name="durationHours"
+                  value={formData.durationHours}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 rounded-lg border ${
                     theme === "dark"
                       ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
                       : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder={language === "ar" ? "11 HR" : "11 HR"}
+                  placeholder="40"
                 />
               </div>
+
+              {/* Total Lessons */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "عدد الدروس" : "Total Lessons"}
+                </label>
+                <input
+                  type="number"
+                  name="totalLessons"
+                  value={formData.totalLessons}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="10"
+                />
+              </div>
+
+              {/* Department (for university courses) */}
+              {courseType === "university" && (
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-2 ${
+                      theme === "dark" ? "text-white" : "text-blue-950"
+                    }`}
+                  >
+                    {language === "ar" ? "القسم" : "Department"}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="department"
+                      value={formData.department}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, department: e.target.value }))
+                      }
+                      className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white"
+                          : "bg-gray-50 border-gray-300 text-gray-900"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    >
+                      <option value="">
+                        {language === "ar" ? "اختر القسم" : "Select department"}
+                      </option>
+                      {departments.map((dept) => (
+                        <option key={dept._id} value={dept._id}>
+                          {language === "ar" ? dept.name.ar : dept.name.en}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                        theme === "dark" ? "text-blue-300" : "text-gray-500"
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Others Place (for professional courses) */}
+              {courseType === "professional" && (
+                <div>
+                  <label
+                    className={`block text-sm font-semibold mb-2 ${
+                      theme === "dark" ? "text-white" : "text-blue-950"
+                    }`}
+                  >
+                    {language === "ar" ? "المكان" : "Place"}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="othersPlace"
+                      value={formData.othersPlace}
+                      onChange={(e) =>
+                        setFormData((prev) => ({ ...prev, othersPlace: e.target.value }))
+                      }
+                      className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white"
+                          : "bg-gray-50 border-gray-300 text-gray-900"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    >
+                      <option value="">
+                        {language === "ar" ? "اختر المكان" : "Select place"}
+                      </option>
+                      {universities.map((uni) => (
+                        <option key={uni._id} value={uni._id}>
+                          {typeof uni.name === "string"
+                            ? uni.name
+                            : language === "ar"
+                            ? uni.name.ar
+                            : uni.name.en}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                        theme === "dark" ? "text-blue-300" : "text-gray-500"
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Description */}
-            <div>
-              <label
-                className={`block text-sm font-semibold mb-2 ${
-                  theme === "dark" ? "text-white" : "text-blue-950"
-                }`}
-              >
-                {language === "ar" ? "الوصف" : "Description"}
-                <span className="text-red-500 ml-1">*</span>
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                rows={6}
-                className={`w-full px-4 py-3 rounded-lg border resize-none ${
-                  theme === "dark"
-                    ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
-                    : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                placeholder={
-                  language === "ar"
-                    ? "أدخل وصف الدورة..."
-                    : "Enter course description..."
-                }
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Description Arabic */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "وصف الدورة بالعربية" : "Description (Arabic)"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="descriptionAr"
+                  value={formData.descriptionAr}
+                  onChange={handleInputChange}
+                  rows={6}
+                  className={`w-full px-4 py-3 rounded-lg border resize-none ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={
+                    language === "ar"
+                      ? "أدخل وصف الدورة بالعربية..."
+                      : "Enter course description in Arabic..."
+                  }
+                />
+              </div>
+
+              {/* Description English */}
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "وصف الدورة بالإنجليزية" : "Description (English)"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="descriptionEn"
+                  value={formData.descriptionEn}
+                  onChange={handleInputChange}
+                  rows={6}
+                  className={`w-full px-4 py-3 rounded-lg border resize-none ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={
+                    language === "ar"
+                      ? "Enter course description in English..."
+                      : "Enter course description in English..."
+                  }
+                />
+              </div>
             </div>
           </form>
         </div>
