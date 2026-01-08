@@ -1,5 +1,5 @@
 import api from "../utils/api";
-import { setLoading, setError, setCourses, setCurrentCourse, addCourse, updateCourse as updateCourseAction } from "../slice/courseSlice";
+import { setLoading, setError, setCourses, setCurrentCourse, addCourse, updateCourse as updateCourseAction, removeCourse } from "../slice/courseSlice";
 import { AppDispatch } from "../store";
 import type { Course, CoursesResponse, CourseResponse, GetCoursesParams, CreateCourseRequest } from "../interface/courseInterface";
 import toast from "react-hot-toast";
@@ -142,6 +142,49 @@ const getCourses = async (params: GetCoursesParams = {}, dispatch: AppDispatch):
   }
 };
 
+const getTeacherCourses = async (dispatch: AppDispatch): Promise<Course[]> => {
+  try {
+    dispatch(setLoading(true));
+    
+    const { data } = await api.get("/courses/teacher/my");
+
+    // API response shape: Course[] or { courses: Course[] } or { message: string, courses: Course[] }
+    const courses: Course[] = Array.isArray(data) 
+      ? data 
+      : data.courses || data.result?.courses || [];
+
+    dispatch(
+      setCourses({
+        courses: courses,
+        pagination: {
+          page: 1,
+          limit: courses.length,
+          total: courses.length,
+          totalPages: 1,
+        },
+      })
+    );
+
+    dispatch(setLoading(false));
+    return courses;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch teacher courses";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 const getCourseById = async (courseId: string, dispatch: AppDispatch): Promise<Course> => {
   try {
     dispatch(setLoading(true));
@@ -229,5 +272,33 @@ const updateCourse = async (courseId: string, courseData: Partial<CreateCourseRe
   }
 };
 
-export { createCourse, getCourses, getCourseById, updateCourse };
+const deleteCourse = async (courseId: string, dispatch: AppDispatch): Promise<void> => {
+  try {
+    dispatch(setLoading(true));
+    
+    const { data } = await api.delete(`/courses/${courseId}`);
+
+    dispatch(removeCourse(courseId));
+    dispatch(setLoading(false));
+    toast.success(data.message || "Course deleted successfully");
+  } catch (error: unknown) {
+    let errorMessage = "Failed to delete course";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    toast.error(errorMessage);
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export { createCourse, getCourses, getTeacherCourses, getCourseById, updateCourse, deleteCourse };
 

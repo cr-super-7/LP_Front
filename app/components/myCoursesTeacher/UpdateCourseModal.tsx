@@ -5,51 +5,56 @@ import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
-  ArrowLeft,
-  Calendar,
+  X,
   Upload,
   ChevronDown,
-  X,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { createCourse } from "../../store/api/courseApi";
+import { updateCourse } from "../../store/api/courseApi";
 import { getCategories } from "../../store/api/categoryApi";
 import { getDepartments } from "../../store/api/departmentApi";
 import { getUniversities } from "../../store/api/universityApi";
+import type { Course } from "../../store/interface/courseInterface";
 import type { CreateCourseRequest } from "../../store/interface/courseInterface";
 
-interface CreateCourseContentProps {
-  courseType: "university" | "professional";
+interface UpdateCourseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  course: Course;
+  onUpdateSuccess: () => void;
 }
 
-export default function CreateCourseContent({ courseType }: CreateCourseContentProps) {
+export default function UpdateCourseModal({
+  isOpen,
+  onClose,
+  course,
+  onUpdateSuccess,
+}: UpdateCourseModalProps) {
   const { language } = useLanguage();
   const { theme } = useTheme();
-  const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
   const { categories } = useAppSelector((state) => state.category);
   const { departments } = useAppSelector((state) => state.department);
   const { universities } = useAppSelector((state) => state.university);
   const { isLoading } = useAppSelector((state) => state.course);
 
+  // Initialize form data from course
   const [formData, setFormData] = useState({
-    titleAr: "",
-    titleEn: "",
-    descriptionAr: "",
-    descriptionEn: "",
-    category: "",
-    level: "",
-    price: "",
-    currency: "SAR",
-    durationHours: "",
-    totalLessons: "",
-    department: "",
-    othersPlace: "",
+    titleAr: typeof course.title === "string" ? "" : course.title?.ar || "",
+    titleEn: typeof course.title === "string" ? "" : course.title?.en || "",
+    descriptionAr: typeof course.description === "string" ? "" : course.description?.ar || "",
+    descriptionEn: typeof course.description === "string" ? "" : course.description?.en || "",
+    category: course.category || "",
+    level: course.level || "",
+    price: course.price?.toString() || "",
+    currency: course.currency || "SAR",
+    durationHours: course.durationHours?.toString() || "",
+    totalLessons: course.totalLessons?.toString() || "",
+    department: course.department || "",
+    othersPlace: course.othersPlace || "",
     coverImage: null as File | null,
-    coverImagePreview: null as string | null,
-    isPublished: false,
+    coverImagePreview: course.thumbnail || null as string | null,
+    isPublished: course.isPublished || false,
   });
 
   // Load categories, departments, and universities on mount
@@ -57,24 +62,20 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
     const loadData = async () => {
       try {
         await getCategories(dispatch);
-        if (courseType === "university") {
+        if (course.courseType === "university") {
           await getDepartments(dispatch);
         }
-        if (courseType === "professional") {
+        if (course.courseType === "professional") {
           await getUniversities(dispatch);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
       }
     };
-    loadData();
-  }, [dispatch, courseType]);
-
-  // Debug: Log categories when they change
-  useEffect(() => {
-    console.log("Categories in Redux:", categories);
-    console.log("Categories length:", categories?.length);
-  }, [categories]);
+    if (isOpen) {
+      loadData();
+    }
+  }, [dispatch, course.courseType, isOpen]);
 
   const courseLevels = [
     { value: "beginner", label: language === "ar" ? "مبتدئ" : "Beginner" },
@@ -108,162 +109,90 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
     setFormData((prev) => ({
       ...prev,
       coverImage: null,
-      coverImagePreview: null,
+      coverImagePreview: course.thumbnail || null,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validation
-    if (!formData.titleAr || !formData.titleEn) {
-      alert(language === "ar" ? "يرجى إدخال عنوان الدورة" : "Please enter course title");
-      return;
-    }
-    if (!formData.descriptionAr || !formData.descriptionEn) {
-      alert(language === "ar" ? "يرجى إدخال وصف الدورة" : "Please enter course description");
-      return;
-    }
-    if (!formData.category) {
-      alert(language === "ar" ? "يرجى اختيار الفئة" : "Please select category");
-      return;
-    }
-    if (!formData.level) {
-      alert(language === "ar" ? "يرجى اختيار المستوى" : "Please select level");
-      return;
-    }
-    if (!formData.price || !formData.durationHours) {
-      alert(language === "ar" ? "يرجى إدخال السعر وساعات الدورة" : "Please enter price and duration hours");
-      return;
-    }
-    if (courseType === "university" && !formData.department) {
-      alert(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
-      return;
-    }
-    if (courseType === "professional" && !formData.othersPlace) {
-      alert(language === "ar" ? "يرجى اختيار المكان" : "Please select place");
-      return;
-    }
-
-    const userId = (user as { id?: string; _id?: string })?.id || (user as { id?: string; _id?: string })?._id;
-    if (!userId) {
-      alert(language === "ar" ? "يرجى تسجيل الدخول" : "Please login");
-      return;
-    }
-
     try {
-      const courseData: CreateCourseRequest = {
+      const courseData: Partial<CreateCourseRequest> = {
         "title.ar": formData.titleAr,
         "title.en": formData.titleEn,
         "description.ar": formData.descriptionAr,
         "description.en": formData.descriptionEn,
-        Teacher: userId,
         category: formData.category,
-        courseType: courseType,
         level: formData.level as "beginner" | "intermediate" | "advanced",
         price: parseFloat(formData.price),
         currency: formData.currency,
         durationHours: parseFloat(formData.durationHours),
-        thumbnail: formData.coverImage || undefined,
+        isPublished: formData.isPublished,
       };
 
-      if (courseType === "university" && formData.department) {
+      if (course.courseType === "university" && formData.department) {
         courseData.department = formData.department;
       }
-      if (courseType === "professional" && formData.othersPlace) {
+      if (course.courseType === "professional" && formData.othersPlace) {
         courseData.othersPlace = formData.othersPlace;
       }
       if (formData.totalLessons) {
         courseData.totalLessons = parseInt(formData.totalLessons);
       }
-      if (formData.isPublished !== undefined) {
-        courseData.isPublished = formData.isPublished;
+      if (formData.coverImage) {
+        courseData.thumbnail = formData.coverImage;
       }
 
-      await createCourse(courseData, dispatch);
-      router.push("/myCoursesTeacher");
+      await updateCourse(course._id, courseData, dispatch);
+      onUpdateSuccess();
+      onClose();
     } catch (error) {
-      console.error("Failed to create course:", error);
+      console.error("Failed to update course:", error);
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div
+        className={`relative w-full max-w-5xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto ${
+          theme === "dark"
+            ? "bg-blue-900/95 backdrop-blur-sm border border-blue-800/50"
+            : "bg-white border border-gray-200"
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className={`p-2 rounded-lg transition-colors ${
-                theme === "dark"
-                  ? "hover:bg-blue-900/50 text-blue-300"
-                  : "hover:bg-gray-100 text-gray-600"
-              }`}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1
-              className={`text-2xl font-bold ${
-                theme === "dark" ? "text-white" : "text-blue-950"
-              }`}
-            >
-              {language === "ar" ? "إنشاء دورة" : "Create Course"}
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div
-              className={`flex items-center gap-2 text-sm ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              <Calendar className="h-4 w-4" />
-              <span>
-                {language === "ar" ? "آخر تحديث:" : "Last update:"} 1 Apr 2025, 02:35pm
-              </span>
-            </div>
-            <button
-              onClick={() => router.back()}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                theme === "dark"
-                  ? "bg-blue-800/50 hover:bg-blue-800 text-blue-200"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-              }`}
-            >
-              {language === "ar" ? "إلغاء" : "Cancel"}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                isLoading
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              } ${
-                theme === "dark"
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              {isLoading
-                ? language === "ar"
-                  ? "جاري الإنشاء..."
-                  : "Creating..."
-                : language === "ar"
-                ? "إنشاء"
-                : "Create"}
-            </button>
-          </div>
+        <div className="sticky top-0 flex items-center justify-between p-6 border-b border-blue-800/30 bg-inherit z-10">
+          <h2
+            className={`text-2xl font-bold ${
+              theme === "dark" ? "text-white" : "text-blue-950"
+            }`}
+          >
+            {language === "ar" ? "تعديل الدورة" : "Update Course"}
+          </h2>
+          <button
+            onClick={onClose}
+            className={`p-2 rounded-lg transition-colors ${
+              theme === "dark"
+                ? "hover:bg-blue-800/50 text-blue-300"
+                : "hover:bg-gray-100 text-gray-600"
+            }`}
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Form Card */}
-        <div
-          className={`rounded-2xl p-8 shadow-xl ${
-            theme === "dark"
-              ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
-              : "bg-white border border-gray-200"
-          }`}
-        >
+        {/* Content */}
+        <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Upload Course Cover */}
             <div>
@@ -273,7 +202,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 }`}
               >
                 {language === "ar" ? "رفع غلاف الدورة" : "Upload Course Cover"}
-                <span className="text-red-500 ml-1">*</span>
               </label>
               <div
                 className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
@@ -411,14 +339,13 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                     </option>
                     {categories && categories.length > 0 ? (
                       categories.map((cat) => {
-                        // Handle different name structures
-                        const categoryName = 
-                          typeof cat.name === "string" 
-                            ? cat.name 
-                            : language === "ar" 
+                        const categoryName =
+                          typeof cat.name === "string"
+                            ? cat.name
+                            : language === "ar"
                             ? cat.name?.ar || cat.name?.en || "Unknown"
                             : cat.name?.en || cat.name?.ar || "Unknown";
-                        
+
                         return (
                           <option key={cat._id} value={cat._id}>
                             {categoryName}
@@ -587,37 +514,8 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 />
               </div>
 
-              {/* Is Published */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id="isPublished"
-                  name="isPublished"
-                  checked={formData.isPublished}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, isPublished: e.target.checked }))
-                  }
-                  className={`w-5 h-5 rounded border-2 cursor-pointer ${
-                    theme === "dark"
-                      ? "bg-blue-800/30 border-blue-700 text-blue-500"
-                      : "bg-gray-50 border-gray-300 text-blue-600"
-                  } focus:ring-2 focus:ring-blue-500`}
-                />
-                <label
-                  htmlFor="isPublished"
-                  className={`text-sm font-semibold cursor-pointer ${
-                    theme === "dark" ? "text-white" : "text-blue-950"
-                  }`}
-                >
-                  {language === "ar" ? "هل الدورة منشورة؟" : "Is the course published?"}
-                  <span className="text-gray-500 text-xs font-normal ml-1">
-                    ({language === "ar" ? "اختياري، القيمة الافتراضية: false" : "Optional, Default: false"})
-                  </span>
-                </label>
-              </div>
-
               {/* Department (for university courses) */}
-              {courseType === "university" && (
+              {course.courseType === "university" && (
                 <div>
                   <label
                     className={`block text-sm font-semibold mb-2 ${
@@ -625,7 +523,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                     }`}
                   >
                     {language === "ar" ? "القسم" : "Department"}
-                    <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -659,7 +556,7 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
               )}
 
               {/* Others Place (for professional courses) */}
-              {courseType === "professional" && (
+              {course.courseType === "professional" && (
                 <div>
                   <label
                     className={`block text-sm font-semibold mb-2 ${
@@ -667,7 +564,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                     }`}
                   >
                     {language === "ar" ? "المكان" : "Place"}
-                    <span className="text-red-500 ml-1">*</span>
                   </label>
                   <div className="relative">
                     <select
@@ -703,6 +599,32 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                   </div>
                 </div>
               )}
+
+              {/* Is Published */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="isPublished"
+                  name="isPublished"
+                  checked={formData.isPublished}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, isPublished: e.target.checked }))
+                  }
+                  className={`w-5 h-5 rounded border-2 cursor-pointer ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-blue-500"
+                      : "bg-gray-50 border-gray-300 text-blue-600"
+                  } focus:ring-2 focus:ring-blue-500`}
+                />
+                <label
+                  htmlFor="isPublished"
+                  className={`text-sm font-semibold cursor-pointer ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "هل الدورة منشورة؟" : "Is the course published?"}
+                </label>
+              </div>
             </div>
 
             {/* Description */}
@@ -763,10 +685,45 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 />
               </div>
             </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-end gap-4 pt-4 border-t border-blue-800/30">
+              <button
+                type="button"
+                onClick={onClose}
+                className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
+                  theme === "dark"
+                    ? "bg-blue-800/50 hover:bg-blue-800 text-blue-200"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
+                  isLoading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                } ${
+                  theme === "dark"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {isLoading
+                  ? language === "ar"
+                    ? "جاري التحديث..."
+                    : "Updating..."
+                  : language === "ar"
+                  ? "تحديث"
+                  : "Update"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
     </div>
   );
 }
-
