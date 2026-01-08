@@ -16,6 +16,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import CourseTypeModal from "./CourseTypeModal";
 import UpdateCourseModal from "./UpdateCourseModal";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -25,6 +26,7 @@ import type { Course } from "../../store/interface/courseInterface";
 export default function MyCoursesTeacherContent() {
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { courses, isLoading } = useAppSelector((state) => state.course);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -189,6 +191,7 @@ export default function MyCoursesTeacherContent() {
                     setIsUpdateModalOpen(true);
                   }}
                   onDelete={() => handleDelete(course._id)}
+                  onViewDetails={() => router.push(`/myCoursesTeacher/lessons?courseId=${course._id}`)}
                 />
               ))}
             </div>
@@ -231,6 +234,7 @@ export default function MyCoursesTeacherContent() {
                     setIsUpdateModalOpen(true);
                   }}
                   onDelete={() => handleDelete(course._id)}
+                  onViewDetails={() => router.push(`/myCoursesTeacher/lessons?courseId=${course._id}`)}
                 />
               ))}
             </div>
@@ -257,9 +261,10 @@ interface CourseCardProps {
   isPublished?: boolean;
   onUpdate?: () => void;
   onDelete?: () => void;
+  onViewDetails?: () => void;
 }
 
-function CourseCard({ course, theme, language, isPublished = false, onUpdate, onDelete }: CourseCardProps) {
+function CourseCard({ course, theme, language, isPublished = false, onUpdate, onDelete, onViewDetails }: CourseCardProps) {
   // Get localized title and description
   const title = typeof course.title === "string" 
     ? course.title 
@@ -300,11 +305,12 @@ function CourseCard({ course, theme, language, isPublished = false, onUpdate, on
 
   return (
     <div
-      className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl ${
+      className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl cursor-pointer ${
         theme === "dark"
           ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
           : "bg-white border border-gray-200"
       }`}
+      onClick={onViewDetails}
     >
       {/* Course Image */}
       <div className="relative w-full h-48">
@@ -423,18 +429,38 @@ function CourseCard({ course, theme, language, isPublished = false, onUpdate, on
           </div>
         )}
 
-        {/* Action Button */}
-        <button
-          onClick={onUpdate}
-          className={`w-full py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-            theme === "dark"
-              ? "bg-blue-600 hover:bg-blue-700 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
-          }`}
-        >
-          {language === "ar" ? "تعديل" : "Update"}
-          <Edit className="h-4 w-4" />
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails?.();
+            }}
+            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+              theme === "dark"
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {language === "ar" ? "عرض التفاصيل" : "View Details"}
+            <BookOpen className="h-4 w-4" />
+          </button>
+          {onUpdate && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onUpdate();
+              }}
+              className={`px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                theme === "dark"
+                  ? "bg-blue-800/50 hover:bg-blue-800 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+              }`}
+            >
+              <Edit className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
