@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { X, Upload, Video } from "lucide-react";
@@ -31,41 +31,38 @@ export default function AddLessonModal({
   const { isLoading } = useAppSelector((state) => state.lesson);
   const [showReviewModal, setShowReviewModal] = useState(false);
 
-  const [formData, setFormData] = useState({
-    titleAr: "",
-    titleEn: "",
-    duration: "",
-    isFree: false,
-    videoFile: null as File | null,
-    videoPreview: null as string | null,
-  });
-
   const isEditMode = !!lesson;
 
-  // Update form data when lesson changes or modal opens
-  useEffect(() => {
+  // Calculate initial form data based on lesson and modal state
+  const initialFormData = useMemo(() => {
     if (isOpen && lesson) {
       // Edit mode - load lesson data
-      setFormData({
+      return {
         titleAr: typeof lesson.title === "string" ? lesson.title : lesson.title.ar || "",
         titleEn: typeof lesson.title === "string" ? lesson.title : lesson.title.en || "",
         duration: lesson.duration?.toString() || "",
         isFree: lesson.isFree || false,
-        videoFile: null,
+        videoFile: null as File | null,
         videoPreview: lesson.videoUrl || null,
-      });
-    } else if (isOpen && !lesson) {
-      // Add mode - reset form
-      setFormData({
-        titleAr: "",
-        titleEn: "",
-        duration: "",
-        isFree: false,
-        videoFile: null,
-        videoPreview: null,
-      });
+      };
     }
+    // Add mode - default empty form
+    return {
+      titleAr: "",
+      titleEn: "",
+      duration: "",
+      isFree: false,
+      videoFile: null as File | null,
+      videoPreview: null as string | null,
+    };
   }, [isOpen, lesson]);
+
+  const [formData, setFormData] = useState(initialFormData);
+
+  // Update form data when initial data changes
+  useEffect(() => {
+    setFormData(initialFormData);
+  }, [initialFormData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
