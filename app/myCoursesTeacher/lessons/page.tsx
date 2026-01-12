@@ -10,7 +10,8 @@ import Background from "../../components/layout/Background";
 import Footer from "../../components/layout/Footer";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getCourseById } from "../../store/api/courseApi";
-import { ArrowLeft } from "lucide-react";
+import { getCourseReviews } from "../../store/api/reviewApi";
+import { ArrowLeft, Star, MessageSquare } from "lucide-react";
 import CourseHeader from "../../components/myCoursesTeacher/lessons/CourseHeader";
 import CourseStats from "../../components/myCoursesTeacher/lessons/CourseStats";
 import CourseMeta from "../../components/myCoursesTeacher/lessons/CourseMeta";
@@ -24,12 +25,16 @@ export default function CourseLessonsPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { currentCourse, isLoading } = useAppSelector((state) => state.course);
+  const { reviews, isLoading: reviewsLoading } = useAppSelector((state) => state.review);
   const courseId = searchParams.get("courseId");
 
   useEffect(() => {
     if (courseId) {
       getCourseById(courseId, dispatch).catch((error) => {
         console.error("Failed to load course:", error);
+      });
+      getCourseReviews(courseId, dispatch).catch((error) => {
+        console.error("Failed to load reviews:", error);
       });
     }
   }, [courseId, dispatch]);
@@ -134,6 +139,8 @@ export default function CourseLessonsPage() {
         day: "numeric",
         month: "short",
         year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
       return dateString;
@@ -192,6 +199,147 @@ export default function CourseLessonsPage() {
 
             {/* Lessons Section */}
             <LessonsSection course={currentCourse} />
+
+            {/* Course Reviews Section */}
+            <div
+              className={`rounded-2xl p-6 md:p-8 shadow-xl ${
+                theme === "dark"
+                  ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
+                  : "bg-white border border-gray-200"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <MessageSquare
+                  className={`h-6 w-6 ${
+                    theme === "dark" ? "text-blue-300" : "text-blue-600"
+                  }`}
+                />
+                <h2
+                  className={`text-2xl font-bold ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "تقييمات الدورة" : "Course Reviews"}
+                </h2>
+                {reviews.length > 0 && (
+                  <span
+                    className={`text-sm px-3 py-1 rounded-full ${
+                      theme === "dark"
+                        ? "bg-blue-800/50 text-blue-200"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {reviews.length}
+                  </span>
+                )}
+              </div>
+
+              {reviewsLoading ? (
+                <div className="text-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mx-auto" />
+                </div>
+              ) : reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div
+                      key={review._id}
+                      className={`p-4 rounded-lg border ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700/50"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              theme === "dark"
+                                ? "bg-blue-700/50 text-blue-200"
+                                : "bg-blue-100 text-blue-600"
+                            }`}
+                          >
+                            <span className="font-semibold text-sm">
+                              {review.user?.email?.charAt(0).toUpperCase() || "U"}
+                            </span>
+                          </div>
+                          <div>
+                            <p
+                              className={`font-semibold ${
+                                theme === "dark" ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {review.user?.email || (language === "ar" ? "مستخدم" : "User")}
+                            </p>
+                            {review.user?.phone && (
+                              <p
+                                className={`text-xs ${
+                                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                                }`}
+                              >
+                                {review.user.phone}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < review.rate
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : theme === "dark"
+                                  ? "text-gray-600"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                          <span
+                            className={`ml-2 text-sm font-semibold ${
+                              theme === "dark" ? "text-blue-200" : "text-gray-700"
+                            }`}
+                          >
+                            {review.rate}/5
+                          </span>
+                        </div>
+                      </div>
+                      {review.createdAt && (
+                        <p
+                          className={`text-xs ${
+                            theme === "dark" ? "text-blue-200" : "text-gray-600"
+                          }`}
+                        >
+                          {formatDate(review.createdAt)}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  className={`p-8 rounded-lg text-center ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border border-blue-700/50"
+                      : "bg-gray-50 border border-gray-200"
+                  }`}
+                >
+                  <MessageSquare
+                    className={`h-12 w-12 mx-auto mb-4 ${
+                      theme === "dark" ? "text-blue-300" : "text-blue-600"
+                    }`}
+                  />
+                  <p
+                    className={`text-lg ${
+                      theme === "dark" ? "text-blue-200" : "text-gray-600"
+                    }`}
+                  >
+                    {language === "ar"
+                      ? "لا توجد تقييمات بعد"
+                      : "No reviews yet"}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </main>
         <div className={`${isRTL ? "mr-64" : "ml-64"}`}>

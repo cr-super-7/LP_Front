@@ -150,6 +150,36 @@ const updateLesson = async (lessonId: string, lessonData: UpdateLessonRequest, d
   }
 };
 
+const getLessonById = async (lessonId: string, dispatch: AppDispatch): Promise<Lesson> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.get(`/lessons/${lessonId}`);
+
+    // Handle different response structures
+    const lessonResponse: LessonResponse = data;
+    const lesson = (lessonResponse.lesson || data.result?.lesson || data) as Lesson;
+
+    dispatch(setCurrentLesson(lesson));
+    dispatch(setLoading(false));
+    return lesson;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch lesson";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 const deleteLesson = async (lessonId: string, dispatch: AppDispatch): Promise<void> => {
   try {
     dispatch(setLoading(true));
@@ -182,4 +212,4 @@ const deleteLesson = async (lessonId: string, dispatch: AppDispatch): Promise<vo
   }
 };
 
-export { createLesson, getLessonsByCourse, updateLesson, deleteLesson };
+export { createLesson, getLessonsByCourse, getLessonById, updateLesson, deleteLesson };

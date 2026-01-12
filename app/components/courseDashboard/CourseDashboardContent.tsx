@@ -1,45 +1,162 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { useAppSelector } from "../../store/hooks";
+import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { getTeacherCourses, deleteCourse } from "../../store/api/courseApi";
+import { getLessonsByCourse } from "../../store/api/lessonApi";
+import { getLessonReviews, getCourseReviews } from "../../store/api/reviewApi";
+import type { Course } from "../../store/interface/courseInterface";
+import type { Review } from "../../store/interface/reviewInterface";
+import type { Lesson } from "../../store/interface/lessonInterface";
+import CourseTypeModal from "../myCoursesTeacher/CourseTypeModal";
+import UpdateCourseModal from "../myCoursesTeacher/UpdateCourseModal";
+import ConfirmDeleteModal from "../myCoursesTeacher/lessons/ConfirmDeleteModal";
 import {
   DollarSign,
   BookOpen,
-  Users,
   Star,
-  Plus,
-
   Edit,
   Eye,
   Trash2,
-  Check,
   Grid3x3,
   ChevronRight,
   ChevronLeft,
+  FileText,
 } from "lucide-react";
 import type { RootState } from "../../store/store";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function CourseDashboardContent() {
   const { language } = useLanguage();
   const { theme } = useTheme();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const { user } = useAppSelector((state: RootState) => state.auth);
+  const { courses: teacherCourses, isLoading: coursesLoading } = useAppSelector(
+    (state: RootState) => state.course
+  );
   const [mounted, setMounted] = useState(false);
+  const [isCourseTypeModalOpen, setIsCourseTypeModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [lessonReviews, setLessonReviews] = useState<Review[]>([]);
+  const [courseReviews, setCourseReviews] = useState<Review[]>([]);
+  const [allLessons, setAllLessons] = useState<Lesson[]>([]);
+  const [totalLessons, setTotalLessons] = useState(0);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
   // Fix hydration mismatch by only showing user-dependent content after mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // This pattern is necessary in Next.js to prevent SSR/client mismatch
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Mock data - سيتم استبدالها بالبيانات من API
+  // Fetch teacher courses on component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        await getTeacherCourses(dispatch);
+      } catch (error) {
+        console.error("Failed to fetch teacher courses:", error);
+      }
+    };
+    fetchCourses();
+  }, [dispatch]);
+
+  // Fetch lessons, course reviews, and lesson reviews for all courses
+  useEffect(() => {
+    const fetchLessonsAndReviews = async () => {
+      if (teacherCourses.length === 0) return;
+      
+      setReviewsLoading(true);
+      try {
+        const allLessonReviews: Review[] = [];
+        const allCourseReviews: Review[] = [];
+        const allLessonsList: Lesson[] = [];
+        let totalLessonsCount = 0;
+        
+        // Get lessons and reviews for each course
+        for (const course of teacherCourses) {
+          try {
+            // Get course reviews
+            try {
+              const reviews = await getCourseReviews(course._id, dispatch);
+              allCourseReviews.push(...reviews);
+            } catch (error) {
+              console.error(`Failed to fetch reviews for course ${course._id}:`, error);
+            }
+
+            // Get lessons for course
+            const courseLessons = await getLessonsByCourse(course._id, dispatch);
+            allLessonsList.push(...courseLessons);
+            totalLessonsCount += courseLessons.length;
+            
+            // Get reviews for each lesson
+            for (const lesson of courseLessons) {
+              try {
+                const reviews = await getLessonReviews(lesson._id, dispatch);
+                allLessonReviews.push(...reviews);
+              } catch (error) {
+                console.error(`Failed to fetch reviews for lesson ${lesson._id}:`, error);
+              }
+            }
+          } catch (error) {
+            console.error(`Failed to fetch lessons for course ${course._id}:`, error);
+          }
+        }
+        
+        // Sort by creation date (newest first) and limit to top 3
+        const sortedLessonReviews = allLessonReviews
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        
+        setLessonReviews(sortedLessonReviews);
+        setCourseReviews(allCourseReviews);
+        setAllLessons(allLessonsList);
+        setTotalLessons(totalLessonsCount);
+      } catch (error) {
+        console.error("Failed to fetch reviews:", error);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (teacherCourses.length > 0) {
+      fetchLessonsAndReviews();
+    }
+  }, [teacherCourses, dispatch]);
+
+  // Calculate overall rating from all reviews (course + lesson reviews)
+  const calculateOverallRating = () => {
+    const allReviews = [...courseReviews, ...lessonReviews];
+    if (allReviews.length === 0) return 0;
+    const totalRating = allReviews.reduce((sum, review) => sum + review.rate, 0);
+    return (totalRating / allReviews.length).toFixed(1);
+  };
+
+  // Calculate summary cards data
   const summaryCards = [
     {
       id: 1,
       icon: DollarSign,
       title: language === "ar" ? "أرباحي" : "My Earnings",
-      value: "$25,378",
+      value: "$25,378", // Keep static - no API endpoint
       change: "+1.3%",
       changeType: "increase" as const,
       color: "green",
@@ -48,16 +165,16 @@ export default function CourseDashboardContent() {
       id: 2,
       icon: BookOpen,
       title: language === "ar" ? "إجمالي الدورات" : "Total Courses",
-      value: "10",
+      value: teacherCourses.length.toString(),
       change: "+1.3%",
       changeType: "increase" as const,
       color: "green",
     },
     {
       id: 3,
-      icon: Users,
-      title: language === "ar" ? "إجمالي الطلاب" : "Total Students",
-      value: "1525",
+      icon: FileText,
+      title: language === "ar" ? "إجمالي الدروس" : "Total Lessons",
+      value: totalLessons.toString(),
       change: "+1.3%",
       changeType: "increase" as const,
       color: "green",
@@ -66,92 +183,213 @@ export default function CourseDashboardContent() {
       id: 4,
       icon: Star,
       title: language === "ar" ? "التقييم العام" : "Overall Rating",
-      value: "4.2",
-      change: "-1.3%",
-      changeType: "decrease" as const,
-      color: "red",
+      value: calculateOverallRating(),
+      change: courseReviews.length + lessonReviews.length > 0 ? "+0%" : "0%",
+      changeType: courseReviews.length + lessonReviews.length > 0 ? ("increase" as const) : ("decrease" as const),
+      color: courseReviews.length + lessonReviews.length > 0 ? "green" : "red",
     },
   ];
 
-  const courses = [
-    {
-      id: 1,
-      name: "UX/UI Design",
-      students: 60,
-      lastUpdate: "25 Apr 2025, 23:02 PM",
-      status: "In Progress",
-      statusColor: "purple",
-    },
-    {
-      id: 2,
-      name: "UX/UI Design",
-      students: 10,
-      lastUpdate: "25 Apr 2025, 23:02 PM",
-      status: "Completed",
-      statusColor: "green",
-    },
-    {
-      id: 3,
-      name: "UX/UI Design",
-      students: 23,
-      lastUpdate: "25 Apr 2025, 23:02 PM",
-      status: "Pending",
-      statusColor: "orange",
-    },
-    {
-      id: 4,
-      name: "UX/UI Design",
-      students: 12,
-      lastUpdate: "25 Apr 2025, 23:02 PM",
-      status: "Approved",
-      statusColor: "blue",
-    },
-    {
-      id: 5,
-      name: "UX/UI Design",
-      students: 45,
-      lastUpdate: "25 Apr 2025, 23:02 PM",
-      status: "Rejected",
-      statusColor: "red",
-    },
-  ];
+  // Transform Course data to table format
+  const courses = teacherCourses.map((course: Course) => {
+    // Format date
+    const formatDate = (dateString?: string) => {
+      if (!dateString) return language === "ar" ? "غير متاح" : "N/A";
+      const date = new Date(dateString);
+      return date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
 
-  const todoItems = [
-    { id: 1, text: "Human interaction Designs", completed: true },
-    { id: 2, text: "Human interaction Designs", completed: true },
-    { id: 3, text: "Human interaction Designs", completed: false },
-    { id: 4, text: "Human interaction Designs", completed: false },
-    { id: 5, text: "Human interaction Designs", completed: false },
-  ];
+    // Get course name based on language
+    const courseName =
+      typeof course.title === "string"
+        ? course.title
+        : language === "ar"
+        ? course.title.ar
+        : course.title.en;
 
-  const topCourses = [
-    {
-      id: 1,
-      name: "UX/UI Design",
-      date: "21 Apr 2025",
-      students: "2145 Students",
-      rating: "4.5",
-    },
-    {
-      id: 2,
-      name: "UX/UI Design",
-      date: "21 Apr 2025",
-      students: "2145 Students",
-      rating: "4.5",
-    },
-    {
-      id: 3,
-      name: "UX/UI Design",
-      date: "21 Apr 2025",
-      students: "2145 Students",
-      rating: "4.5",
-    },
-  ];
+    // Map isPublished to status
+    const getStatus = (isPublished?: boolean) => {
+      if (isPublished === true) {
+        return {
+          status: language === "ar" ? "منشور" : "Published",
+          statusColor: "green",
+        };
+      } else if (isPublished === false) {
+        return {
+          status: language === "ar" ? "قيد المراجعة" : "Pending Review",
+          statusColor: "orange",
+        };
+      }
+      return {
+        status: language === "ar" ? "مسودة" : "Draft",
+        statusColor: "purple",
+      };
+    };
 
-  const [todos, setTodos] = useState(todoItems);
+    const statusInfo = getStatus(course.isPublished);
 
-  const toggleTodo = (id: number) => {
-    setTodos(todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo)));
+    return {
+      id: course._id,
+      name: courseName,
+      students: 0, // TODO: Replace with actual student count from API when available
+      lastUpdate: formatDate(course.updatedAt || course.createdAt),
+      status: statusInfo.status,
+      statusColor: statusInfo.statusColor,
+      course: course, // Keep reference to original course object
+    };
+  });
+
+  // Format date for reviews
+  const formatReviewDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Calculate data by month from actual data
+  const calculateMonthlyData = () => {
+    const currentYear = new Date().getFullYear();
+    const lastYear = currentYear - 1;
+    const months = [
+      { num: 0, ar: "يناير", en: "Jan" },
+      { num: 1, ar: "فبراير", en: "Feb" },
+      { num: 2, ar: "مارس", en: "Mar" },
+      { num: 3, ar: "أبريل", en: "Apr" },
+      { num: 4, ar: "مايو", en: "May" },
+      { num: 5, ar: "يونيو", en: "Jun" },
+      { num: 6, ar: "يوليو", en: "Jul" },
+      { num: 7, ar: "أغسطس", en: "Aug" },
+      { num: 8, ar: "سبتمبر", en: "Sep" },
+      { num: 9, ar: "أكتوبر", en: "Oct" },
+      { num: 10, ar: "نوفمبر", en: "Nov" },
+      { num: 11, ar: "ديسمبر", en: "Dec" },
+    ];
+
+    // Initialize monthly data
+    const studentGrowthData = months.map((m) => ({
+      month: language === "ar" ? m.ar : m.en,
+      students: 0,
+    }));
+
+    const earningsData = months.slice(0, 6).map((m) => ({
+      month: language === "ar" ? m.ar : m.en,
+      thisYear: 0,
+      lastYear: 0,
+      courses: 0,
+    }));
+
+    // Calculate student growth from reviews (cumulative)
+    const allReviews = [...courseReviews, ...lessonReviews];
+    let cumulativeStudents = 0;
+    
+    months.forEach((m, index) => {
+      // Count reviews in this month (as proxy for student activity)
+      const monthStart = new Date(currentYear, m.num, 1);
+      const monthEnd = new Date(currentYear, m.num + 1, 0, 23, 59, 59);
+
+      // Use unique users from reviews as student count
+      const uniqueUsersThisMonth = new Set(
+        allReviews
+          .filter((review) => {
+            const reviewDate = new Date(review.createdAt);
+            return reviewDate >= monthStart && reviewDate <= monthEnd;
+          })
+          .map((review) => review.user?._id || review.user?.email)
+      ).size;
+
+      cumulativeStudents += uniqueUsersThisMonth;
+      studentGrowthData[index].students = cumulativeStudents || (index > 0 ? studentGrowthData[index - 1].students : 0);
+    });
+
+    // Calculate earnings data (courses and lessons per month)
+    months.slice(0, 6).forEach((m, index) => {
+      const monthStartThisYear = new Date(currentYear, m.num, 1);
+      const monthEndThisYear = new Date(currentYear, m.num + 1, 0, 23, 59, 59);
+      const monthStartLastYear = new Date(lastYear, m.num, 1);
+      const monthEndLastYear = new Date(lastYear, m.num + 1, 0, 23, 59, 59);
+
+      // Count courses created this month (this year)
+      const coursesThisYear = teacherCourses.filter((course) => {
+        const courseDate = new Date(course.createdAt);
+        return courseDate >= monthStartThisYear && courseDate <= monthEndThisYear;
+      }).length;
+
+      // Count courses created this month (last year)
+      const coursesLastYear = teacherCourses.filter((course) => {
+        const courseDate = new Date(course.createdAt);
+        return courseDate >= monthStartLastYear && courseDate <= monthEndLastYear;
+      }).length;
+
+      // Count lessons created this month (this year)
+      const lessonsThisYear = allLessons.filter((lesson) => {
+        const lessonDate = new Date(lesson.createdAt);
+        return lessonDate >= monthStartThisYear && lessonDate <= monthEndThisYear;
+      }).length;
+
+      // Count lessons created this month (last year) - approximate from current data
+      const lessonsLastYear = allLessons.filter((lesson) => {
+        const lessonDate = new Date(lesson.createdAt);
+        return lessonDate >= monthStartLastYear && lessonDate <= monthEndLastYear;
+      }).length;
+
+      // Use courses count as proxy for earnings (multiply by estimated value per course)
+      earningsData[index].thisYear = coursesThisYear * 500 + lessonsThisYear * 50;
+      earningsData[index].lastYear = coursesLastYear * 500 + lessonsLastYear * 50;
+      earningsData[index].courses = coursesThisYear;
+    });
+
+    return { studentGrowthData, earningsData };
+  };
+
+  const { studentGrowthData, earningsData } = calculateMonthlyData();
+
+  // Handle course actions
+  const handleEdit = (courseId: string) => {
+    const course = teacherCourses.find((c) => c._id === courseId);
+    if (course) {
+      setSelectedCourse(course);
+      setIsUpdateModalOpen(true);
+    }
+  };
+
+  const handleUpdateSuccess = async () => {
+    await getTeacherCourses(dispatch);
+    setIsUpdateModalOpen(false);
+    setSelectedCourse(null);
+  };
+
+  const handleView = (courseId: string) => {
+    router.push(`/myCoursesTeacher/lessons?courseId=${courseId}`);
+  };
+
+  const handleDelete = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!courseToDelete) return;
+    
+    try {
+      await deleteCourse(courseToDelete, dispatch);
+      await getTeacherCourses(dispatch); // Reload courses after deletion
+      setCourseToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete course:", error);
+    }
   };
 
   const getStatusColor = (color: string) => {
@@ -191,19 +429,8 @@ export default function CourseDashboardContent() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-              theme === "dark"
-                ? "bg-blue-900/50 text-blue-200"
-                : "bg-blue-50 text-blue-700"
-            }`}
-          >
-            <Grid3x3 className="h-4 w-4" />
-            <span className="text-sm font-medium">
-              {language === "ar" ? "3 مهام لإكمالها" : "3 tasks to complete"}
-            </span>
-          </div>
           <button
+            onClick={() => setIsCourseTypeModalOpen(true)}
             className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
               theme === "dark"
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
@@ -354,13 +581,40 @@ export default function CourseDashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {courses.map((course) => (
-                    <tr
-                      key={course.id}
-                      className={`border-b ${
-                        theme === "dark" ? "border-blue-800/50" : "border-gray-100"
-                      }`}
-                    >
+                  {coursesLoading ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center">
+                        <p
+                          className={`${
+                            theme === "dark" ? "text-blue-200" : "text-gray-600"
+                          }`}
+                        >
+                          {language === "ar" ? "جاري التحميل..." : "Loading..."}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : courses.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center">
+                        <p
+                          className={`${
+                            theme === "dark" ? "text-blue-200" : "text-gray-600"
+                          }`}
+                        >
+                          {language === "ar"
+                            ? "لا توجد دورات متاحة"
+                            : "No courses available"}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    courses.map((course) => (
+                      <tr
+                        key={course.id}
+                        className={`border-b ${
+                          theme === "dark" ? "border-blue-800/50" : "border-gray-100"
+                        }`}
+                      >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <div
@@ -405,114 +659,54 @@ export default function CourseDashboardContent() {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <button
-                            className={`p-1.5 rounded ${
+                            onClick={() => handleEdit(course.course._id)}
+                            className={`p-1.5 rounded transition-colors ${
                               theme === "dark"
                                 ? "hover:bg-blue-800/50 text-purple-400"
                                 : "hover:bg-gray-100 text-purple-600"
                             }`}
                             aria-label="Edit"
+                            title={language === "ar" ? "تعديل" : "Edit"}
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
-                            className={`p-1.5 rounded ${
+                            onClick={() => handleView(course.course._id)}
+                            className={`p-1.5 rounded transition-colors ${
                               theme === "dark"
                                 ? "hover:bg-blue-800/50 text-green-400"
                                 : "hover:bg-gray-100 text-green-600"
                             }`}
                             aria-label="View"
+                            title={language === "ar" ? "عرض" : "View"}
                           >
                             <Eye className="h-4 w-4" />
                           </button>
                           <button
-                            className={`p-1.5 rounded ${
+                            onClick={() => handleDelete(course.course._id)}
+                            className={`p-1.5 rounded transition-colors ${
                               theme === "dark"
                                 ? "hover:bg-blue-800/50 text-red-400"
                                 : "hover:bg-gray-100 text-red-600"
                             }`}
                             aria-label="Delete"
+                            title={language === "ar" ? "حذف" : "Delete"}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* Right Sidebar - To Do List and Top Courses */}
+        {/* Right Sidebar - Top Courses */}
         <div className="space-y-6">
-          {/* To Do List */}
-          <div
-            className={`rounded-xl p-6 shadow-lg ${
-              theme === "dark"
-                ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
-                : "bg-white border border-gray-200"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2
-                className={`text-xl font-bold ${
-                  theme === "dark" ? "text-white" : "text-blue-950"
-                }`}
-              >
-                {language === "ar" ? "قائمة المهام" : "To do List"}
-              </h2>
-              <button
-                className={`p-2 rounded-lg ${
-                  theme === "dark"
-                    ? "hover:bg-blue-800/50 text-blue-300"
-                    : "hover:bg-gray-100 text-blue-600"
-                }`}
-                aria-label="Add task"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {todos.map((todo) => (
-                <div
-                  key={todo.id}
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() => toggleTodo(todo.id)}
-                >
-                  <div
-                    className={`shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      todo.completed
-                        ? theme === "dark"
-                          ? "bg-green-500 border-green-500"
-                          : "bg-green-500 border-green-500"
-                        : theme === "dark"
-                        ? "border-blue-400"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {todo.completed && (
-                      <Check className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  <span
-                    className={`flex-1 ${
-                      todo.completed
-                        ? theme === "dark"
-                          ? "text-blue-300 line-through"
-                          : "text-gray-400 line-through"
-                        : theme === "dark"
-                        ? "text-white"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {todo.text}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Top Courses */}
           <div
             className={`rounded-xl p-6 shadow-lg ${
@@ -526,55 +720,96 @@ export default function CourseDashboardContent() {
                 theme === "dark" ? "text-white" : "text-blue-950"
               }`}
             >
-              {language === "ar" ? "أفضل دوراتك" : "Your Top Courses"}
+              {language === "ar" ? "تقييمات الدروس" : "Lesson Reviews"}
             </h2>
             <div className="space-y-4 max-h-80 overflow-y-auto">
-              {topCourses.map((course) => (
+              {reviewsLoading ? (
+                <div className="text-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-4 border-blue-500 border-t-transparent mx-auto" />
+                </div>
+              ) : lessonReviews.length > 0 ? (
+                lessonReviews.map((review) => {
+                  const lessonTitle = review.lesson
+                    ? typeof review.lesson.title === "string"
+                      ? review.lesson.title
+                      : language === "ar"
+                      ? review.lesson.title.ar || review.lesson.title.en
+                      : review.lesson.title.en || review.lesson.title.ar
+                    : language === "ar"
+                    ? "درس غير معروف"
+                    : "Unknown Lesson";
+
+                  return (
+                    <div
+                      key={review._id}
+                      className={`p-4 rounded-lg ${
+                        theme === "dark" ? "bg-blue-800/30" : "bg-gray-50"
+                      }`}
+                    >
+                      <h3
+                        className={`font-semibold mb-2 ${
+                          theme === "dark" ? "text-white" : "text-blue-950"
+                        }`}
+                      >
+                        {lessonTitle}
+                      </h3>
+                      <p
+                        className={`text-sm mb-2 ${
+                          theme === "dark" ? "text-blue-200" : "text-gray-600"
+                        }`}
+                      >
+                        {review.user?.email || (language === "ar" ? "مستخدم" : "User")}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <p
+                          className={`text-xs ${
+                            theme === "dark" ? "text-blue-200" : "text-gray-600"
+                          }`}
+                        >
+                          {formatReviewDate(review.createdAt)}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <span
+                            className={`font-semibold ${
+                              theme === "dark" ? "text-yellow-400" : "text-yellow-600"
+                            }`}
+                          >
+                            {review.rate}
+                          </span>
+                          <Star
+                            className={`h-4 w-4 ${
+                              theme === "dark" ? "text-yellow-400" : "text-yellow-500"
+                            } fill-current`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
                 <div
-                  key={course.id}
-                  className={`p-4 rounded-lg ${
-                    theme === "dark" ? "bg-blue-800/30" : "bg-gray-50"
+                  className={`p-8 rounded-lg text-center ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border border-blue-700/50"
+                      : "bg-gray-50 border border-gray-200"
                   }`}
                 >
-                  <h3
-                    className={`font-semibold mb-2 ${
-                      theme === "dark" ? "text-white" : "text-blue-950"
+                  <Star
+                    className={`h-12 w-12 mx-auto mb-4 ${
+                      theme === "dark" ? "text-blue-300" : "text-blue-600"
                     }`}
-                  >
-                    {course.name}
-                  </h3>
+                  />
                   <p
-                    className={`text-sm mb-1 ${
+                    className={`text-lg ${
                       theme === "dark" ? "text-blue-200" : "text-gray-600"
                     }`}
                   >
-                    {course.date}
+                    {language === "ar"
+                      ? "لا توجد تقييمات بعد"
+                      : "No reviews yet"}
                   </p>
-                  <div className="flex items-center justify-between">
-                    <p
-                      className={`text-sm ${
-                        theme === "dark" ? "text-blue-200" : "text-gray-600"
-                      }`}
-                    >
-                      {course.students}
-                    </p>
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`font-semibold ${
-                          theme === "dark" ? "text-yellow-400" : "text-yellow-600"
-                        }`}
-                      >
-                        {course.rating}
-                      </span>
-                      <Star
-                        className={`h-4 w-4 ${
-                          theme === "dark" ? "text-yellow-400" : "text-yellow-500"
-                        } fill-current`}
-                      />
-                    </div>
-                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -599,17 +834,45 @@ export default function CourseDashboardContent() {
               ? "نمو الطلاب | هذا العام"
               : "Student Growth | This year"}
           </h2>
-          <div className="h-64 flex items-center justify-center">
-            <p
-              className={`text-sm ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              {language === "ar"
-                ? "الرسم البياني سيتم إضافته قريباً"
-                : "Chart will be added soon"}
-            </p>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={studentGrowthData}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={theme === "dark" ? "#1e3a8a" : "#e5e7eb"}
+              />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: theme === "dark" ? "#bfdbfe" : "#4b5563" }}
+                stroke={theme === "dark" ? "#3b82f6" : "#6b7280"}
+              />
+              <YAxis
+                tick={{ fill: theme === "dark" ? "#bfdbfe" : "#4b5563" }}
+                stroke={theme === "dark" ? "#3b82f6" : "#6b7280"}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: theme === "dark" ? "#1e3a8a" : "#ffffff",
+                  border: `1px solid ${theme === "dark" ? "#3b82f6" : "#e5e7eb"}`,
+                  borderRadius: "8px",
+                  color: theme === "dark" ? "#ffffff" : "#1f2937",
+                }}
+              />
+              <Legend
+                wrapperStyle={{
+                  color: theme === "dark" ? "#bfdbfe" : "#4b5563",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="students"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={{ fill: "#3b82f6", r: 4 }}
+                activeDot={{ r: 6 }}
+                name={language === "ar" ? "عدد الطلاب" : "Students"}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         {/* My Earning Chart */}
@@ -629,19 +892,81 @@ export default function CourseDashboardContent() {
               ? "أرباحي | إجمالي الدورات | هذا العام | العام الماضي"
               : "My Earning | Total courses | This year | Last year"}
           </h2>
-          <div className="h-64 flex items-center justify-center">
-            <p
-              className={`text-sm ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              {language === "ar"
-                ? "الرسم البياني سيتم إضافته قريباً"
-                : "Chart will be added soon"}
-            </p>
-          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={earningsData}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke={theme === "dark" ? "#1e3a8a" : "#e5e7eb"}
+              />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: theme === "dark" ? "#bfdbfe" : "#4b5563" }}
+                stroke={theme === "dark" ? "#3b82f6" : "#6b7280"}
+              />
+              <YAxis
+                tick={{ fill: theme === "dark" ? "#bfdbfe" : "#4b5563" }}
+                stroke={theme === "dark" ? "#3b82f6" : "#6b7280"}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: theme === "dark" ? "#1e3a8a" : "#ffffff",
+                  border: `1px solid ${theme === "dark" ? "#3b82f6" : "#e5e7eb"}`,
+                  borderRadius: "8px",
+                  color: theme === "dark" ? "#ffffff" : "#1f2937",
+                }}
+              />
+              <Legend
+                wrapperStyle={{
+                  color: theme === "dark" ? "#bfdbfe" : "#4b5563",
+                }}
+              />
+              <Bar
+                dataKey="thisYear"
+                fill="#3b82f6"
+                name={language === "ar" ? "هذا العام" : "This Year"}
+                radius={[8, 8, 0, 0]}
+              />
+              <Bar
+                dataKey="lastYear"
+                fill="#60a5fa"
+                name={language === "ar" ? "العام الماضي" : "Last Year"}
+                radius={[8, 8, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
+
+      {/* Course Type Modal */}
+      <CourseTypeModal
+        isOpen={isCourseTypeModalOpen}
+        onClose={() => setIsCourseTypeModalOpen(false)}
+      />
+
+      {/* Update Course Modal */}
+      {selectedCourse && (
+        <UpdateCourseModal
+          isOpen={isUpdateModalOpen}
+          onClose={() => {
+            setIsUpdateModalOpen(false);
+            setSelectedCourse(null);
+          }}
+          course={selectedCourse}
+          onUpdateSuccess={handleUpdateSuccess}
+        />
+      )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setCourseToDelete(null);
+        }}
+        onConfirm={confirmDelete}
+        title={language === "ar" ? "تأكيد حذف الكورس" : "Confirm Delete Course"}
+        message={language === "ar" ? "هل أنت متأكد من حذف هذا الكورس؟ لا يمكن التراجع عن هذا الإجراء." : "Are you sure you want to delete this course? This action cannot be undone."}
+      />
     </div>
   );
 }

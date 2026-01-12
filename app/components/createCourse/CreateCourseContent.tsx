@@ -6,7 +6,6 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
   ArrowLeft,
-  Calendar,
   Upload,
   ChevronDown,
   X,
@@ -18,6 +17,7 @@ import { getCategories } from "../../store/api/categoryApi";
 import { getDepartments } from "../../store/api/departmentApi";
 import { getOthersPlaces } from "../../store/api/othersPlaceApi";
 import type { CreateCourseRequest } from "../../store/interface/courseInterface";
+import toast from "react-hot-toast";
 
 interface CreateCourseContentProps {
   courseType: "university" | "others";
@@ -111,37 +111,37 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
 
     // Validation
     if (!formData.titleAr || !formData.titleEn) {
-      alert(language === "ar" ? "يرجى إدخال عنوان الدورة" : "Please enter course title");
+      toast.error(language === "ar" ? "يرجى إدخال عنوان الدورة" : "Please enter course title");
       return;
     }
     if (!formData.descriptionAr || !formData.descriptionEn) {
-      alert(language === "ar" ? "يرجى إدخال وصف الدورة" : "Please enter course description");
+      toast.error(language === "ar" ? "يرجى إدخال وصف الدورة" : "Please enter course description");
       return;
     }
     if (!formData.category) {
-      alert(language === "ar" ? "يرجى اختيار الفئة" : "Please select category");
+      toast.error(language === "ar" ? "يرجى اختيار الفئة" : "Please select category");
       return;
     }
     if (!formData.level) {
-      alert(language === "ar" ? "يرجى اختيار المستوى" : "Please select level");
+      toast.error(language === "ar" ? "يرجى اختيار المستوى" : "Please select level");
       return;
     }
     if (!formData.price || !formData.durationHours) {
-      alert(language === "ar" ? "يرجى إدخال السعر وساعات الدورة" : "Please enter price and duration hours");
+      toast.error(language === "ar" ? "يرجى إدخال السعر وساعات الدورة" : "Please enter price and duration hours");
       return;
     }
     if (courseType === "university" && !formData.department) {
-      alert(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
+      toast.error(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
       return;
     }
     if (courseType === "others" && !formData.othersPlace) {
-      alert(language === "ar" ? "يرجى اختيار المكان" : "Please select place");
+      toast.error(language === "ar" ? "يرجى اختيار المكان" : "Please select place");
       return;
     }
 
     const userId = (user as { id?: string; _id?: string })?.id || (user as { id?: string; _id?: string })?._id;
     if (!userId) {
-      alert(language === "ar" ? "يرجى تسجيل الدخول" : "Please login");
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول" : "Please login");
       return;
     }
 
@@ -175,9 +175,15 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
       }
 
       await createCourse(courseData, dispatch);
+      toast.success(language === "ar" ? "تم إنشاء الدورة بنجاح" : "Course created successfully");
       router.push("/myCoursesTeacher");
     } catch (error) {
       console.error("Failed to create course:", error);
+      toast.error(
+        language === "ar" 
+          ? "فشل إنشاء الدورة. يرجى المحاولة مرة أخرى" 
+          : "Failed to create course. Please try again"
+      );
     }
   };
 
@@ -204,49 +210,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
             >
               {language === "ar" ? "إنشاء دورة" : "Create Course"}
             </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div
-              className={`flex items-center gap-2 text-sm ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              <Calendar className="h-4 w-4" />
-              <span>
-                {language === "ar" ? "آخر تحديث:" : "Last update:"} 1 Apr 2025, 02:35pm
-              </span>
-            </div>
-            <button
-              onClick={() => router.back()}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                theme === "dark"
-                  ? "bg-blue-800/50 hover:bg-blue-800 text-blue-200"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-              }`}
-            >
-              {language === "ar" ? "إلغاء" : "Cancel"}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                isLoading
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              } ${
-                theme === "dark"
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              {isLoading
-                ? language === "ar"
-                  ? "جاري الإنشاء..."
-                  : "Creating..."
-                : language === "ar"
-                ? "إنشاء"
-                : "Create"}
-            </button>
           </div>
         </div>
 
@@ -756,6 +719,42 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                   }
                 />
               </div>
+            </div>
+
+            {/* Submit Buttons */}
+            <div className="flex items-center justify-end gap-4 pt-6 border-t border-blue-800/30">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  theme === "dark"
+                    ? "bg-blue-800/50 hover:bg-blue-800 text-blue-200"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                }`}
+              >
+                {language === "ar" ? "إلغاء" : "Cancel"}
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                  isLoading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                } ${
+                  theme === "dark"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {isLoading
+                  ? language === "ar"
+                    ? "جاري الإنشاء..."
+                    : "Creating..."
+                  : language === "ar"
+                  ? "إنشاء"
+                  : "Create"}
+              </button>
             </div>
           </form>
         </div>
