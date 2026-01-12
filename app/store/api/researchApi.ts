@@ -39,8 +39,12 @@ const createResearch = async (
 
     const formData = new FormData();
 
+    // Add file only if provided (optional)
+    if (researchData.file) {
+      formData.append("file", researchData.file);
+    }
+
     // Add required fields
-    formData.append("file", researchData.file);
     formData.append("researcherName.ar", researchData["researcherName.ar"]);
     formData.append("researcherName.en", researchData["researcherName.en"]);
     formData.append("title.ar", researchData["title.ar"]);

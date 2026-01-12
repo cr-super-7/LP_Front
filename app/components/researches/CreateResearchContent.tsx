@@ -118,10 +118,7 @@ export default function CreateResearchContent() {
       toast.error(language === "ar" ? "يرجى إدخال الوصف" : "Please enter description");
       return;
     }
-    if (!formData.researchFile) {
-      toast.error(language === "ar" ? "يرجى رفع ملف البحث" : "Please upload research file");
-      return;
-    }
+    // Research file is optional
     if (formData.researchType === "university" && !formData.department) {
       toast.error(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
       return;
@@ -133,7 +130,6 @@ export default function CreateResearchContent() {
 
     try {
       const researchData: CreateResearchRequest = {
-        file: formData.researchFile,
         "researcherName.ar": formData.researcherNameAr,
         "researcherName.en": formData.researcherNameEn,
         "title.ar": formData.titleAr,
@@ -142,6 +138,11 @@ export default function CreateResearchContent() {
         "description.en": formData.descriptionEn,
         researchType: formData.researchType as "university" | "others",
       };
+
+      // Add file only if provided
+      if (formData.researchFile) {
+        researchData.file = formData.researchFile;
+      }
 
       if (formData.researchType === "university" && formData.department) {
         researchData.department = formData.department;
@@ -183,13 +184,7 @@ export default function CreateResearchContent() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            <p
-              className={`text-sm ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              {language === "ar" ? "آخر تحديث:" : "Last update:"} {new Date().toLocaleDateString()}
-            </p>
+           
             <button
               onClick={() => router.back()}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -209,7 +204,7 @@ export default function CreateResearchContent() {
                   : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
               }`}
             >
-              {language === "ar" ? "التالي >" : "Next >"}
+              {language === "ar" ? "انشاء البحث " : "Create Research "}
             </button>
           </div>
         </div>
@@ -374,7 +369,7 @@ export default function CreateResearchContent() {
               </div>
             </div>
 
-            {/* Research Title and Level - Two Columns */}
+            {/* Research Title - Two Columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
@@ -382,7 +377,7 @@ export default function CreateResearchContent() {
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
-                  {language === "ar" ? "عنوان البحث" : "Research Title"}
+                  {language === "ar" ? "عنوان البحث بالعربية" : "Research Title (Arabic)"}
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <input
@@ -395,7 +390,7 @@ export default function CreateResearchContent() {
                       ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
                       : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder={language === "ar" ? "أدخل عنوان البحث" : "Enter research title"}
+                  placeholder={language === "ar" ? "أدخل عنوان البحث بالعربية" : "Enter research title in Arabic"}
                 />
               </div>
 
@@ -405,53 +400,102 @@ export default function CreateResearchContent() {
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
-                  {language === "ar" ? "مستوى البحث" : "Research Level"}
+                  {language === "ar" ? "عنوان البحث بالإنجليزية" : "Research Title (English)"}
                   <span className="text-red-500 ml-1">*</span>
                 </label>
-                <div className="relative">
-                  <select
-                    name="researchLevel"
-                    className={`w-full px-4 py-3 rounded-lg border appearance-none ${
-                      theme === "dark"
-                        ? "bg-blue-800/30 border-blue-700 text-white"
-                        : "bg-gray-50 border-gray-300 text-gray-900"
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  >
-                    <option value="advanced">
-                      {language === "ar" ? "متقدم" : "Advanced"}
-                    </option>
-                  </select>
-                  <ChevronDown
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
-                      theme === "dark" ? "text-blue-300" : "text-gray-500"
-                    }`}
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="titleEn"
+                  value={formData.titleEn}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder={language === "ar" ? "Enter research title in English" : "Enter research title in English"}
+                />
               </div>
             </div>
 
-            {/* Description */}
+            {/* Research Level */}
             <div>
               <label
                 className={`block text-sm font-semibold mb-2 ${
                   theme === "dark" ? "text-white" : "text-blue-950"
                 }`}
               >
-                {language === "ar" ? "الوصف" : "Description"}
+                {language === "ar" ? "مستوى البحث" : "Research Level"}
                 <span className="text-red-500 ml-1">*</span>
               </label>
-              <textarea
-                name="descriptionAr"
-                value={formData.descriptionAr}
-                onChange={handleInputChange}
-                rows={5}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  theme === "dark"
-                    ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
-                    : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
-                } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
-                placeholder={language === "ar" ? "أدخل الوصف" : "Enter description"}
-              />
+              <div className="relative">
+                <select
+                  name="researchLevel"
+                  className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                >
+                  <option value="advanced">
+                    {language === "ar" ? "متقدم" : "Advanced"}
+                  </option>
+                </select>
+                <ChevronDown
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                    theme === "dark" ? "text-blue-300" : "text-gray-500"
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Description - Two Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "الوصف بالعربية" : "Description (Arabic)"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="descriptionAr"
+                  value={formData.descriptionAr}
+                  onChange={handleInputChange}
+                  rows={5}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
+                  placeholder={language === "ar" ? "أدخل الوصف بالعربية" : "Enter description in Arabic"}
+                />
+              </div>
+
+              <div>
+                <label
+                  className={`block text-sm font-semibold mb-2 ${
+                    theme === "dark" ? "text-white" : "text-blue-950"
+                  }`}
+                >
+                  {language === "ar" ? "الوصف بالإنجليزية" : "Description (English)"}
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="descriptionEn"
+                  value={formData.descriptionEn}
+                  onChange={handleInputChange}
+                  rows={5}
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                      : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
+                  placeholder={language === "ar" ? "Enter description in English" : "Enter description in English"}
+                />
+              </div>
             </div>
 
             {/* Research Data - Two Columns */}
@@ -740,7 +784,7 @@ export default function CreateResearchContent() {
                   </div>
                 </div>
 
-                {/* Research Title and Level - Two Columns */}
+                {/* Research Title - Two Columns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label
@@ -748,7 +792,7 @@ export default function CreateResearchContent() {
                         theme === "dark" ? "text-white" : "text-blue-950"
                       }`}
                     >
-                      {language === "ar" ? "عنوان البحث" : "Research Title"}
+                      {language === "ar" ? "عنوان البحث بالعربية" : "Research Title (Arabic)"}
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input
@@ -761,7 +805,7 @@ export default function CreateResearchContent() {
                           ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
                           : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
                       } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      placeholder={language === "ar" ? "أدخل عنوان البحث" : "Enter research title"}
+                      placeholder={language === "ar" ? "أدخل عنوان البحث بالعربية" : "Enter research title in Arabic"}
                     />
                   </div>
 
@@ -771,53 +815,102 @@ export default function CreateResearchContent() {
                         theme === "dark" ? "text-white" : "text-blue-950"
                       }`}
                     >
-                      {language === "ar" ? "مستوى البحث" : "Research Level"}
+                      {language === "ar" ? "عنوان البحث بالإنجليزية" : "Research Title (English)"}
                       <span className="text-red-500 ml-1">*</span>
                     </label>
-                    <div className="relative">
-                      <select
-                        name="researchLevel"
-                        className={`w-full px-4 py-3 rounded-lg border appearance-none ${
-                          theme === "dark"
-                            ? "bg-blue-800/30 border-blue-700 text-white"
-                            : "bg-gray-50 border-gray-300 text-gray-900"
-                        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                      >
-                        <option value="advanced">
-                          {language === "ar" ? "متقدم" : "Advanced"}
-                        </option>
-                      </select>
-                      <ChevronDown
-                        className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
-                          theme === "dark" ? "text-blue-300" : "text-gray-500"
-                        }`}
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      name="titleEn"
+                      value={formData.titleEn}
+                      onChange={handleInputChange}
+                      className={`w-full px-4 py-3 rounded-lg border ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                          : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                      placeholder={language === "ar" ? "Enter research title in English" : "Enter research title in English"}
+                    />
                   </div>
                 </div>
 
-                {/* Description */}
+                {/* Research Level */}
                 <div>
                   <label
                     className={`block text-sm font-semibold mb-2 ${
                       theme === "dark" ? "text-white" : "text-blue-950"
                     }`}
                   >
-                    {language === "ar" ? "الوصف" : "Description"}
+                    {language === "ar" ? "مستوى البحث" : "Research Level"}
                     <span className="text-red-500 ml-1">*</span>
                   </label>
-                  <textarea
-                    name="descriptionAr"
-                    value={formData.descriptionAr}
-                    onChange={handleInputChange}
-                    rows={5}
-                    className={`w-full px-4 py-3 rounded-lg border ${
-                      theme === "dark"
-                        ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
-                        : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
-                    placeholder={language === "ar" ? "أدخل الوصف" : "Enter description"}
-                  />
+                  <div className="relative">
+                    <select
+                      name="researchLevel"
+                      className={`w-full px-4 py-3 rounded-lg border appearance-none ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white"
+                          : "bg-gray-50 border-gray-300 text-gray-900"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    >
+                      <option value="advanced">
+                        {language === "ar" ? "متقدم" : "Advanced"}
+                      </option>
+                    </select>
+                    <ChevronDown
+                      className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
+                        theme === "dark" ? "text-blue-300" : "text-gray-500"
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Description - Two Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label
+                      className={`block text-sm font-semibold mb-2 ${
+                        theme === "dark" ? "text-white" : "text-blue-950"
+                      }`}
+                    >
+                      {language === "ar" ? "الوصف بالعربية" : "Description (Arabic)"}
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      name="descriptionAr"
+                      value={formData.descriptionAr}
+                      onChange={handleInputChange}
+                      rows={5}
+                      className={`w-full px-4 py-3 rounded-lg border ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                          : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
+                      placeholder={language === "ar" ? "أدخل الوصف بالعربية" : "Enter description in Arabic"}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className={`block text-sm font-semibold mb-2 ${
+                        theme === "dark" ? "text-white" : "text-blue-950"
+                      }`}
+                    >
+                      {language === "ar" ? "الوصف بالإنجليزية" : "Description (English)"}
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <textarea
+                      name="descriptionEn"
+                      value={formData.descriptionEn}
+                      onChange={handleInputChange}
+                      rows={5}
+                      className={`w-full px-4 py-3 rounded-lg border ${
+                        theme === "dark"
+                          ? "bg-blue-800/30 border-blue-700 text-white placeholder-blue-400"
+                          : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                      } focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none`}
+                      placeholder={language === "ar" ? "Enter description in English" : "Enter description in English"}
+                    />
+                  </div>
                 </div>
               </>
             )}

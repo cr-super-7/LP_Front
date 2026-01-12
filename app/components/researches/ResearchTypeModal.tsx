@@ -95,12 +95,19 @@ export default function ResearchTypeModal({ isOpen, onClose }: ResearchTypeModal
               </div>
               <div className="flex-1 text-left">
                 <h3
-                  className={`text-lg font-semibold mb-2 ${
+                  className={`text-lg font-semibold mb-1 ${
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
                   {language === "ar" ? "بحث جامعي" : "University Research"}
                 </h3>
+                <h4
+                  className={`text-sm mb-2 ${
+                    theme === "dark" ? "text-blue-300" : "text-blue-600"
+                  }`}
+                >
+                  {language === "ar" ? "University Research" : "بحث جامعي"}
+                </h4>
                 <p
                   className={`text-sm ${
                     theme === "dark" ? "text-blue-200" : "text-gray-600"
@@ -137,12 +144,19 @@ export default function ResearchTypeModal({ isOpen, onClose }: ResearchTypeModal
               </div>
               <div className="flex-1 text-left">
                 <h3
-                  className={`text-lg font-semibold mb-2 ${
+                  className={`text-lg font-semibold mb-1 ${
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
                   {language === "ar" ? "بحث تقني/أخرى" : "Technical/Other Research"}
                 </h3>
+                <h4
+                  className={`text-sm mb-2 ${
+                    theme === "dark" ? "text-blue-300" : "text-blue-600"
+                  }`}
+                >
+                  {language === "ar" ? "Technical/Other Research" : "بحث تقني/أخرى"}
+                </h4>
                 <p
                   className={`text-sm ${
                     theme === "dark" ? "text-blue-200" : "text-gray-600"

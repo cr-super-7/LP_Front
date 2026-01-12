@@ -33,18 +33,20 @@ export interface Research {
   researcherName: LocalizedText;
   title: LocalizedText;
   description: LocalizedText;
-  file: string; // URL to the research file
+  file: string | null; // URL to the research file
   researchType: "university" | "others";
   department?: Department | string;
   othersPlace?: OthersPlace | string;
   createdBy: User | string;
   isApproved: boolean;
+  approvedBy?: User | string | null;
+  approvedAt?: string | null;
   createdAt: string;
   updatedAt?: string;
 }
 
 export interface CreateResearchRequest {
-  file: File;
+  file?: File; // Optional file
   "researcherName.ar": string;
   "researcherName.en": string;
   "title.ar": string;

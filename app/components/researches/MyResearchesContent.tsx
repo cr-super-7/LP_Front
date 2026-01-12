@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { Lightbulb, Link2, Star, User, ExternalLink, ChevronRight, ChevronLeft } from "lucide-react";
+import { Lightbulb, Link2, User, ExternalLink, ChevronRight, ChevronLeft, CheckCircle, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getMyResearches } from "../../store/api/researchApi";
@@ -210,9 +210,6 @@ function ResearchCard({
   // Get image URL - using file URL as thumbnail or default image
   const imageUrl = research.file || "/home/privet_lessons.png";
 
-  // Calculate rating from isApproved status (temporary - can be replaced with actual rating later)
-  const rating = research.isApproved ? 4.5 : 4.0;
-
   return (
     <div
       className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl ${
@@ -230,10 +227,29 @@ function ResearchCard({
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        {/* Rating Badge */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
-          <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-          <span className="text-white text-sm font-semibold">{rating}</span>
+        {/* Approval Status Badge */}
+        <div
+          className={`absolute top-3 right-3 flex items-center gap-1 px-3 py-1.5 rounded-full backdrop-blur-sm ${
+            research.isApproved
+              ? "bg-green-600/80 text-white"
+              : "bg-yellow-600/80 text-white"
+          }`}
+        >
+          {research.isApproved ? (
+            <>
+              <CheckCircle className="h-4 w-4" />
+              <span className="text-sm font-semibold">
+                {language === "ar" ? "مقبول" : "Approved"}
+              </span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-4 w-4" />
+              <span className="text-sm font-semibold">
+                {language === "ar" ? "قيد المراجعة" : "Under Review"}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
