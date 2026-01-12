@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Phone, Pencil, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import Sidebar from "../../layout/Sidebar";
 import Navbar from "../../layout/Navbar";
 import Background from "../../layout/Background";
 import Footer from "../../layout/Footer";
-import { useAppDispatch } from "../../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { updateProfile, changePassword } from "../../../store/api/authApi";
+import { getTeacherCourses } from "../../../store/api/courseApi";
 import type { UserProfile } from "../../../store/interface/auth.interface";
 import type { UpdateProfileRequest, ChangePasswordRequest } from "../../../store/interface/auth.interface";
+import type { Course } from "../../../store/interface/courseInterface";
 
 type TeacherProfileData = UserProfile & {
   totalCourses?: number;
@@ -30,6 +33,8 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
   const { theme } = useTheme();
   const { language } = useLanguage();
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const { courses: teacherCourses } = useAppSelector((state) => state.course);
   const isRTL = language === "ar";
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -46,6 +51,22 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Load teacher courses once to compute dynamic stats
+  useEffect(() => {
+    if (!teacherCourses || teacherCourses.length === 0) {
+      getTeacherCourses(dispatch).catch((error) => {
+        console.error("Failed to load teacher courses for profile:", error);
+      });
+    }
+  }, [dispatch, teacherCourses.length]);
+
+  // Compute dynamic stats from courses
+  const totalCourses = teacherCourses.length;
+  const completedCount = teacherCourses.filter((course: Course) => course.isPublished === true).length;
+  const pendingCount = teacherCourses.filter((course: Course) => course.isPublished === false).length;
+  const draftCount = totalCourses - completedCount - pendingCount;
+
 
   const textAlign = isRTL ? "text-right" : "text-left";
   const roleLabel = language === "ar" ? "المعلّم" : "Teacher";
@@ -257,25 +278,31 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
                           theme === "dark" ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {user.totalCourses ?? 11}
+                        {totalCourses}
                       </p>
                     </div>
 
                     <div className="flex flex-wrap items-center justify-center gap-4">
-                      <ProfileStat
-                        color="orange"
-                        label={language === "ar" ? "في السلة" : "Cart"}
-                        value={String(user.cartCount ?? 3)}
-                      />
-                      <ProfileStat
-                        color="indigo"
-                        label={language === "ar" ? "قيد التقدّم" : "In Progress"}
-                        value={String(user.inProgressCount ?? 3)}
-                      />
+                      {/* Cart - Hidden for teachers */}
+                      {user.role !== "instructor" && user.role !== "teacher" && (
+                        <ProfileStat
+                          color="orange"
+                          label={language === "ar" ? "في السلة" : "Cart"}
+                          value={String(draftCount)}
+                        />
+                      )}
+                      {/* In Progress - Hidden for teachers */}
+                      {user.role !== "instructor" && user.role !== "teacher" && (
+                        <ProfileStat
+                          color="indigo"
+                          label={language === "ar" ? "قيد التقدّم" : "In Progress"}
+                          value={String(pendingCount)}
+                        />
+                      )}
                       <ProfileStat
                         color="green"
                         label={language === "ar" ? "مكتملة" : "Completed"}
-                        value={String(user.completedCount ?? 6)}
+                        value={String(completedCount)}
                       />
                     </div>
                   </div>
@@ -289,8 +316,29 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
                 {language === "ar" ? "أفضل دوراتي" : "My Top Course"}
               </h2>
               <div className="grid gap-6 md:grid-cols-2">
-                <CourseCard highlight />
-                <CourseCard />
+                {teacherCourses.length > 0 ? (
+                  <>
+                    <CourseCard
+                      course={teacherCourses[0]}
+                      highlight
+                      language={language}
+                      theme={theme}
+                      onViewClick={() => router.push(`/myCoursesTeacher/lessons/${teacherCourses[0]._id}`)}
+                    />
+                    {teacherCourses.length > 1 && (
+                      <CourseCard
+                        course={teacherCourses[1]}
+                        language={language}
+                        theme={theme}
+                        onViewClick={() => router.push(`/myCoursesTeacher/lessons/${teacherCourses[1]._id}`)}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                    {language === "ar" ? "لا توجد دورات متاحة" : "No courses available"}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -300,12 +348,21 @@ export default function TeacherProfile({ user, onUpdate }: TeacherProfileProps) 
                 {language === "ar" ? "دوراتي" : "My Courses"}
               </h2>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
+                {teacherCourses.length > 0 ? (
+                  teacherCourses.map((course) => (
+                    <CourseCard
+                      key={course._id}
+                      course={course}
+                      language={language}
+                      theme={theme}
+                      onViewClick={() => router.push(`/myCoursesTeacher/lessons/${course._id}`)}
+                    />
+                  ))
+                ) : (
+                  <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
+                    {language === "ar" ? "لا توجد دورات متاحة" : "No courses available"}
+                  </p>
+                )}
               </div>
             </section>
           </div>
@@ -651,52 +708,84 @@ function ProfileStat({ label, value, color }: ProfileStatProps) {
 }
 
 type CourseCardProps = {
+  course: Course;
   highlight?: boolean;
+  language: string;
+  theme: string;
+  onViewClick: () => void;
 };
 
-function CourseCard({ highlight }: CourseCardProps) {
+function CourseCard({ course, highlight, language, theme, onViewClick }: CourseCardProps) {
+  const title = language === "ar" ? course.title.ar : course.title.en;
+  const description = language === "ar" ? course.description.ar : course.description.en;
+  const totalLessons = course.totalLessons || 0;
+  const durationHours = course.durationHours || 0;
+  const price = `${course.price} ${course.currency}`;
+  const levelLabel =
+    language === "ar"
+      ? course.level === "beginner"
+        ? "مبتدئ"
+        : course.level === "intermediate"
+        ? "متوسط"
+        : "متقدم"
+      : course.level.charAt(0).toUpperCase() + course.level.slice(1);
+  const imageUrl = course.thumbnail || "/home/privet_lessons.png";
+
   return (
     <article
-      className={`flex flex-col overflow-hidden rounded-2xl bg-slate-900/80 text-white shadow-xl ring-1 ring-slate-700/60 ${
+      className={`flex flex-col overflow-hidden rounded-2xl ${
+        theme === "dark" ? "bg-slate-900/80" : "bg-white"
+      } text-white shadow-xl ring-1 ${
+        theme === "dark" ? "ring-slate-700/60" : "ring-gray-200"
+      } ${
         highlight ? "scale-[1.01] border border-blue-400/60" : ""
       }`}
     >
       <div className="relative h-40 w-full">
         <Image
-          src="/home/privet_lessons.png"
-          alt="Course image"
+          src={imageUrl}
+          alt={title}
           fill
           className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Introduction To UI</h3>
-          <p className="text-xs text-slate-300">
-            15 Lessons • 500 Std • 15 h
+          <h3 className={`text-lg font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+            {title}
+          </h3>
+          <p className={`text-xs ${theme === "dark" ? "text-slate-300" : "text-gray-600"}`}>
+            {totalLessons} {language === "ar" ? "درس" : "Lessons"} • {durationHours}{" "}
+            {language === "ar" ? "ساعة" : "Hours"}
           </p>
         </div>
 
-        <p className="line-clamp-2 text-sm text-slate-300">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        <p className={`line-clamp-2 text-sm ${theme === "dark" ? "text-slate-300" : "text-gray-700"}`}>
+          {description}
         </p>
 
         <div className="mt-auto flex items-center justify-between pt-2 text-sm">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold">
-              Advanced
-            </span>
-            <span className="flex items-center gap-1 text-yellow-400">
-              <span className="text-base">★</span> 4.3
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                theme === "dark" ? "bg-slate-800" : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {levelLabel}
             </span>
           </div>
-          <span className="font-bold text-blue-300">1400 $</span>
+          <span className={`font-bold ${theme === "dark" ? "text-blue-300" : "text-blue-600"}`}>
+            {price}
+          </span>
         </div>
 
-        <button className="mt-3 w-full rounded-full bg-blue-600 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-500">
-          View
+        <button
+          onClick={onViewClick}
+          className="mt-3 w-full rounded-full bg-blue-600 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-500"
+        >
+          {language === "ar" ? "عرض" : "View"}
         </button>
       </div>
     </article>

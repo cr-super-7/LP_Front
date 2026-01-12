@@ -76,12 +76,6 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
     { value: "advanced", label: language === "ar" ? "متقدم" : "Advanced" },
   ];
 
-  const currencies = [
-    { value: "SAR", label: "SAR" },
-    { value: "USD", label: "USD" },
-    { value: "EUR", label: "EUR" },
-  ];
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -460,7 +454,7 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                 />
               </div>
 
-              {/* Currency */}
+              {/* Currency - Fixed to SAR */}
               <div>
                 <label
                   className={`block text-sm font-semibold mb-2 ${
@@ -468,32 +462,17 @@ export default function CreateCourseContent({ courseType }: CreateCourseContentP
                   }`}
                 >
                   {language === "ar" ? "العملة" : "Currency"}
-                  <span className="text-red-500 ml-1">*</span>
                 </label>
-                <div className="relative">
-                  <select
-                    name="currency"
-                    value={formData.currency}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, currency: e.target.value }))
-                    }
-                    className={`w-full px-4 py-3 rounded-lg border appearance-none ${
-                      theme === "dark"
-                        ? "bg-blue-800/30 border-blue-700 text-white"
-                        : "bg-gray-50 border-gray-300 text-gray-900"
-                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  >
-                    {currencies.map((curr) => (
-                      <option key={curr.value} value={curr.value}>
-                        {curr.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 pointer-events-none ${
-                      theme === "dark" ? "text-blue-300" : "text-gray-500"
-                    }`}
-                  />
+                <div
+                  className={`w-full px-4 py-3 rounded-lg border ${
+                    theme === "dark"
+                      ? "bg-blue-800/30 border-blue-700 text-white"
+                      : "bg-gray-50 border-gray-300 text-gray-900"
+                  }`}
+                >
+                  <span className={theme === "dark" ? "text-blue-200" : "text-gray-700"}>
+                    SAR
+                  </span>
                 </div>
               </div>
 
