@@ -10,6 +10,7 @@ import othersPlaceReducer from "./slice/othersPlaceSlice";
 import lessonReducer from "./slice/lessonSlice";
 import reviewReducer from "./slice/reviewSlice";
 import privateLessonReducer from "./slice/privateLessonSlice";
+import researchReducer from "./slice/researchSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     lesson: lessonReducer,
     review: reviewReducer,
     privateLesson: privateLessonReducer,
+    research: researchReducer,
   },
 });
 

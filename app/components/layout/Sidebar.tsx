@@ -21,6 +21,7 @@ import {
   ChevronUp,
   GraduationCap,
   BarChart3,
+  FileText,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -119,6 +120,17 @@ export default function Sidebar() {
       subItems: [
         { key: "myPrivateLessons", href: "/private-lessons/my-lessons", label: t("sidebar.myPrivateLessons") },
         { key: "myAppointments", href: "/private-lessons/appointments", label: t("sidebar.myAppointments") },
+      ],
+    },
+    {
+      key: "researches",
+      href: "/researches",
+      icon: FileText,
+      label: t("sidebar.researches"),
+      hasSubmenu: true,
+      subItems: [
+        { key: "researchesDashboard", href: "/researches/dashboard", label: t("sidebar.researchesDashboard") },
+        { key: "myResearches", href: "/researches/my-researches", label: t("sidebar.myResearches") },
       ],
     },
     {
