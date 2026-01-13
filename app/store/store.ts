@@ -11,6 +11,7 @@ import lessonReducer from "./slice/lessonSlice";
 import reviewReducer from "./slice/reviewSlice";
 import privateLessonReducer from "./slice/privateLessonSlice";
 import researchReducer from "./slice/researchSlice";
+import advertisementReducer from "./slice/advertisementSlice";
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     review: reviewReducer,
     privateLesson: privateLessonReducer,
     research: researchReducer,
+    advertisement: advertisementReducer,
   },
 });
 

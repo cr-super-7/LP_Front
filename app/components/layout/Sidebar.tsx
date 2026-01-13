@@ -22,6 +22,7 @@ import {
   GraduationCap,
   BarChart3,
   FileText,
+  Megaphone,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -138,6 +139,17 @@ export default function Sidebar() {
       href: "/report",
       icon: BarChart3,
       label: t("sidebar.report"),
+    },
+    {
+      key: "advertisements",
+      href: "/advertisements",
+      icon: Megaphone,
+      label: t("sidebar.advertisements"),
+      hasSubmenu: true,
+      subItems: [
+        { key: "myAdvertisements", href: "/advertisements/my-advertisements", label: t("sidebar.myAdvertisements") },
+        { key: "createAdvertisement", href: "/advertisements/create", label: t("sidebar.createAdvertisement") },
+      ],
     },
     {
       key: "profile",
