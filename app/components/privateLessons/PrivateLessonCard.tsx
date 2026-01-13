@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Clock, RefreshCw, ExternalLink } from "lucide-react";
+import { Clock, RefreshCw, ExternalLink, Trash2 } from "lucide-react";
 import type { PrivateLesson } from "../../store/interface/privateLessonInterface";
 
 interface PrivateLessonCardProps {
@@ -9,6 +9,7 @@ interface PrivateLessonCardProps {
   theme: "dark" | "light";
   language: "ar" | "en";
   onContinue?: () => void;
+  onDelete?: () => void;
 }
 
 export default function PrivateLessonCard({
@@ -16,6 +17,7 @@ export default function PrivateLessonCard({
   theme,
   language,
   onContinue,
+  onDelete,
 }: PrivateLessonCardProps) {
   // Get localized lesson name and description
   const lessonName =
@@ -173,17 +175,34 @@ export default function PrivateLessonCard({
               {getStatusText()}
             </span>
           </div>
-          <button
-            onClick={onContinue}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-              theme === "dark"
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
-            }`}
-          >
-            <span>{language === "ar" ? "متابعة" : "Continue"}</span>
-            <ExternalLink className="h-4 w-4" />
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={onContinue}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                theme === "dark"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+            >
+              <span>{language === "ar" ? "متابعة" : "Continue"}</span>
+              <ExternalLink className="h-4 w-4" />
+            </button>
+            {onDelete && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                  theme === "dark"
+                    ? "bg-red-600/80 hover:bg-red-700 text-white"
+                    : "bg-red-50 hover:bg-red-100 text-red-600"
+                }`}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

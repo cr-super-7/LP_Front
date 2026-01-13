@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { Megaphone, Plus, CheckCircle, Clock, Edit, Trash2, Eye } from "lucide-react";
+import { Megaphone, Plus, CheckCircle, Clock, Edit, Trash2, Eye, Filter, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getMyAdvertisements, deleteAdvertisement } from "../../store/api/advertisementApi";
 import type { Advertisement } from "../../store/interface/advertisementInterface";
+import ConfirmDeleteModal from "../myCoursesTeacher/lessons/ConfirmDeleteModal";
 import toast from "react-hot-toast";
+import { useMemo } from "react";
 
 export default function MyAdvertisementsContent() {
   const { language } = useLanguage();
@@ -17,6 +19,9 @@ export default function MyAdvertisementsContent() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { advertisements, isLoading } = useAppSelector((state) => state.advertisement);
+  const [filterStatus, setFilterStatus] = useState<"all" | "approved" | "pending">("all");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [advertisementToDelete, setAdvertisementToDelete] = useState<string | null>(null);
 
   // Load advertisements on mount
   useEffect(() => {
@@ -34,22 +39,36 @@ export default function MyAdvertisementsContent() {
     router.push("/advertisements/create");
   };
 
-  const handleDelete = async (advertisementId: string) => {
-    if (
-      !confirm(
-        language === "ar"
-          ? "هل أنت متأكد من حذف هذا الإعلان؟"
-          : "Are you sure you want to delete this advertisement?"
-      )
-    ) {
-      return;
+  // Filter advertisements based on selected filter
+  const filteredAdvertisements = useMemo(() => {
+    if (filterStatus === "all") {
+      return advertisements;
+    } else if (filterStatus === "approved") {
+      return advertisements.filter((ad) => ad.isApproved === true);
+    } else if (filterStatus === "pending") {
+      return advertisements.filter((ad) => ad.isApproved === false);
     }
+    return advertisements;
+  }, [advertisements, filterStatus]);
+
+  // Handle delete advertisement confirmation
+  const handleDeleteClick = (advertisementId: string) => {
+    setAdvertisementToDelete(advertisementId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle delete advertisement
+  const handleDeleteConfirm = async () => {
+    if (!advertisementToDelete) return;
 
     try {
-      await deleteAdvertisement(advertisementId, dispatch);
+      await deleteAdvertisement(advertisementToDelete, dispatch);
+      await getMyAdvertisements(dispatch); // Reload advertisements after deletion
       toast.success(
         language === "ar" ? "تم حذف الإعلان بنجاح" : "Advertisement deleted successfully"
       );
+      setIsDeleteModalOpen(false);
+      setAdvertisementToDelete(null);
     } catch (error) {
       console.error("Failed to delete advertisement:", error);
     }
@@ -129,6 +148,63 @@ export default function MyAdvertisementsContent() {
         </div>
       </div>
 
+      {/* Filter Section */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter
+              className={`h-5 w-5 ${
+                theme === "dark" ? "text-blue-300" : "text-blue-600"
+              }`}
+            />
+            <span
+              className={`text-sm font-medium ${
+                theme === "dark" ? "text-blue-200" : "text-gray-700"
+              }`}
+            >
+              {language === "ar" ? "فلترة حسب الحالة" : "Filter by Status"}
+            </span>
+          </div>
+          <div className="relative">
+            <select
+              value={filterStatus}
+              onChange={(e) =>
+                setFilterStatus(e.target.value as "all" | "approved" | "pending")
+              }
+              className={`appearance-none px-4 py-2 pr-10 rounded-lg border transition-colors ${
+                theme === "dark"
+                  ? "bg-blue-800/30 border-blue-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
+              } focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer`}
+            >
+              <option value="all">
+                {language === "ar" ? "جميع الإعلانات" : "All Advertisements"}
+              </option>
+              <option value="approved">
+                {language === "ar" ? "مقبولة" : "Approved"}
+              </option>
+              <option value="pending">
+                {language === "ar" ? "قيد المراجعة" : "Pending"}
+              </option>
+            </select>
+            <ChevronDown
+              className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none ${
+                theme === "dark" ? "text-blue-300" : "text-gray-500"
+              }`}
+            />
+          </div>
+        </div>
+        <div
+          className={`text-sm ${
+            theme === "dark" ? "text-blue-200" : "text-gray-600"
+          }`}
+        >
+          {filteredAdvertisements.length}{" "}
+          {language === "ar" ? "إعلان" : "advertisement"}
+          {filteredAdvertisements.length !== 1 ? (language === "ar" ? "ات" : "s") : ""}
+        </div>
+      </div>
+
       {/* Advertisements Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -159,16 +235,16 @@ export default function MyAdvertisementsContent() {
           >
             {language === "ar" ? "جاري التحميل..." : "Loading..."}
           </div>
-        ) : advertisements.length > 0 ? (
+        ) : filteredAdvertisements.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {advertisements.map((advertisement) => (
+            {filteredAdvertisements.map((advertisement) => (
               <AdvertisementCard
                 key={advertisement._id}
                 advertisement={advertisement}
                 theme={theme}
                 language={language}
                 getAdvertisementTypeLabel={getAdvertisementTypeLabel}
-                onDelete={handleDelete}
+                onDelete={handleDeleteClick}
               />
             ))}
           </div>
@@ -186,6 +262,22 @@ export default function MyAdvertisementsContent() {
           </div>
         )}
       </div>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setAdvertisementToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title={language === "ar" ? "تأكيد حذف الإعلان" : "Confirm Delete Advertisement"}
+        message={
+          language === "ar"
+            ? "هل أنت متأكد من حذف هذا الإعلان؟ لا يمكن التراجع عن هذا الإجراء."
+            : "Are you sure you want to delete this advertisement? This action cannot be undone."
+        }
+      />
     </div>
   );
 }

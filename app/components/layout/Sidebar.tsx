@@ -119,6 +119,7 @@ export default function Sidebar() {
       label: t("sidebar.privateLessons"),
       hasSubmenu: true,
       subItems: [
+        { key: "lessonsDashboard", href: "/private-lessons/dashboard", label: t("sidebar.lessonsDashboard") },
         { key: "myPrivateLessons", href: "/private-lessons/my-lessons", label: t("sidebar.myPrivateLessons") },
         { key: "myAppointments", href: "/private-lessons/appointments", label: t("sidebar.myAppointments") },
       ],

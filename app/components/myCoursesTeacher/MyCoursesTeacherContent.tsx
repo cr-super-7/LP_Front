@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import CourseTypeModal from "./CourseTypeModal";
 import UpdateCourseModal from "./UpdateCourseModal";
+import ConfirmDeleteModal from "./lessons/ConfirmDeleteModal";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getTeacherCourses, deleteCourse } from "../../store/api/courseApi";
 import type { Course } from "../../store/interface/courseInterface";
@@ -32,6 +33,8 @@ export default function MyCoursesTeacherContent() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
 
   // Load teacher courses on mount
   useEffect(() => {
@@ -45,16 +48,24 @@ export default function MyCoursesTeacherContent() {
     loadCourses();
   }, [dispatch]);
 
+  // Handle delete course confirmation
+  const handleDeleteClick = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setIsDeleteModalOpen(true);
+  };
+
   // Handle delete course
-  const handleDelete = async (courseId: string) => {
-   
-      try {
-        await deleteCourse(courseId, dispatch);
-        await getTeacherCourses(dispatch); // Reload courses after deletion
-      } catch (error) {
-        console.error("Failed to delete course:", error);
-      }
+  const handleDeleteConfirm = async () => {
+    if (!courseToDelete) return;
     
+    try {
+      await deleteCourse(courseToDelete, dispatch);
+      await getTeacherCourses(dispatch); // Reload courses after deletion
+      setIsDeleteModalOpen(false);
+      setCourseToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete course:", error);
+    }
   };
 
   // Separate published and unpublished courses
@@ -145,6 +156,22 @@ export default function MyCoursesTeacherContent() {
         />
       )}
 
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setCourseToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title={language === "ar" ? "تأكيد حذف الدورة" : "Confirm Delete Course"}
+        message={
+          language === "ar"
+            ? "هل أنت متأكد من حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء."
+            : "Are you sure you want to delete this course? This action cannot be undone."
+        }
+      />
+
       {/* Published Section - Displayed First */}
       {publishedCourses.length > 0 && (
         <div className="space-y-6">
@@ -190,7 +217,7 @@ export default function MyCoursesTeacherContent() {
                     setSelectedCourse(course);
                     setIsUpdateModalOpen(true);
                   }}
-                  onDelete={() => handleDelete(course._id)}
+                  onDelete={() => handleDeleteClick(course._id)}
                   onViewDetails={() => router.push(`/myCoursesTeacher/lessons?courseId=${course._id}`)}
                 />
               ))}
@@ -233,7 +260,7 @@ export default function MyCoursesTeacherContent() {
                     setSelectedCourse(course);
                     setIsUpdateModalOpen(true);
                   }}
-                  onDelete={() => handleDelete(course._id)}
+                  onDelete={() => handleDeleteClick(course._id)}
                   onViewDetails={() => router.push(`/myCoursesTeacher/lessons?courseId=${course._id}`)}
                 />
               ))}

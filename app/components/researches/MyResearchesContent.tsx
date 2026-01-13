@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { Lightbulb, Link2, User, ExternalLink, ChevronRight, ChevronLeft, CheckCircle, Clock } from "lucide-react";
+import { Lightbulb, Link2, User, ExternalLink, ChevronRight, ChevronLeft, CheckCircle, Clock, Filter, ChevronDown, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { getMyResearches } from "../../store/api/researchApi";
+import { getMyResearches, deleteResearch } from "../../store/api/researchApi";
 import type { Research } from "../../store/interface/researchInterface";
 import ResearchTypeModal from "./ResearchTypeModal";
-import { useState } from "react";
+import ConfirmDeleteModal from "../myCoursesTeacher/lessons/ConfirmDeleteModal";
+import { useState, useMemo } from "react";
 
 export default function MyResearchesContent() {
   const { language } = useLanguage();
@@ -19,6 +20,9 @@ export default function MyResearchesContent() {
   const dispatch = useAppDispatch();
   const { researches, isLoading } = useAppSelector((state) => state.research);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<"all" | "approved" | "pending">("all");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [researchToDelete, setResearchToDelete] = useState<string | null>(null);
 
   // Load researches on mount
   useEffect(() => {
@@ -37,8 +41,39 @@ export default function MyResearchesContent() {
   };
 
   const handleContinue = (researchId: string) => {
-    // TODO: Navigate to research details/edit page when available
     router.push(`/researches/${researchId}`);
+  };
+
+  // Filter researches based on selected filter
+  const filteredResearches = useMemo(() => {
+    if (filterStatus === "all") {
+      return researches;
+    } else if (filterStatus === "approved") {
+      return researches.filter((research) => research.isApproved === true);
+    } else if (filterStatus === "pending") {
+      return researches.filter((research) => research.isApproved === false);
+    }
+    return researches;
+  }, [researches, filterStatus]);
+
+  // Handle delete research confirmation
+  const handleDeleteClick = (researchId: string) => {
+    setResearchToDelete(researchId);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle delete research
+  const handleDeleteConfirm = async () => {
+    if (!researchToDelete) return;
+    
+    try {
+      await deleteResearch(researchToDelete, dispatch);
+      await getMyResearches(dispatch); // Reload researches after deletion
+      setIsDeleteModalOpen(false);
+      setResearchToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete research:", error);
+    }
   };
 
   return (
@@ -112,6 +147,63 @@ export default function MyResearchesContent() {
         </div>
       </div>
 
+      {/* Filter Section */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter
+              className={`h-5 w-5 ${
+                theme === "dark" ? "text-blue-300" : "text-blue-600"
+              }`}
+            />
+            <span
+              className={`text-sm font-medium ${
+                theme === "dark" ? "text-blue-200" : "text-gray-700"
+              }`}
+            >
+              {language === "ar" ? "فلترة حسب الحالة" : "Filter by Status"}
+            </span>
+          </div>
+          <div className="relative">
+            <select
+              value={filterStatus}
+              onChange={(e) =>
+                setFilterStatus(e.target.value as "all" | "approved" | "pending")
+              }
+              className={`appearance-none px-4 py-2 pr-10 rounded-lg border transition-colors ${
+                theme === "dark"
+                  ? "bg-blue-800/30 border-blue-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
+              } focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer`}
+            >
+              <option value="all">
+                {language === "ar" ? "جميع الأبحاث" : "All Researches"}
+              </option>
+              <option value="approved">
+                {language === "ar" ? "مقبولة" : "Approved"}
+              </option>
+              <option value="pending">
+                {language === "ar" ? "قيد المراجعة" : "Pending"}
+              </option>
+            </select>
+            <ChevronDown
+              className={`absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 pointer-events-none ${
+                theme === "dark" ? "text-blue-300" : "text-gray-500"
+              }`}
+            />
+          </div>
+        </div>
+        <div
+          className={`text-sm ${
+            theme === "dark" ? "text-blue-200" : "text-gray-600"
+          }`}
+        >
+          {filteredResearches.length}{" "}
+          {language === "ar" ? "بحث" : "research"}
+          {filteredResearches.length !== 1 ? (language === "ar" ? "" : "es") : ""}
+        </div>
+      </div>
+
       {/* Continue Creating Section */}
       <div className="space-y-6">
         <div className="flex items-center gap-3">
@@ -144,15 +236,16 @@ export default function MyResearchesContent() {
           >
             {language === "ar" ? "جاري التحميل..." : "Loading..."}
           </div>
-        ) : researches.length > 0 ? (
+        ) : filteredResearches.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {researches.map((research) => (
+            {filteredResearches.map((research) => (
               <ResearchCard
                 key={research._id}
                 research={research}
                 theme={theme}
                 language={language}
                 onContinue={() => handleContinue(research._id)}
+                onDelete={() => handleDeleteClick(research._id)}
               />
             ))}
           </div>
@@ -176,6 +269,22 @@ export default function MyResearchesContent() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Confirm Delete Modal */}
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setResearchToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title={language === "ar" ? "تأكيد حذف البحث" : "Confirm Delete Research"}
+        message={
+          language === "ar"
+            ? "هل أنت متأكد من حذف هذا البحث؟ لا يمكن التراجع عن هذا الإجراء."
+            : "Are you sure you want to delete this research? This action cannot be undone."
+        }
+      />
     </div>
   );
 }
@@ -185,6 +294,7 @@ interface ResearchCardProps {
   theme: "dark" | "light";
   language: "ar" | "en";
   onContinue?: () => void;
+  onDelete?: () => void;
 }
 
 function ResearchCard({
@@ -192,6 +302,7 @@ function ResearchCard({
   theme,
   language,
   onContinue,
+  onDelete,
 }: ResearchCardProps) {
   // Get localized content
   const title =
@@ -295,18 +406,35 @@ function ResearchCard({
           </span>
         </div>
 
-        {/* Continue Button */}
-        <button
-          onClick={onContinue}
-          className={`w-full py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 border-2 ${
-            theme === "dark"
-              ? "bg-transparent border-blue-500 text-blue-500 hover:bg-blue-500/10"
-              : "bg-transparent border-blue-400 text-blue-600 hover:bg-blue-400/10"
-          }`}
-        >
-          <span>{language === "ar" ? "متابعة" : "Continue"}</span>
-          <ExternalLink className="h-4 w-4" />
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={onContinue}
+            className={`flex-1 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 border-2 ${
+              theme === "dark"
+                ? "bg-transparent border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                : "bg-transparent border-blue-400 text-blue-600 hover:bg-blue-400/10"
+            }`}
+          >
+            <span>{language === "ar" ? "متابعة" : "Continue"}</span>
+            <ExternalLink className="h-4 w-4" />
+          </button>
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className={`px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                theme === "dark"
+                  ? "bg-red-600/80 hover:bg-red-700 text-white"
+                  : "bg-red-50 hover:bg-red-100 text-red-600"
+              }`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
