@@ -20,7 +20,7 @@ export default function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
-  const { isLoading, error, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  const { isLoading, error, isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
   
   const [isLogin, setIsLogin] = useState(true);
   
@@ -54,10 +54,15 @@ export default function AuthContent() {
 
   // Redirect if authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/");
+    if (isAuthenticated && user) {
+      const userRole = user?.role;
+      if (userRole === "instructor") {
+        router.push("/courseDashboard");
+      } else {
+        router.push("/courses");
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +71,7 @@ export default function AuthContent() {
     try {
       await login(email, password, dispatch);
       toast.success(t("auth.loginSuccessful"));
-      // Redirect to courses page after showing toast
-      router.push("/courses");
+      // Redirect will be handled by useEffect when user state is updated
     } catch (error: unknown) {
       // Error is already handled by the login function
       console.error("Login error:", error);

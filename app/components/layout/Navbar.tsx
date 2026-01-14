@@ -8,35 +8,80 @@ import LanguageSelector from "../home/LanguageSelector";
 import ThemeToggle from "../home/ThemeToggle";
 import LoginModal from "../auth/LoginModal";
 import type { RootState } from "../../store/store";
-import { Search } from "lucide-react";
+import { Search, Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useAppDispatch } from "../../store/hooks";
+import { getUnreadCount } from "../../store/api/notificationApi";
+import { useNotificationSocket } from "../../hooks/useNotificationSocket";
 
 export default function Navbar() {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
   const { isAuthenticated, user } = useAppSelector((state: RootState) => state.auth);
+  const { unreadCount } = useAppSelector((state: RootState) => state.notification);
+  const router = useRouter();
+  const dispatch = useAppDispatch();
   const isRTL = language === "ar";
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Initialize Socket.IO connection for real-time notifications
+  useNotificationSocket();
 
   // Check if user is a teacher/instructor
   const isTeacher = user?.role === "instructor";
 
   // Fix hydration mismatch by only showing auth-dependent content after mount
   // This pattern is necessary in Next.js to prevent SSR/client mismatch
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    setMounted(true);
+    // Use setTimeout to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Load unread count when authenticated
+  useEffect(() => {
+    if (mounted && isAuthenticated) {
+      const loadUnreadCount = async () => {
+        try {
+          await getUnreadCount(dispatch);
+        } catch (error) {
+          console.error("Failed to load unread count:", error);
+        }
+      };
+      loadUnreadCount();
+
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(() => {
+        loadUnreadCount();
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }
+  }, [mounted, isAuthenticated, dispatch]);
 
   return (
     <nav
-      className={`fixed top-0 h-16 z-30 flex items-center justify-between px-6 border-b ${
+      className={`fixed top-0 h-16 z-30 flex items-center justify-between px-6 border-b gap-4 ${
         isRTL ? "left-0 right-64" : "right-0 left-64"
       } ${
         theme === "dark" ? "bg-blue-950 border-blue-800" : "bg-white border-gray-200"
       }`}
     >
+      {/* Logo - Clickable */}
+      <div
+        onClick={() => router.push("/")}
+        className={`text-xl font-bold cursor-pointer transition-opacity hover:opacity-80 shrink-0 ${
+          theme === "dark" ? "text-white" : "text-blue-950"
+        }`}
+      >
+        <span className="text-blue-400">LP</span>
+        <span className={theme === "dark" ? "text-white" : "text-blue-950"}> Company</span>
+      </div>
+
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
         <div className="relative">
@@ -109,43 +154,20 @@ export default function Navbar() {
             </svg>
           </button>
         )}
-        <button
-          className={`p-2 rounded-lg transition-colors relative ${
-            theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
-          }`}
-          aria-label="Notifications"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            className={theme === "dark" ? "text-white" : "text-gray-700"}
+        {mounted && isAuthenticated && (
+          <button
+            onClick={() => router.push("/notifications")}
+            className={`p-2 rounded-lg transition-colors relative ${
+              theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
+            }`}
+            aria-label="Notifications"
           >
-            <path
-              d="M10 5.36719V8.14219"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-            />
-            <path
-              d="M10.0167 1.66406C6.95004 1.66406 4.4667 4.1474 4.4667 7.21406V8.96406C4.4667 9.53073 4.23337 10.3807 3.9417 10.8641L2.88337 12.6307C2.23337 13.7224 2.68337 14.9391 3.88337 15.3391C7.8667 16.6641 12.175 16.6641 16.1584 15.3391C17.2834 14.9641 17.7667 13.6474 17.1584 12.6307L16.1 10.8641C15.8084 10.3807 15.575 9.5224 15.575 8.96406V7.21406C15.5667 4.16406 13.0667 1.66406 10.0167 1.66406Z"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-            />
-            <path
-              d="M12.775 15.6797C12.775 17.2047 11.525 18.4547 9.99998 18.4547C9.24164 18.4547 8.54164 18.138 8.04164 17.638C7.54164 17.138 7.22498 16.438 7.22498 15.6797"
-              stroke="currentColor"
-              strokeWidth="1.25"
-              strokeMiterlimit="10"
-            />
-          </svg>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-        </button>
+            <Bell className={`h-5 w-5 ${theme === "dark" ? "text-white" : "text-gray-700"}`} />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            )}
+          </button>
+        )}
         {!mounted ? (
           // Show placeholder during SSR to prevent hydration mismatch
           <div className="w-20 h-10"></div>

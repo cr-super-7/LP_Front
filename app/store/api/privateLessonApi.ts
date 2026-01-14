@@ -90,7 +90,7 @@ const createPrivateLesson = async (
 
     dispatch(addPrivateLesson(privateLesson));
     dispatch(setLoading(false));
-    toast.success(lessonResponse.message || "Private lesson created successfully");
+   
     return privateLesson;
   } catch (error: unknown) {
     let errorMessage = "Failed to create private lesson";

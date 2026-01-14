@@ -14,7 +14,7 @@ import {
   BookOpen,
   Heart,
   User,
-  Settings,
+
   HelpCircle,
   LogOut,
   ChevronDown,
@@ -179,7 +179,7 @@ export default function Sidebar() {
       <div className="flex flex-col h-full p-6">
         {/* Logo */}
         <div className="mb-8">
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold cursor-pointer" onClick={() => router.push("/")}>
             <span className="text-blue-400">LP</span>
             <span className={theme === "dark" ? "text-white" : "text-blue-950"}> Company</span>
           </div>
