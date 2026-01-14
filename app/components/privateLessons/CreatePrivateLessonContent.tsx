@@ -164,6 +164,22 @@ export default function CreatePrivateLessonContent() {
       toast.error(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
       return;
     }
+    if (formData.schedule.length === 0) {
+      toast.error(language === "ar" ? "يرجى إضافة فترة واحدة على الأقل في الجدول الزمني" : "Please add at least one schedule period");
+      return;
+    }
+    // Validate that all schedule items have required fields
+    const invalidSchedule = formData.schedule.some(
+      (item) => !item.date || !item.time || !item.duration || item.duration <= 0
+    );
+    if (invalidSchedule) {
+      toast.error(
+        language === "ar"
+          ? "يرجى التأكد من ملء جميع حقول الجدول الزمني (التاريخ، الوقت، والمدة)"
+          : "Please ensure all schedule fields are filled (date, time, and duration)"
+      );
+      return;
+    }
 
     try {
       const lessonData: CreatePrivateLessonRequest = {
