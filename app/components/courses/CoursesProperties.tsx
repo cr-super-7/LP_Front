@@ -1,163 +1,211 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAppDispatch } from "../../store/hooks";
+import { getAdvertisements } from "../../store/api/advertisementApi";
+import type { Advertisement } from "../../store/interface/advertisementInterface";
 
 export default function CoursesProperties() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
+  const dispatch = useAppDispatch();
 
-  const properties = [
-    {
-      id: 1,
-      labelKey: "properties.courses",
-      position: "top-left",
-      imageBg: "from-amber-200 to-amber-400",
-      delay: 0.1,
-      image: "/home/course.png",
-    },
-    {
-      id: 2,
-      labelKey: "properties.privateLessons",
-      position: "bottom-left",
-      imageBg: "from-blue-200 to-blue-400",
-      delay: 0.2,
-      image: "/home/privet_lessons.png",
-    },
-    {
-      id: 3,
-      labelKey: "properties.inquiry",
-      position: "top-right",
-      imageBg: "from-gray-200 to-gray-400",
-      delay: 0.3,
-      image: "/home/inquiring.png",
-    },
-    {
-      id: 4,
-      labelKey: "properties.research",
-      position: "bottom-right",
-      imageBg: "from-purple-200 to-purple-400",
-      delay: 0.4,
-    },
-  ];
+  const [ads, setAds] = useState<Advertisement[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const isRTL = language === "ar";
+
+  useEffect(() => {
+    const loadAdvertisements = async () => {
+      try {
+        setIsLoading(true);
+        const result = await getAdvertisements("courses", dispatch);
+        setAds(result);
+      } catch (error) {
+        console.error("Failed to load course advertisements:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAdvertisements();
+  }, [dispatch]);
+
+  // Auto-slide effect - move one ad at a time, loop من آخر إعلان إلى الأول
+  useEffect(() => {
+    if (ads.length <= 3) return; // Don't auto-slide if 3 or fewer ads
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => {
+        // Move one ad at a time, stop when we can't show 3 more ads
+        const maxIndex = Math.max(0, ads.length - 3);
+        return prev >= maxIndex ? 0 : prev + 1;
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [ads.length]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
     },
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, scale: 0.8, y: 20 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-    },
-  };
+  const getDescription = (ad: Advertisement) =>
+    language === "ar" ? ad.description.ar : ad.description.en;
 
-  const circleVariants = {
-    hidden: { opacity: 0, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-    },
-  };
+  // ترتيب الإعلانات حسب اتجاه اللغة (للـ RTL نعرضها بالعكس)
+  const displayedAds = isRTL ? [...ads].reverse() : ads;
+  const slidePercent = 100 / 3;
+  const direction = isRTL ? 1 : -1; // RTL يتحرك لليمين، LTR لليسار
 
   return (
     <section className="mb-12">
-      <motion.div
-        className="relative h-64 md:h-80 lg:h-96 w-full max-w-7xl mx-auto"
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-      >
-        {properties.map((property) => {
-          let positionClasses = "";
-          if (property.position === "top-left") {
-            positionClasses = "absolute left-0 top-0";
-          } else if (property.position === "bottom-left") {
-            positionClasses = "absolute bottom-0 left-40 md:left-60 lg:left-80";
-          } else if (property.position === "top-right") {
-            positionClasses = "absolute right-40 md:right-60 lg:right-80 top-0";
-          } else if (property.position === "bottom-right") {
-            positionClasses = "absolute bottom-0 right-0";
-          }
+      <div className="flex items-center justify-between mb-4">
+        <h2
+          className={`text-xl md:text-2xl font-bold ${
+            theme === "dark" ? "text-white" : "text-blue-950"
+          }`}
+        >
+          {t("properties.courses")}
+        </h2>
+      </div>
 
-          return (
-            <motion.div
-              key={property.id}
-              className={positionClasses}
-              variants={itemVariants}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+      {isLoading && ads.length === 0 ? (
+        <div className="flex items-center justify-center h-40">
+          <motion.div
+            className="flex items-center gap-3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.span
+              className={`inline-flex h-3 w-3 rounded-full ${
+                theme === "dark" ? "bg-blue-400" : "bg-blue-500"
+              }`}
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ repeat: Infinity, duration: 1, ease: "easeInOut" }}
+            />
+            <p
+              className={`text-sm ${
+                theme === "dark" ? "text-blue-200" : "text-gray-600"
+              }`}
             >
-              <motion.div
-                className={`relative h-32 w-32 md:h-40 md:w-40 lg:h-48 lg:w-48 cursor-pointer`}
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              >
-                <motion.div
-                  className={`absolute inset-0 rounded-full border-2 border-dashed ${
-                    theme === "dark" ? "border-white" : "border-blue-950"
-                  }`}
-                  initial={{ opacity: 0, scale: 0.9, rotate: 0 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    rotate: 360,
-                  }}
-                  transition={{
-                    opacity: { duration: 0.8, ease: "easeOut" },
-                    scale: { duration: 0.8, ease: "easeOut" },
-                    rotate: {
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: "linear",
-                    },
-                  }}
-                ></motion.div>
-                <motion.div
-                  className={`absolute left-2 top-2 h-[calc(100%-16px)] w-[calc(100%-16px)] rounded-full overflow-hidden bg-linear-to-b ${property.imageBg}`}
-                  variants={circleVariants}
-                  initial="hidden"
-                  animate="visible"
-                  transition={{ duration: 0.8, ease: "easeOut" }}
-                >
-                  {property.image ? (
-                    <Image
-                      src={property.image}
-                      alt={t(property.labelKey)}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-gray-200"></div>
-                  )}
-                </motion.div>
-                <motion.div
-                  className={`absolute -right-5 top-6 md:top-8 rounded-full ${
-                    theme === "dark" ? "bg-blue-400" : "bg-blue-500"
-                  } px-2 py-1 md:px-3 md:py-1.5 lg:px-4 lg:py-2 shadow-lg`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: property.delay + 0.3, duration: 0.5 }}
-                >
-                  <span className={`text-xs md:text-sm font-medium text-white`}>{t(property.labelKey)}</span>
-                </motion.div>
-              </motion.div>
+              {language === "ar"
+                ? "جاري تحميل الإعلانات..."
+                : "Loading advertisements..."}
+            </p>
+          </motion.div>
+        </div>
+      ) : ads.length === 0 ? (
+        <motion.div
+          className="flex items-center justify-center h-40"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            className={`relative rounded-2xl px-6 py-4 md:px-8 md:py-5 shadow-lg flex items-center gap-4 ${
+              theme === "dark"
+                ? "bg-blue-900/60 border border-blue-700/60"
+                : "bg-white border border-blue-100"
+            }`}
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                theme === "dark" ? "bg-blue-800" : "bg-blue-100"
+              }`}
+              animate={{ y: [0, -4, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              <span className="text-xl">📢</span>
             </motion.div>
-          );
-        })}
-      </motion.div>
+            <div>
+              <p
+                className={`text-sm md:text-base font-semibold ${
+                  theme === "dark" ? "text-white" : "text-blue-950"
+                }`}
+              >
+                {language === "ar"
+                  ? "لا توجد إعلانات دورات حالياً"
+                  : "No course advertisements right now"}
+              </p>
+              <p
+                className={`text-xs md:text-sm mt-1 ${
+                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                }`}
+              >
+                {language === "ar"
+                  ? "تابعنا، سيتم إضافة إعلانات جديدة للدورات قريباً."
+                  : "Stay tuned, new course promotions will be added soon."}
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : (
+        <motion.div
+          className="relative max-w-7xl mx-auto overflow-hidden"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+        >
+          <motion.div
+            className={`flex gap-4 ${isRTL ? "flex-row-reverse" : ""}`}
+            animate={{ x: `${currentIndex * slidePercent * direction}%` }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+          >
+            {displayedAds.map((ad) => (
+              <div
+                key={ad._id}
+                className="shrink-0 w-full md:w-[calc(33.333%-0.67rem)] lg:w-[calc(33.333%-0.67rem)]"
+              >
+                <div className="relative h-44 md:h-52 lg:h-60 rounded-2xl overflow-hidden group shadow-lg shadow-black/10">
+                  <Image
+                    src={ad.image}
+                    alt={getDescription(ad)}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 33vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                    <p className="text-sm md:text-base text-white p-4 line-clamp-4">
+                      {getDescription(ad)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Dots indicators */}
+          {ads.length > 3 && (
+            <div className="flex justify-center gap-2 mt-4">
+              {Array.from({ length: Math.max(1, ads.length - 2) }).map((_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    currentIndex === index
+                      ? "w-6 bg-blue-500"
+                      : "w-2.5 bg-blue-500/40"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
     </section>
   );
 }
-

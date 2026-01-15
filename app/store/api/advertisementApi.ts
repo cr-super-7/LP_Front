@@ -53,7 +53,7 @@ const createAdvertisement = async (
     const advertisement = (data.advertisement || data) as Advertisement;
     dispatch(addAdvertisement(advertisement));
     dispatch(setLoading(false));
-    toast.success(data.message || "Advertisement created successfully");
+    
     return advertisement;
   } catch (error: unknown) {
     let errorMessage = "Failed to create advertisement";
