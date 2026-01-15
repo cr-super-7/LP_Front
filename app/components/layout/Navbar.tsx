@@ -12,6 +12,7 @@ import { Search, Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch } from "../../store/hooks";
 import { getUnreadCount } from "../../store/api/notificationApi";
+import { getCart } from "../../store/api/cartApi";
 import { useNotificationSocket } from "../../hooks/useNotificationSocket";
 
 export default function Navbar() {
@@ -25,6 +26,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   // Initialize Socket.IO connection for real-time notifications
   useNotificationSocket();
@@ -42,7 +44,7 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Load unread count when authenticated
+  // Load unread count and cart count when authenticated
   useEffect(() => {
     if (mounted && isAuthenticated) {
       const loadUnreadCount = async () => {
@@ -54,14 +56,33 @@ export default function Navbar() {
       };
       loadUnreadCount();
 
+      // Load cart count (only for students)
+      if (!isTeacher) {
+        const loadCartCount = async () => {
+          try {
+            const cart = await getCart(dispatch);
+            setCartCount(cart.items?.length || 0);
+          } catch (error) {
+            // Cart might be empty or not available
+            setCartCount(0);
+          }
+        };
+        loadCartCount();
+      }
+
       // Poll for new notifications every 30 seconds
       const interval = setInterval(() => {
         loadUnreadCount();
+        if (!isTeacher) {
+          getCart(dispatch)
+            .then((cart) => setCartCount(cart.items?.length || 0))
+            .catch(() => setCartCount(0));
+        }
       }, 30000);
 
       return () => clearInterval(interval);
     }
-  }, [mounted, isAuthenticated, dispatch]);
+  }, [mounted, isAuthenticated, dispatch, isTeacher]);
 
   return (
     <nav
@@ -71,16 +92,7 @@ export default function Navbar() {
         theme === "dark" ? "bg-blue-950 border-blue-800" : "bg-white border-gray-200"
       }`}
     >
-      {/* Logo - Clickable */}
-      <div
-        onClick={() => router.push("/")}
-        className={`text-xl font-bold cursor-pointer transition-opacity hover:opacity-80 shrink-0 ${
-          theme === "dark" ? "text-white" : "text-blue-950"
-        }`}
-      >
-        <span className="text-blue-400">LP</span>
-        <span className={theme === "dark" ? "text-white" : "text-blue-950"}> Company</span>
-      </div>
+
 
       {/* Search Bar */}
       <div className="flex-1 max-w-md">
@@ -106,7 +118,8 @@ export default function Navbar() {
         {/* Hide Cart icon if user is a teacher/instructor - Only render after mount to prevent hydration mismatch */}
         {mounted && !isTeacher && (
           <button
-            className={`p-2 rounded-lg transition-colors ${
+            onClick={() => router.push("/cart")}
+            className={`p-2 rounded-lg transition-colors relative ${
               theme === "dark" ? "hover:bg-blue-900" : "hover:bg-gray-100"
             }`}
             aria-label="Cart"
@@ -152,6 +165,11 @@ export default function Navbar() {
                 strokeLinejoin="round"
               />
             </svg>
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 flex items-center justify-center text-xs font-semibold rounded-full border-2 bg-red-500 text-white border-white">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
           </button>
         )}
         {mounted && isAuthenticated && (

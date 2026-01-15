@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Phone, Pencil, Lock } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
@@ -9,10 +9,15 @@ import Sidebar from "../../layout/Sidebar";
 import Navbar from "../../layout/Navbar";
 import Background from "../../layout/Background";
 import Footer from "../../layout/Footer";
-import { useAppDispatch } from "../../../store/hooks";
-import { updateProfile, changePassword } from "../../../store/api/authApi";
+import { useAppDispatch, useAppSelector } from "../../../store/hooks";
+import { updateProfile, changePassword, getUserProfile } from "../../../store/api/authApi";
+import { getMyEnrollments } from "../../../store/api/enrollmentApi";
+import { getCart } from "../../../store/api/cartApi";
+import { getMyProgress } from "../../../store/api/progressApi";
 import type { UserProfile } from "../../../store/interface/auth.interface";
 import type { UpdateProfileRequest, ChangePasswordRequest } from "../../../store/interface/auth.interface";
+import type { Enrollment } from "../../../store/interface/enrollmentInterface";
+import type { Course } from "../../../store/interface/courseInterface";
 
 type StudentProfileData = UserProfile & {
   totalCourses?: number;
@@ -26,12 +31,19 @@ type StudentProfileProps = {
   onUpdate?: () => void;
 };
 
-export default function StudentProfile({ user, onUpdate }: StudentProfileProps) {
+export default function StudentProfile({ user: propUser, onUpdate }: StudentProfileProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
   const dispatch = useAppDispatch();
+  const authUser = useAppSelector((state) => state.auth.user);
   const isRTL = language === "ar";
 
+  const [user, setUser] = useState<StudentProfileData | null>(propUser || null);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [inProgressCount, setInProgressCount] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -46,6 +58,65 @@ export default function StudentProfile({ user, onUpdate }: StudentProfileProps) 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Load user data and statistics
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        const authIds = authUser as { id?: string; _id?: string } | null;
+        const userId = authIds?.id || authIds?._id;
+
+        if (userId) {
+          // Load user profile
+          const userProfile = await getUserProfile(userId, dispatch);
+          setUser(userProfile as StudentProfileData);
+
+          // Load enrollments
+          const myEnrollments = await getMyEnrollments(dispatch);
+          setEnrollments(myEnrollments);
+          const totalCourses = myEnrollments.length;
+          const activeEnrollments = myEnrollments.filter((e) => e.status === "active");
+          setInProgressCount(activeEnrollments.length);
+          setCompletedCount(myEnrollments.filter((e) => e.status === "completed").length);
+
+          // Load cart
+          try {
+            const cart = await getCart(dispatch);
+            setCartCount(cart.items?.length || 0);
+          } catch (error) {
+            // Cart might be empty
+            setCartCount(0);
+          }
+
+          // Load progress to calculate in-progress courses
+          try {
+            const progress = await getMyProgress(dispatch);
+            const inProgress = progress.filter((p) => p.overallProgress > 0 && p.overallProgress < 100);
+            setInProgressCount(inProgress.length);
+          } catch (error) {
+            // Progress might not be available
+          }
+
+          // Update user with statistics
+          setUser((prev) => ({
+            ...prev,
+            ...userProfile,
+            totalCourses,
+            cartCount: cartCount,
+            inProgressCount: inProgressCount,
+            completedCount: completedCount,
+          } as StudentProfileData));
+        }
+      } catch (error) {
+        console.error("Failed to load student data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [authUser, dispatch]);
 
   const textAlign = isRTL ? "text-right" : "text-left";
   const roleLabel = language === "ar" ? "الطالب" : "Student";
@@ -75,6 +146,19 @@ export default function StudentProfile({ user, onUpdate }: StudentProfileProps) 
 
       await updateProfile(updateData, dispatch);
       setIsEditModalOpen(false);
+      
+      // Reload user data
+      const authIds = authUser as { id?: string; _id?: string } | null;
+      const userId = authIds?.id || authIds?._id;
+      if (userId) {
+        const updatedProfile = await getUserProfile(userId, dispatch);
+        setUser(updatedProfile as StudentProfileData);
+        setFormData({
+          bio: updatedProfile.bio || "",
+          location: updatedProfile.location || "",
+        });
+      }
+      
       if (onUpdate) {
         onUpdate();
       }
@@ -257,7 +341,7 @@ export default function StudentProfile({ user, onUpdate }: StudentProfileProps) 
                           theme === "dark" ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {user?.totalCourses ?? 5}
+                        {isLoading ? "..." : (user?.totalCourses ?? enrollments.length ?? 0)}
                       </p>
                     </div>
 
@@ -265,17 +349,17 @@ export default function StudentProfile({ user, onUpdate }: StudentProfileProps) 
                       <ProfileStat
                         color="orange"
                         label={language === "ar" ? "في السلة" : "Cart"}
-                        value={String(user?.cartCount ?? 3)}
+                        value={String(isLoading ? "..." : (user?.cartCount ?? cartCount ?? 0))}
                       />
                       <ProfileStat
                         color="indigo"
                         label={language === "ar" ? "قيد التقدّم" : "In Progress"}
-                        value={String(user?.inProgressCount ?? 3)}
+                        value={String(isLoading ? "..." : (user?.inProgressCount ?? inProgressCount ?? 0))}
                       />
                       <ProfileStat
                         color="green"
                         label={language === "ar" ? "مكتملة" : "Completed"}
-                        value={String(user?.completedCount ?? 6)}
+                        value={String(isLoading ? "..." : (user?.completedCount ?? completedCount ?? 0))}
                       />
                     </div>
                   </div>
@@ -284,29 +368,68 @@ export default function StudentProfile({ user, onUpdate }: StudentProfileProps) 
             </section>
 
             {/* Top course */}
-            <section className="space-y-6">
-              <h2 className="text-xl font-bold text-white">
-                {language === "ar" ? "أفضل دوراتي" : "My Top Course"}
-              </h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <CourseCard highlight />
-                <CourseCard />
-              </div>
-            </section>
+            {enrollments.length > 0 && (
+              <section className="space-y-6">
+                <h2 className={`text-xl font-bold ${
+                  theme === "dark" ? "text-white" : "text-blue-950"
+                }`}>
+                  {language === "ar" ? "أفضل دوراتي" : "My Top Course"}
+                </h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  {enrollments.slice(0, 2).map((enrollment, index) => {
+                    const course = typeof enrollment.course === "object" 
+                      ? enrollment.course 
+                      : null;
+                    if (!course) return null;
+                    return (
+                      <CourseCard 
+                        key={enrollment._id} 
+                        highlight={index === 0}
+                        course={course as Course}
+                        enrollment={enrollment}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
             {/* All courses */}
             <section className="space-y-6">
-              <h2 className="text-xl font-bold text-white">
+              <h2 className={`text-xl font-bold ${
+                theme === "dark" ? "text-white" : "text-blue-950"
+              }`}>
                 {language === "ar" ? "دوراتي" : "My Courses"}
               </h2>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-                <CourseCard />
-              </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                </div>
+              ) : enrollments.length === 0 ? (
+                <div className={`text-center py-12 ${
+                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                }`}>
+                  {language === "ar" 
+                    ? "لا توجد دورات مسجلة حالياً" 
+                    : "No enrolled courses yet"}
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {enrollments.map((enrollment) => {
+                    const course = typeof enrollment.course === "object" 
+                      ? enrollment.course 
+                      : null;
+                    if (!course) return null;
+                    return (
+                      <CourseCard 
+                        key={enrollment._id}
+                        course={course as Course}
+                        enrollment={enrollment}
+                      />
+                    );
+                  })}
+                </div>
+              )}
             </section>
           </div>
         </main>
@@ -652,51 +775,94 @@ function ProfileStat({ label, value, color }: ProfileStatProps) {
 
 type CourseCardProps = {
   highlight?: boolean;
+  course?: Course;
+  enrollment?: Enrollment;
 };
 
-function CourseCard({ highlight }: CourseCardProps) {
+function CourseCard({ highlight, course, enrollment }: CourseCardProps) {
+  const { theme } = useTheme();
+  const { language } = useLanguage();
+  const isRTL = language === "ar";
+  
+  if (!course) {
+    return null;
+  }
+
+  const courseTitle = language === "ar" ? course.title.ar : course.title.en;
+  const courseDescription = language === "ar" ? course.description.ar : course.description.en;
+  const levelLabel = 
+    course.level === "beginner" 
+      ? (language === "ar" ? "مبتدئ" : "Beginner")
+      : course.level === "intermediate"
+      ? (language === "ar" ? "متوسط" : "Intermediate")
+      : (language === "ar" ? "متقدم" : "Advanced");
+
   return (
     <article
-      className={`flex flex-col overflow-hidden rounded-2xl bg-slate-900/80 text-white shadow-xl ring-1 ring-slate-700/60 ${
-        highlight ? "scale-[1.01] border border-blue-400/60" : ""
+      className={`flex flex-col overflow-hidden rounded-2xl ${
+        theme === "dark" 
+          ? "bg-blue-900/50 text-white shadow-xl ring-1 ring-blue-700/60" 
+          : "bg-white text-gray-900 shadow-lg ring-1 ring-gray-200"
+      } ${
+        highlight ? "scale-[1.01] border-2 border-blue-400/60" : ""
       }`}
     >
       <div className="relative h-40 w-full">
         <Image
-          src="/images/courses/course-placeholder.jpg"
-          alt="Course image"
+          src={course.thumbnail || "/images/courses/course-placeholder.jpg"}
+          alt={courseTitle}
           fill
           className="object-cover"
+          unoptimized
         />
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold">Introduction To UI</h3>
-          <p className="text-xs text-slate-300">
-            15 Lessons • 500 Std • 15 h
+          <h3 className="text-lg font-semibold line-clamp-1">{courseTitle}</h3>
+          <p className={`text-xs ${
+            theme === "dark" ? "text-blue-200" : "text-gray-600"
+          }`}>
+            {course.totalLessons || 0} {language === "ar" ? "درس" : "Lessons"} • {course.durationHours}h
           </p>
         </div>
 
-        <p className="line-clamp-2 text-sm text-slate-300">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        <p className={`line-clamp-2 text-sm ${
+          theme === "dark" ? "text-blue-200" : "text-gray-600"
+        }`}>
+          {courseDescription}
         </p>
 
         <div className="mt-auto flex items-center justify-between pt-2 text-sm">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-semibold">
-              Advanced
-            </span>
-            <span className="flex items-center gap-1 text-yellow-400">
-              <span className="text-base">★</span> 4.3
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              theme === "dark" ? "bg-blue-800" : "bg-blue-100"
+            }`}>
+              {levelLabel}
             </span>
           </div>
-          <span className="font-bold text-blue-300">1400 $</span>
+          <span className={`font-bold ${
+            theme === "dark" ? "text-blue-300" : "text-blue-600"
+          }`}>
+            {course.price} {course.currency}
+          </span>
         </div>
 
-        <button className="mt-3 w-full rounded-full bg-blue-600 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-500">
-          View
+        {enrollment && (
+          <div className={`text-xs ${
+            theme === "dark" ? "text-blue-300" : "text-blue-600"
+          }`}>
+            {language === "ar" ? "الحالة: " : "Status: "}
+            {enrollment.status === "active" 
+              ? (language === "ar" ? "نشط" : "Active")
+              : enrollment.status === "completed"
+              ? (language === "ar" ? "مكتمل" : "Completed")
+              : (language === "ar" ? "ملغي" : "Cancelled")}
+          </div>
+        )}
+
+        <button className="mt-3 w-full rounded-full bg-blue-600 py-2 text-sm font-semibold text-white shadow-md hover:bg-blue-500 transition-colors">
+          {language === "ar" ? "عرض" : "View"}
         </button>
       </div>
     </article>

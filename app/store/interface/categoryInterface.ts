@@ -7,11 +7,11 @@ export interface LocalizedText {
 
 export interface Category {
   _id: string;
-  name: LocalizedText;
-  description: LocalizedText;
-  image: string;
-  createdAt: string;
-  updatedAt: string;
+  name: LocalizedText | string;
+  description?: LocalizedText | string;
+  image?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CategoriesResponse {

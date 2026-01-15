@@ -72,7 +72,7 @@ const createCourse = async (courseData: CreateCourseRequest, dispatch: AppDispat
 
     dispatch(addCourse(course));
     dispatch(setLoading(false));
-    toast.success(courseResponse.message || "Course created successfully");
+   
     return course;
   } catch (error: unknown) {
     let errorMessage = "Failed to create course";
@@ -307,5 +307,42 @@ const deleteCourse = async (courseId: string, dispatch: AppDispatch): Promise<vo
   }
 };
 
-export { createCourse, getCourses, getTeacherCourses, getCourseById, updateCourse, deleteCourse };
+const getCoursesByCategory = async (
+  categoryId: string,
+  dispatch: AppDispatch
+): Promise<{ category: any; courses: Course[]; message?: string }> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.get(`/courses/category/${categoryId}`);
+
+    // API response shape:
+    // { message: string, category: Category, courses: Course[] }
+    const category = data.category || {};
+    const courses = data.courses || [];
+
+    dispatch(setLoading(false));
+    return {
+      category,
+      courses,
+      message: data.message || "Courses retrieved successfully",
+    };
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch courses by category";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export { createCourse, getCourses, getTeacherCourses, getCourseById, updateCourse, deleteCourse, getCoursesByCategory };
 

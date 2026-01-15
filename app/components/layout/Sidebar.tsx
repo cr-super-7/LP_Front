@@ -7,7 +7,9 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { logout } from "../../store/slice/authSlice";
+import { getCategories } from "../../store/api/categoryApi";
 import type { RootState } from "../../store/store";
+import type { Category } from "../../store/interface/categoryInterface";
 import {
   Home,
   Grid3x3,
@@ -35,13 +37,32 @@ export default function Sidebar() {
   const isRTL = language === "ar";
   const [mounted, setMounted] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Fix hydration mismatch by only showing auth-dependent content after mount
   // This pattern is necessary in Next.js to prevent SSR/client mismatch
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    setMounted(true);
+    // Use setTimeout to avoid synchronous setState in effect
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Load categories from API
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await getCategories(dispatch);
+        setCategories(categoriesData || []);
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+        setCategories([]);
+      }
+    };
+
+    loadCategories();
+  }, [dispatch]);
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) =>
@@ -57,6 +78,23 @@ export default function Sidebar() {
   const isStudent = user?.role === "student";
   const isInstructor = user?.role === "instructor";
 
+  // Generate category subItems from API data
+  const categorySubItems = categories.map((category) => {
+    // Handle both LocalizedText and string name formats
+    let categoryName: string;
+    if (typeof category.name === "string") {
+      categoryName = category.name;
+    } else {
+      categoryName = language === "ar" ? category.name.ar : category.name.en;
+    }
+
+    return {
+      key: category._id,
+      href: `/courses/category/${category._id}`,
+      label: categoryName,
+    };
+  });
+
   // Student menu items
   const studentMenuItems = [
     {
@@ -71,12 +109,15 @@ export default function Sidebar() {
       icon: Grid3x3,
       label: t("sidebar.category"),
       hasSubmenu: true,
-      subItems: [
-        { key: "webDevelopment", href: "/courses/web-development", label: t("sidebar.webDevelopment") },
-        { key: "flutter", href: "/courses/flutter", label: t("sidebar.flutter") },
-        { key: "uxUiDesign", href: "/courses/ux-ui-design", label: t("sidebar.uxUiDesign") },
-        { key: "ai", href: "/courses/ai", label: t("sidebar.ai") },
-      ],
+      subItems: categorySubItems.length > 0 
+        ? categorySubItems 
+        : [
+            // Fallback to static items if categories are loading or empty
+            { key: "webDevelopment", href: "/courses/web-development", label: t("sidebar.webDevelopment") },
+            { key: "flutter", href: "/courses/flutter", label: t("sidebar.flutter") },
+            { key: "uxUiDesign", href: "/courses/ux-ui-design", label: t("sidebar.uxUiDesign") },
+            { key: "ai", href: "/courses/ai", label: t("sidebar.ai") },
+          ],
     },
     {
       key: "myCourses",
