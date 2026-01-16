@@ -1,7 +1,13 @@
 import api from "../utils/api";
 import { setLoading, setError, setReviews } from "../slice/reviewSlice";
 import { AppDispatch } from "../store";
-import type { Review, ReviewsResponse } from "../interface/reviewInterface";
+import type {
+  Review,
+  ReviewsResponse,
+  CreateCourseReviewRequest,
+  CreateLessonReviewRequest,
+} from "../interface/reviewInterface";
+
 
 // Define error response interface
 interface ErrorResponse {
@@ -81,10 +87,6 @@ const getCourseReviews = async (courseId: string, dispatch: AppDispatch): Promis
   }
 };
 
-interface CreateCourseReviewRequest {
-  rate: number;
-}
-
 const createCourseReview = async (
   courseId: string,
   reviewData: CreateCourseReviewRequest,
@@ -96,7 +98,7 @@ const createCourseReview = async (
 
     const review = (data.review || data) as Review;
     dispatch(setLoading(false));
-    toast.success(data.message || "Review created successfully");
+   
     return review;
   } catch (error: unknown) {
     let errorMessage = "Failed to create review";
@@ -117,4 +119,34 @@ const createCourseReview = async (
   }
 };
 
-export { getLessonReviews, getCourseReviews, createCourseReview };
+const createLessonReview = async (
+  lessonId: string,
+  reviewData: CreateLessonReviewRequest,
+  dispatch: AppDispatch
+): Promise<Review> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.post(`/reviews/lesson/${lessonId}`, reviewData);
+
+    const review = (data.review || data) as Review;
+    dispatch(setLoading(false));
+    return review;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to create review";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export { getLessonReviews, getCourseReviews, createCourseReview, createLessonReview };

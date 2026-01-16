@@ -44,3 +44,11 @@ export interface ReviewState {
   isLoading: boolean;
   error: string | null;
 }
+
+export interface CreateCourseReviewRequest {
+  rate: number;
+}
+
+export interface CreateLessonReviewRequest {
+  rate: number;
+}

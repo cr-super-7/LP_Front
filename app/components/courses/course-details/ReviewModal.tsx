@@ -15,6 +15,8 @@ interface ReviewModalProps {
   onClose: () => void;
   courseId: string;
   onSuccess: () => void;
+  onSubmitReview?: (rating: number) => Promise<void>;
+  isLesson?: boolean;
 }
 
 export default function ReviewModal({
@@ -22,6 +24,8 @@ export default function ReviewModal({
   onClose,
   courseId,
   onSuccess,
+  onSubmitReview,
+  isLesson = false,
 }: ReviewModalProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
@@ -53,19 +57,27 @@ export default function ReviewModal({
 
     try {
       setIsSubmittingReview(true);
-      await createCourseReview(courseId, { rate: selectedRating }, dispatch);
       
-      // Reload reviews
-      await getCourseReviews(courseId, dispatch);
+      // If custom submit handler is provided (for lessons), use it
+      if (onSubmitReview) {
+        await onSubmitReview(selectedRating);
+      } else {
+        // Default behavior for courses
+        await createCourseReview(courseId, { rate: selectedRating }, dispatch);
+        await getCourseReviews(courseId, dispatch);
+      }
       
       onClose();
       setSelectedRating(0);
       onSuccess();
-      toast.success(
-        language === "ar"
-          ? "تم إضافة التقييم بنجاح"
-          : "Review added successfully"
-      );
+      
+      if (!onSubmitReview) {
+        toast.success(
+          language === "ar"
+            ? "تم إضافة التقييم بنجاح"
+            : "Review added successfully"
+        );
+      }
     } catch (error: unknown) {
       console.error("Failed to submit review:", error);
       
@@ -93,7 +105,11 @@ export default function ReviewModal({
           apiErrorMessage?.includes("قيمت") ||
           apiErrorMessage?.includes("قيم")) {
         errorMessage = language === "ar"
-          ? "لقد قيّمت هذه الدورة مسبقاً"
+          ? isLesson
+            ? "لقد قيّمت هذا الدرس مسبقاً"
+            : "لقد قيّمت هذه الدورة مسبقاً"
+          : isLesson
+          ? "You have already reviewed this lesson"
           : "You have already reviewed this course";
         onClose();
         setSelectedRating(0);

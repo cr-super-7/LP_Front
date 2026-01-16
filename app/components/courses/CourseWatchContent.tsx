@@ -15,6 +15,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import type { Course } from "../../store/interface/courseInterface";
 import type { Lesson } from "../../store/interface/lessonInterface";
+import LessonReviews from "./course-details/LessonReviews";
 
 interface CourseWatchContentProps {
   course: Course;
@@ -148,6 +149,9 @@ export default function CourseWatchContent({
                   )}
                 </div>
               </div>
+
+              {/* Lesson Reviews */}
+              <LessonReviews lessonId={selectedLesson._id} />
             </div>
           ) : (
             <div

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useAppDispatch } from "../../store/hooks";
@@ -185,9 +185,11 @@ export default function CourseDetailsContent() {
           >
             {language === "ar" ? "الرئيسية" : "Home"}
           </button>
-          <span className={theme === "dark" ? "text-blue-400" : "text-gray-500"}>
-            {isRTL ? "←" : ">"}
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 ${
+              theme === "dark" ? "text-blue-400" : "text-gray-500"
+            } ${isRTL ? "rotate-180" : ""}`}
+          />
           <button
             onClick={() => router.push("/courses")}
             className={`hover:underline ${
@@ -198,11 +200,11 @@ export default function CourseDetailsContent() {
           </button>
           {courseData.category && (
             <>
-              <span
-                className={theme === "dark" ? "text-blue-400" : "text-gray-500"}
-              >
-                {isRTL ? "←" : ">"}
-              </span>
+              <ChevronRight
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-blue-400" : "text-gray-500"
+                } ${isRTL ? "rotate-180" : ""}`}
+              />
               <button
                 onClick={() =>
                   router.push(`/courses/category/${courseData.category._id}`)
@@ -215,9 +217,11 @@ export default function CourseDetailsContent() {
               </button>
             </>
           )}
-          <span className={theme === "dark" ? "text-blue-400" : "text-gray-500"}>
-            {isRTL ? "←" : ">"}
-          </span>
+          <ChevronRight
+            className={`h-4 w-4 ${
+              theme === "dark" ? "text-blue-400" : "text-gray-500"
+            } ${isRTL ? "rotate-180" : ""}`}
+          />
           <span className={theme === "dark" ? "text-white" : "text-gray-900"}>
             {courseTitle}
           </span>
