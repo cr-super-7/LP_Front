@@ -62,6 +62,11 @@ export interface GetCoursesParams {
   page?: number;
   limit?: number;
   sort?: string;
+  category?: string;
+  department?: string;
+  courseType?: "university" | "others";
+  level?: "beginner" | "intermediate" | "advanced";
+  teacher?: string;
 }
 
 export interface CourseState {

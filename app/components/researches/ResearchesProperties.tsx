@@ -9,7 +9,7 @@ import { useAppDispatch } from "../../store/hooks";
 import { getAdvertisements } from "../../store/api/advertisementApi";
 import type { Advertisement } from "../../store/interface/advertisementInterface";
 
-export default function CoursesProperties() {
+export default function ResearchesProperties() {
   const { t, language } = useLanguage();
   const { theme } = useTheme();
   const dispatch = useAppDispatch();
@@ -23,19 +23,19 @@ export default function CoursesProperties() {
     const loadAdvertisements = async () => {
       try {
         setIsLoading(true);
-        // Get both courses and all type advertisements
-        const [coursesAds, allAds] = await Promise.all([
-          getAdvertisements("courses", dispatch),
+        // Get both researches and all type advertisements
+        const [researchesAds, allAds] = await Promise.all([
+          getAdvertisements("researches", dispatch),
           getAdvertisements("all", dispatch),
         ]);
         // Combine and remove duplicates
-        const combinedAds = [...coursesAds, ...allAds];
+        const combinedAds = [...researchesAds, ...allAds];
         const uniqueAds = combinedAds.filter(
           (ad, index, self) => index === self.findIndex((a) => a._id === ad._id)
         );
         setAds(uniqueAds);
       } catch (error) {
-        console.error("Failed to load course advertisements:", error);
+        console.error("Failed to load research advertisements:", error);
       } finally {
         setIsLoading(false);
       }
@@ -80,7 +80,7 @@ export default function CoursesProperties() {
             theme === "dark" ? "text-white" : "text-blue-950"
           }`}
         >
-          {t("properties.courses")}
+          {language === "ar" ? "إعلانات الأبحاث" : "Research Advertisements"}
         </h2>
       </div>
 
@@ -144,8 +144,8 @@ export default function CoursesProperties() {
                 }`}
               >
                 {language === "ar"
-                  ? "لا توجد إعلانات دورات حالياً"
-                  : "No course advertisements right now"}
+                  ? "لا توجد إعلانات أبحاث حالياً"
+                  : "No research advertisements right now"}
               </p>
               <p
                 className={`text-xs md:text-sm mt-1 ${
@@ -153,8 +153,8 @@ export default function CoursesProperties() {
                 }`}
               >
                 {language === "ar"
-                  ? "تابعنا، سيتم إضافة إعلانات جديدة للدورات قريباً."
-                  : "Stay tuned, new course promotions will be added soon."}
+                  ? "تابعنا، سيتم إضافة إعلانات جديدة للأبحاث قريباً."
+                  : "Stay tuned, new research promotions will be added soon."}
               </p>
             </div>
           </motion.div>

@@ -8,10 +8,9 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { useAppDispatch } from "../../store/hooks";
 import { deleteResearch } from "../../store/api/researchApi";
 import ConfirmDeleteModal from "../myCoursesTeacher/lessons/ConfirmDeleteModal";
+
 import {
   ArrowLeft,
-  Edit,
-  Trash2,
   Clock,
   GraduationCap,
   Briefcase,
@@ -20,6 +19,8 @@ import {
   User,
   FileText,
   Download,
+  Building2,
+  MapPin,
 } from "lucide-react";
 import type { Research } from "../../store/interface/researchInterface";
 import toast from "react-hot-toast";
@@ -108,6 +109,7 @@ export default function ResearchDetailsContent({ research }: ResearchDetailsCont
 
   return (
     <div className="p-6 space-y-6">
+
       {/* Header with Back Button and Actions */}
       <div className="flex items-center justify-between">
         <button
@@ -122,30 +124,7 @@ export default function ResearchDetailsContent({ research }: ResearchDetailsCont
           <span>{language === "ar" ? "رجوع" : "Back"}</span>
         </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push(`/researches/create?edit=${research._id}`)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              theme === "dark"
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-blue-600 hover:bg-blue-700 text-white"
-            }`}
-          >
-            <Edit className="h-4 w-4" />
-            <span>{language === "ar" ? "تعديل" : "Edit"}</span>
-          </button>
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              theme === "dark"
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : "bg-red-600 hover:bg-red-700 text-white"
-            }`}
-          >
-            <Trash2 className="h-4 w-4" />
-            <span>{language === "ar" ? "حذف" : "Delete"}</span>
-          </button>
-        </div>
+        
       </div>
 
       {/* Main Content Card */}

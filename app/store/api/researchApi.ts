@@ -72,7 +72,7 @@ const createResearch = async (
 
     dispatch(addResearch(research));
     dispatch(setLoading(false));
-    toast.success(researchResponse.message || "Research created successfully");
+   
     return research;
   } catch (error: unknown) {
     let errorMessage = "Failed to create research";
@@ -86,6 +86,35 @@ const createResearch = async (
     }
     dispatch(setError(errorMessage));
     toast.error(errorMessage);
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+const getResearches = async (dispatch: AppDispatch): Promise<Research[]> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.get("/researches");
+
+    const researchesResponse: ResearchesResponse = data;
+    const researches = (researchesResponse.researches || data.result?.researches || []) as Research[];
+
+    dispatch(setResearches(researches));
+    dispatch(setLoading(false));
+    return researches;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch researches";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
     dispatch(setLoading(false));
     throw new Error(errorMessage);
   } finally {
@@ -242,6 +271,7 @@ const deleteResearch = async (researchId: string, dispatch: AppDispatch): Promis
 
 export {
   createResearch,
+  getResearches,
   getMyResearches,
   getResearchById,
   updateResearch,

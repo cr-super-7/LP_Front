@@ -25,6 +25,8 @@ import {
   BarChart3,
   FileText,
   Megaphone,
+  Building2,
+  Search,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -130,6 +132,18 @@ export default function Sidebar() {
       href: "/courses/liked",
       icon: Heart,
       label: t("sidebar.liked"),
+    },
+    {
+      key: "explore",
+      href: "/explore",
+      icon: Building2,
+      label: language === "ar" ? "استكشف" : "Explore",
+    },
+    {
+      key: "researches",
+      href: "/researches",
+      icon: Search,
+      label: language === "ar" ? "الأبحاث" : "Researches",
     },
     {
       key: "profile",

@@ -40,6 +40,7 @@ export default function Properties() {
       labelKey: "properties.research",
       position: "bottom-right",
       imageBg: "from-purple-200 to-purple-400",
+      image: "/home/R&S.png",
       delay: 0.4,
     },
   ];

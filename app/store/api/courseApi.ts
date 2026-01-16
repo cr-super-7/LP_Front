@@ -97,14 +97,23 @@ const createCourse = async (courseData: CreateCourseRequest, dispatch: AppDispat
 const getCourses = async (params: GetCoursesParams = {}, dispatch: AppDispatch): Promise<CoursesResponse> => {
   try {
     dispatch(setLoading(true));
-    const { page = 1, limit = 10, sort = "-createdAt" } = params;
+    const { page = 1, limit = 10, sort = "-createdAt", category, department, courseType, level, teacher } = params;
+    
+    // Build query params object, only including defined values
+    const queryParams: Record<string, string | number> = {
+      page,
+      limit,
+      sort,
+    };
+    
+    if (category) queryParams.category = category;
+    if (department) queryParams.department = department;
+    if (courseType) queryParams.courseType = courseType;
+    if (level) queryParams.level = level;
+    if (teacher) queryParams.teacher = teacher;
     
     const { data } = await api.get("/courses", {
-      params: {
-        page,
-        limit,
-        sort,
-      },
+      params: queryParams,
     });
 
     // API response shape:
