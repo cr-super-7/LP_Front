@@ -41,16 +41,51 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
   const courseDescription =
     language === "ar" ? course.description.ar : course.description.en;
 
-  // Get instructor name
+  // Get instructor name from Teacher data
   const getInstructorName = () => {
-    if (courseData.Teacher?.user) {
-      // If Teacher has user object, get email or name
-      if (typeof courseData.Teacher.user === "object") {
-        return courseData.Teacher.user.email || "Instructor";
-      }
+    // Check if Teacher.user is an object with name/email
+    if (courseData.Teacher?.user && typeof courseData.Teacher.user === "object") {
+      return (
+        courseData.Teacher.user.name ||
+        courseData.Teacher.user.email ||
+        "Instructor"
+      );
     }
+    // Check if Teacher has name directly
+    if (courseData.Teacher?.name) {
+      return courseData.Teacher.name;
+    }
+    // If Teacher.user is just an ID string, return default
     return "Instructor";
   };
+
+  // Get rating from course data (averageRating is in the course object directly)
+  const getRating = () => {
+    // Use averageRating from course object first (as shown in API response)
+    if (courseData.averageRating !== undefined) {
+      return courseData.averageRating;
+    }
+    // Fallback to Teacher.rating if available
+    if (courseData.Teacher?.rating !== undefined) {
+      return courseData.Teacher.rating;
+    }
+    return null;
+  };
+
+  // Get total students from Teacher data
+  const getTotalStudents = () => {
+    if (courseData.Teacher?.totalStudents !== undefined) {
+      return courseData.Teacher.totalStudents;
+    }
+    // Fallback to course students if available
+    if (courseData.totalStudents !== undefined) {
+      return courseData.totalStudents;
+    }
+    return null;
+  };
+
+  const rating = getRating();
+  const totalStudents = getTotalStudents();
 
   const handleCardClick = () => {
     router.push(`/courses/${course._id}`);
@@ -154,18 +189,24 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
           />
         </button>
 
-        {/* Rating */}
-        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-          <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-          <span className="text-white text-sm font-semibold">4.3</span>
-        </div>
-
-        {/* Installments Badge */}
-        <div className="absolute bottom-3 left-3">
-          <div className="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs font-medium">
-            {language === "ar" ? "تقسيط متاح" : "Installments Available"}
+        {/* Rating - Show if rating exists (even if 0) */}
+        {rating !== null && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
+            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+            <span className="text-white text-sm font-semibold">
+              {rating.toFixed(1)}
+            </span>
           </div>
-        </div>
+        )}
+
+        {/* Installments Badge - Only show if installments are available */}
+        {courseData.installmentsAvailable && (
+          <div className="absolute bottom-3 left-3">
+            <div className="px-3 py-1 rounded-lg bg-orange-500 text-white text-xs font-medium">
+              {language === "ar" ? "تقسيط متاح" : "Installments Available"}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Course Content */}
@@ -229,18 +270,20 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
               </span>
             </div>
           )}
-          <div className="flex items-center gap-1">
-            <Users
-              className={`h-4 w-4 ${
-                theme === "dark" ? "text-red-400" : "text-red-600"
-              }`}
-            />
-            <span
-              className={theme === "dark" ? "text-white" : "text-gray-900"}
-            >
-              500 {language === "ar" ? "طالب" : "Std"}
-            </span>
-          </div>
+          {totalStudents !== null && (
+            <div className="flex items-center gap-1">
+              <Users
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-red-400" : "text-red-600"
+                }`}
+              />
+              <span
+                className={theme === "dark" ? "text-white" : "text-gray-900"}
+              >
+                {totalStudents} {language === "ar" ? "طالب" : "Std"}
+              </span>
+            </div>
+          )}
           {course.durationHours && (
             <div className="flex items-center gap-1">
               <Clock

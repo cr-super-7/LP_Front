@@ -3,6 +3,7 @@ import { setLoading, setError, setCourses, setCurrentCourse, addCourse, updateCo
 import { AppDispatch } from "../store";
 import type { Course, CoursesResponse, CourseResponse, GetCoursesParams, CreateCourseRequest } from "../interface/courseInterface";
 import toast from "react-hot-toast";
+import { Category } from "../interface/categoryInterface";
 
 // Define error response interface
 interface ErrorResponse {
@@ -310,14 +311,14 @@ const deleteCourse = async (courseId: string, dispatch: AppDispatch): Promise<vo
 const getCoursesByCategory = async (
   categoryId: string,
   dispatch: AppDispatch
-): Promise<{ category: any; courses: Course[]; message?: string }> => {
+): Promise<{ category: Category; courses: Course[]; message?: string }> => {
   try {
     dispatch(setLoading(true));
     const { data } = await api.get(`/courses/category/${categoryId}`);
 
     // API response shape:
     // { message: string, category: Category, courses: Course[] }
-    const category = data.category || {};
+    const category = data.category as Category;
     const courses = data.courses || [];
 
     dispatch(setLoading(false));

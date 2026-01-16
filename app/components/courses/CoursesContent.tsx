@@ -7,7 +7,6 @@ import Navbar from "../layout/Navbar";
 import Background from "../layout/Background";
 import Footer from "../layout/Footer";
 import CoursesProperties from "./CoursesProperties";
-import ContinueLearning from "./ContinueLearning";
 import RecentlyAdded from "./RecentlyAdded";
 
 export default function CoursesContent() {
@@ -28,7 +27,6 @@ export default function CoursesContent() {
         <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
           <div className="max-w-7xl mx-auto">
             <CoursesProperties />
-            <ContinueLearning />
             <RecentlyAdded />
           </div>
         </main>

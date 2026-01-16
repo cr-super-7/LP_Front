@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import CourseCard from "./CourseCard";
+import { useAppDispatch } from "../../store/hooks";
+import { getCourses } from "../../store/api/courseApi";
+import type { Course } from "../../store/interface/courseInterface";
+import CourseCardGrid from "./cards/CourseCardGrid";
 
 export default function ContinueLearning() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { theme } = useTheme();
+  const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState("beginner");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const tabs = [
     { key: "beginner", label: t("courses.beginner") },
@@ -17,28 +23,35 @@ export default function ContinueLearning() {
     { key: "advanced", label: t("courses.advanced") },
   ];
 
-  const courses = [
-    {
-      instructor: "MR. Sahar",
-      courseName: "Programming Basics",
-      university: "imam mohammad ibn saud islamic university",
-      description: "Learn the fundamentals of programming with hands-on exercises and real-world examples.",
-      lessons: 15,
-      students: 500,
-      hours: 15,
-      image: "/home/course.png",
-    },
-    {
-      instructor: "MR. Mohammad",
-      courseName: "Programming Basics",
-      university: "imam mohammad ibn saud islamic university",
-      description: "Learn the fundamentals of programming with hands-on exercises and real-world examples.",
-      lessons: 15,
-      students: 500,
-      hours: 15,
-      image: "/home/course.png",
-    },
-  ];
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        setIsLoading(true);
+        const response = await getCourses(
+          {
+            page: 1,
+            limit: 6,
+            sort: "-createdAt",
+          },
+          dispatch
+        );
+        
+        // Filter courses by level
+        const filteredCourses = response.courses.filter(
+          (course) => course.level === activeTab
+        );
+        
+        setCourses(filteredCourses.slice(0, 2)); // Show max 2 courses
+      } catch (error) {
+        console.error("Failed to load courses:", error);
+        setCourses([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCourses();
+  }, [activeTab, dispatch]);
 
   return (
     <section className="mb-8">
@@ -70,18 +83,47 @@ export default function ContinueLearning() {
       </div>
 
       {/* Course Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {courses.map((course, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2].map((index) => (
+            <div
+              key={index}
+              className={`h-64 rounded-xl ${
+                theme === "dark" ? "bg-blue-900/50" : "bg-gray-200"
+              } animate-pulse`}
+            />
+          ))}
+        </div>
+      ) : courses.length === 0 ? (
+        <div
+          className={`text-center py-8 rounded-xl ${
+            theme === "dark" ? "bg-blue-900/30" : "bg-gray-100"
+          }`}
+        >
+          <p
+            className={`${
+              theme === "dark" ? "text-blue-200" : "text-gray-600"
+            }`}
           >
-            <CourseCard {...course} />
-          </motion.div>
-        ))}
-      </div>
+            {language === "ar"
+              ? "لا توجد دورات متاحة في هذا المستوى"
+              : "No courses available at this level"}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {courses.map((course, index) => (
+            <motion.div
+              key={course._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <CourseCardGrid course={course} />
+            </motion.div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

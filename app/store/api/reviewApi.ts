@@ -81,4 +81,40 @@ const getCourseReviews = async (courseId: string, dispatch: AppDispatch): Promis
   }
 };
 
-export { getLessonReviews, getCourseReviews };
+interface CreateCourseReviewRequest {
+  rate: number;
+}
+
+const createCourseReview = async (
+  courseId: string,
+  reviewData: CreateCourseReviewRequest,
+  dispatch: AppDispatch
+): Promise<Review> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.post(`/reviews/course/${courseId}`, reviewData);
+
+    const review = (data.review || data) as Review;
+    dispatch(setLoading(false));
+    toast.success(data.message || "Review created successfully");
+    return review;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to create review";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    // Don't show toast here - let the component handle it with proper translation
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
+export { getLessonReviews, getCourseReviews, createCourseReview };
