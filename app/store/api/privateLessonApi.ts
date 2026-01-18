@@ -111,6 +111,42 @@ const createPrivateLesson = async (
   }
 };
 
+const getPrivateLessons = async (dispatch?: AppDispatch): Promise<PrivateLesson[]> => {
+  try {
+    if (dispatch) dispatch(setLoading(true));
+
+    const { data } = await api.get<PrivateLessonsResponse>("/private-lessons");
+
+    // API response shape: { privateLessons: PrivateLesson[] }
+    const lessons: PrivateLesson[] = Array.isArray(data.privateLessons)
+      ? data.privateLessons
+      : data.result?.privateLessons || (Array.isArray(data) ? data : []);
+
+    if (dispatch) {
+      dispatch(setPrivateLessons(lessons));
+      dispatch(setLoading(false));
+    }
+    return lessons;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch private lessons";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    if (dispatch) {
+      dispatch(setError(errorMessage));
+      dispatch(setLoading(false));
+    }
+    throw new Error(errorMessage);
+  } finally {
+    if (dispatch) dispatch(setLoading(false));
+  }
+};
+
 const getMyPrivateLessons = async (dispatch: AppDispatch): Promise<PrivateLesson[]> => {
   try {
     dispatch(setLoading(true));
@@ -273,6 +309,7 @@ const deletePrivateLesson = async (lessonId: string, dispatch: AppDispatch): Pro
 
 export {
   createPrivateLesson,
+  getPrivateLessons,
   getMyPrivateLessons,
   getPrivateLessonById,
   updatePrivateLesson,

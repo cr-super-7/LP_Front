@@ -27,6 +27,7 @@ import {
   Megaphone,
   Building2,
   Search,
+  Users,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -138,6 +139,12 @@ export default function Sidebar() {
       href: "/explore",
       icon: Building2,
       label: language === "ar" ? "استكشف" : "Explore",
+    },
+    {
+      key: "privateLessons",
+      href: "/privet_lessons",
+      icon: Users,
+      label: language === "ar" ? "الدروس الخصوصية" : "Private Lessons",
     },
     {
       key: "researches",

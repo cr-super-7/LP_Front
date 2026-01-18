@@ -13,7 +13,10 @@ export interface ScheduleItem {
 
 export interface PrivateLesson {
   _id: string;
-  instructor: string;
+  instructor: string | {
+    _id: string;
+    user: string;
+  };
   instructorImage?: string;
   instructorName: LocalizedText;
   locationUrl: string;
@@ -27,19 +30,25 @@ export interface PrivateLesson {
       name: LocalizedText;
       university?: {
         _id: string;
-        name: LocalizedText;
+        name: LocalizedText | string;
       };
     };
   };
   lessonName: LocalizedText;
   lessonLevel: "beginner" | "intermediate" | "advanced";
-  price: number;
+  price?: number; // Legacy field
+  packagePrice?: number;
+  oneLessonPrice?: number;
   currency: "SAR" | "EGP";
   courseHours?: number;
   description: LocalizedText;
   schedule?: ScheduleItem[];
   isPublished?: boolean;
   status?: "pending" | "approved" | "rejected";
+  rejectionReason?: string | null;
+  reviews?: any[];
+  averageRating?: number;
+  totalReviews?: number;
   createdAt: string;
   updatedAt?: string;
 }
