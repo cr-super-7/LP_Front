@@ -1,14 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { deletePrivateLesson } from "../../store/api/privateLessonApi";
-import UpdatePrivateLessonModal from "./UpdatePrivateLessonModal";
-import ConfirmDeleteModal from "../myCoursesTeacher/lessons/ConfirmDeleteModal";
+import { addToWishlist, removeFromWishlist, getWishlist } from "../../store/api/wishlistApi";
+import { addToCart } from "../../store/api/cartApi";
 import {
   ArrowLeft,
   Clock,
@@ -19,10 +18,14 @@ import {
   XCircle,
   AlertCircle,
   Calendar,
-  DollarSign,
   Star,
   TrendingUp,
   CalendarDays,
+  Heart,
+  ShoppingCart,
+  BookOpen,
+  Users,
+  Building2,
 } from "lucide-react";
 import type { PrivateLesson } from "../../store/interface/privateLessonInterface";
 import type { RootState } from "../../store/store";
@@ -37,17 +40,106 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
   const { theme } = useTheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state: RootState) => state.auth);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const { user, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
-  // Check if current user is the instructor (owner of the lesson)
-  const isInstructor = user?.role === "instructor";
-  const userId = user?.id;
-  const isOwner = isInstructor && userId && 
-    (typeof lesson.instructor === "object" 
-      ? lesson.instructor.user === userId || lesson.instructor._id === userId
-      : lesson.instructor === userId);
+  // Check if lesson is in wishlist
+  useEffect(() => {
+    const checkWishlist = async () => {
+      if (isAuthenticated && user?.role === "student") {
+        try {
+          const wishlist = await getWishlist(dispatch);
+          const inWishlist = wishlist.items?.some(
+            (item) => item.courseId === lesson._id
+          );
+          setIsInWishlist(inWishlist || false);
+        } catch {
+          // Silently fail
+        }
+      }
+    };
+    checkWishlist();
+  }, [dispatch, isAuthenticated, lesson._id, user?.role]);
+
+  // Handle wishlist toggle
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
+      router.push("/auth/login");
+      return;
+    }
+
+    if (user?.role !== "student") {
+      toast.error(language === "ar" ? "هذه الميزة للطلاب فقط" : "This feature is for students only");
+      return;
+    }
+
+    setIsAddingToWishlist(true);
+    try {
+      if (isInWishlist) {
+        await removeFromWishlist(lesson._id, dispatch);
+        setIsInWishlist(false);
+        toast.success(language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from wishlist");
+      } else {
+        await addToWishlist({ courseId: lesson._id }, dispatch);
+        setIsInWishlist(true);
+        toast.success(language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to wishlist");
+      }
+    } catch {
+      toast.error(language === "ar" ? "حدث خطأ" : "Something went wrong");
+    }
+    setIsAddingToWishlist(false);
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
+      router.push("/auth/login");
+      return;
+    }
+
+    if (user?.role !== "student") {
+      toast.error(language === "ar" ? "هذه الميزة للطلاب فقط" : "This feature is for students only");
+      return;
+    }
+
+    setIsAddingToCart(true);
+    try {
+      await addToCart({ courseId: lesson._id }, dispatch);
+      toast.success(language === "ar" ? "تمت الإضافة إلى السلة" : "Added to cart");
+    } catch {
+      toast.error(language === "ar" ? "حدث خطأ" : "Something went wrong");
+    }
+    setIsAddingToCart(false);
+  };
+
+  // Handle enroll
+  const handleEnroll = async () => {
+    if (!isAuthenticated) {
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
+      router.push("/auth/login");
+      return;
+    }
+
+    if (user?.role !== "student") {
+      toast.error(language === "ar" ? "هذه الميزة للطلاب فقط" : "This feature is for students only");
+      return;
+    }
+
+    setIsEnrolling(true);
+    try {
+      // Navigate to booking/checkout page
+      router.push(`/private-lessons/${lesson._id}/book`);
+    } catch {
+      toast.error(language === "ar" ? "حدث خطأ" : "Something went wrong");
+    }
+    setIsEnrolling(false);
+  };
+
 
   // Get localized content
   const lessonName =
@@ -60,25 +152,6 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
     language === "ar"
       ? lesson.instructorName.ar || lesson.instructorName.en
       : lesson.instructorName.en || lesson.instructorName.ar;
-
-  const jobTitle =
-    lesson.jobTitle && (language === "ar" ? lesson.jobTitle.ar || lesson.jobTitle.en : lesson.jobTitle.en || lesson.jobTitle.ar);
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
   // Format level
   const levelLabels: Record<string, { ar: string; en: string }> = {
@@ -155,23 +228,6 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
 
   const priceInfo = getPrice(lesson);
 
-  // Handle delete
-  const handleDelete = async () => {
-    try {
-      await deletePrivateLesson(lesson._id, dispatch);
-      toast.success(language === "ar" ? "تم حذف الدرس الخاص بنجاح" : "Private lesson deleted successfully");
-      router.push("/private-lessons/my-lessons");
-    } catch (error) {
-      console.error("Failed to delete private lesson:", error);
-    }
-  };
-
-  // Handle update success
-  const handleUpdateSuccess = async () => {
-    setIsEditModalOpen(false);
-    router.refresh();
-  };
-
   // Get image URL
   const imageUrl = lesson.instructorImage || "/home/privet_lessons.png";
 
@@ -234,73 +290,174 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
 
       {/* Instructor Section - At the Top */}
       <section
-        className={`mb-8 rounded-3xl p-6 md:p-8 lg:p-10 shadow-2xl transition-all duration-300 ${
+        className={`mb-8 rounded-3xl shadow-2xl transition-all duration-300 relative overflow-hidden ${
           theme === "dark"
-            ? "bg-linear-to-br from-blue-900/60 to-blue-800/40 backdrop-blur-sm border border-blue-700/50"
-            : "bg-linear-to-br from-white to-blue-50/50 border border-gray-200 shadow-blue-100/50"
+            ? "bg-gradient-to-br from-blue-900/90 to-blue-800/70 backdrop-blur-sm border border-blue-700/50"
+            : "bg-gradient-to-br from-blue-600 to-blue-700 border border-blue-500"
         }`}
       >
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start">
+        {/* Background decorative lines */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-10 left-1/3 w-96 h-96 border border-white/5 rounded-full" />
+          <div className="absolute top-20 left-1/4 w-80 h-80 border border-white/5 rounded-full" />
+          <div className="absolute -top-10 left-1/2 w-72 h-72 border border-white/5 rounded-full" />
+        </div>
+
+        <div className="relative z-10 flex flex-row">
           {/* Instructor Image - Left Side */}
-          <div className={`relative w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 shrink-0 rounded-2xl overflow-hidden shadow-xl ring-4 ring-offset-4 transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
-            theme === "dark" ? "ring-blue-500/30" : "ring-blue-300/20"
-          }`}>
+          <div className="relative w-64 md:w-72 lg:w-80 shrink-0 self-stretch">
             <Image
               src={imageUrl}
               alt={instructorName}
               fill
-              className="object-cover"
-              sizes="(max-width: 768px) 128px, (max-width: 1024px) 160px, 250px"
+              className="object-cover rounded-r-none rounded-l-3xl"
+              sizes="(max-width: 768px) 256px, (max-width: 1024px) 288px, 320px"
             />
           </div>
 
-          {/* Instructor Info - Right Side */}
-          <div className="flex-1 text-center md:text-right">
-            <div className="mb-4">
-              <h2
-                className={`text-2xl md:text-3xl lg:text-4xl font-bold mb-2 ${
-                  theme === "dark" ? "text-white" : "text-blue-950"
-                }`}
-              >
-                {instructorName}
-              </h2>
-              {jobTitle && (
-                <p
-                  className={`text-lg md:text-xl ${
-                    theme === "dark" ? "text-blue-300" : "text-blue-600"
-                  }`}
-                >
-                  {jobTitle}
-                </p>
+          {/* Content - Right Side */}
+          <div className="flex-1 p-6 md:p-8 relative">
+            {/* Wishlist Heart Button - Top Right */}
+            <button
+              onClick={handleWishlistToggle}
+              disabled={isAddingToWishlist}
+              className={`absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full transition-all duration-300 ${
+                isInWishlist
+                  ? "text-red-500"
+                  : "text-white/60 hover:text-red-400"
+              } ${isAddingToWishlist ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
+              title={isInWishlist 
+                ? (language === "ar" ? "إزالة من المفضلة" : "Remove from wishlist")
+                : (language === "ar" ? "إضافة إلى المفضلة" : "Add to wishlist")
+              }
+            >
+              <Heart className={`h-6 w-6 ${isInWishlist ? "fill-red-500" : ""}`} />
+            </button>
+
+            {/* Instructor Name */}
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 pr-10">
+              {instructorName}
+            </h1>
+
+            {/* Description */}
+            {description && (
+              <p className="text-blue-100/90 text-sm md:text-base leading-relaxed mb-6">
+                {description}
+              </p>
+            )}
+
+            {/* Location & Department Info */}
+            <div className="space-y-2 mb-6 text-sm text-blue-100/80">
+              {lesson.department?.college?.university && (
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 shrink-0" />
+                  <span>
+                    {typeof lesson.department.college.university.name === "string"
+                      ? lesson.department.college.university.name
+                      : language === "ar"
+                      ? lesson.department.college.university.name.ar || lesson.department.college.university.name.en
+                      : lesson.department.college.university.name.en || lesson.department.college.university.name.ar}
+                    {lesson.department?.college && (
+                      <> &quot;{language === "ar" ? lesson.department.college.name.ar : lesson.department.college.name.en}&quot;</>
+                    )}
+                  </span>
+                </div>
+              )}
+              {lesson.locationUrl && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 shrink-0" />
+                  <span>{language === "ar" ? "الموقع" : "location"}</span>
+                </div>
+              )}
+              {lessonName && (
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span>{lessonName}</span>
+                </div>
               )}
             </div>
 
-            {/* Rating Display */}
-            {lesson.averageRating !== undefined && lesson.averageRating !== null && (
-              <div className="flex items-center justify-center md:justify-end gap-2 mb-4">
-                <div className="flex items-center gap-1">
-                  <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  <span className={`text-lg font-bold ${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                    {lesson.averageRating.toFixed(1)}
+            {/* Price - Right aligned */}
+            {priceInfo && (
+              <div className="flex justify-end mb-6">
+                <div>
+                  <span className="text-3xl md:text-4xl font-bold text-emerald-400">
+                    {priceInfo.price}
                   </span>
+                  <span className="text-emerald-300/80 text-lg ml-2">{lesson.currency}</span>
                 </div>
-                {lesson.totalReviews !== undefined && lesson.totalReviews > 0 && (
-                  <span className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>
-                    ({lesson.totalReviews} {language === "ar" ? "تقييم" : "reviews"})
-                  </span>
-                )}
               </div>
             )}
 
-            {/* Price Display */}
-            {priceInfo && (
-              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
-                <DollarSign className={`h-5 w-5 ${theme === "dark" ? "text-green-400" : "text-green-600"}`} />
-                <span className={`text-xl font-bold ${theme === "dark" ? "text-green-400" : "text-green-600"}`}>
-                  {priceInfo.price} {lesson.currency}
-                </span>
+            {/* Stats Bar */}
+            <div className={`flex flex-wrap items-center justify-center gap-8 md:gap-12 py-4 px-4 rounded-2xl mb-6 ${
+              theme === "dark" ? "bg-blue-900/40" : "bg-white/10"
+            }`}>
+              {lesson.schedule && lesson.schedule.length > 0 && (
+                <div className="flex flex-col items-center">
+                  <BookOpen className="h-5 w-5 text-blue-200 mb-1" />
+                  <span className="text-white font-bold">{lesson.schedule.length}</span>
+                  <span className="text-blue-200/70 text-xs">{language === "ar" ? "درس" : "Lessons"}</span>
+                </div>
+              )}
+              {lesson.totalReviews !== undefined && (
+                <div className="flex flex-col items-center">
+                  <Users className="h-5 w-5 text-red-400 mb-1" />
+                  <span className="text-white font-bold">{lesson.totalReviews || 0}</span>
+                  <span className="text-blue-200/70 text-xs">{language === "ar" ? "طالب" : "Student"}</span>
+                </div>
+              )}
+              {lesson.courseHours && (
+                <div className="flex flex-col items-center">
+                  <Clock className="h-5 w-5 text-blue-200 mb-1" />
+                  <span className="text-white font-bold">{lesson.courseHours}</span>
+                  <span className="text-blue-200/70 text-xs">{language === "ar" ? "ساعة" : "Hour"}</span>
+                </div>
+              )}
+              <div className="flex flex-col items-center">
+                <Star className="h-5 w-5 text-yellow-400 mb-1" />
+                <span className="text-white font-bold">{lesson.averageRating?.toFixed(1) || "0.0"}</span>
+                <span className="text-blue-200/70 text-xs">{language === "ar" ? "التقييم" : "Rating"}</span>
               </div>
-            )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={handleAddToCart}
+                disabled={isAddingToCart}
+                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 border-2 ${
+                  isAddingToCart
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-white/10"
+                } border-blue-300/30 text-white`}
+              >
+                <span>
+                  {isAddingToCart
+                    ? (language === "ar" ? "جاري الإضافة..." : "Adding...")
+                    : (language === "ar" ? "أضف إلى السلة" : "Add to cart")
+                  }
+                </span>
+                <ShoppingCart className="h-4 w-4" />
+              </button>
+              <button
+                onClick={handleEnroll}
+                disabled={isEnrolling}
+                className={`flex-1 sm:flex-[2] flex items-center justify-center gap-2 px-8 py-3 rounded-full font-bold transition-all duration-300 ${
+                  isEnrolling
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-blue-400"
+                } bg-blue-500 text-white shadow-lg`}
+              >
+                <span>
+                  {isEnrolling
+                    ? (language === "ar" ? "جاري التسجيل..." : "Enrolling...")
+                    : (language === "ar" ? "سجل الآن" : "Enroll")
+                  }
+                </span>
+                <ArrowLeft className={`h-4 w-4 ${language === "ar" ? "" : "rotate-180"}`} />
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -710,52 +867,6 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
             </div>
           )}
 
-          {/* Dates Card */}
-          <div
-            className={`rounded-2xl p-6 shadow-xl transition-all duration-300 ${
-              theme === "dark"
-                ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
-                : "bg-white border border-gray-200"
-            }`}
-          >
-            <h3
-              className={`text-sm font-semibold mb-4 ${
-                theme === "dark" ? "text-blue-200" : "text-gray-600"
-              }`}
-            >
-              {language === "ar" ? "التواريخ" : "Dates"}
-            </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className={`h-4 w-4 ${theme === "dark" ? "text-blue-300" : "text-blue-600"}`} />
-                <div>
-                  <p
-                    className={`text-xs ${theme === "dark" ? "text-blue-300" : "text-gray-600"}`}
-                  >
-                    {language === "ar" ? "تاريخ الإنشاء" : "Created"}
-                  </p>
-                  <p className={`text-sm ${theme === "dark" ? "text-white" : "text-blue-950"}`}>
-                    {formatDate(lesson.createdAt)}
-                  </p>
-                </div>
-              </div>
-              {lesson.updatedAt && (
-                <div className="flex items-center gap-2">
-                  <Clock className={`h-4 w-4 ${theme === "dark" ? "text-blue-300" : "text-blue-600"}`} />
-                  <div>
-                    <p
-                      className={`text-xs ${theme === "dark" ? "text-blue-300" : "text-gray-600"}`}
-                    >
-                      {language === "ar" ? "آخر تحديث" : "Last Updated"}
-                    </p>
-                    <p className={`text-sm ${theme === "dark" ? "text-white" : "text-blue-950"}`}>
-                      {formatDate(lesson.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         </aside>
       </div>
 
