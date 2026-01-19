@@ -159,11 +159,17 @@ const getCourses = async (params: GetCoursesParams = {}, dispatch: AppDispatch):
   }
 };
 
-const getTeacherCourses = async (dispatch: AppDispatch): Promise<Course[]> => {
+const getTeacherCourses = async (dispatch: AppDispatch, sort?: string): Promise<Course[]> => {
   try {
     dispatch(setLoading(true));
     
-    const { data } = await api.get("/courses/teacher/my");
+    // Build query params - supports sort=popular
+    const queryParams: Record<string, string> = {};
+    if (sort) queryParams.sort = sort;
+    
+    const { data } = await api.get("/courses/teacher/my", {
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    });
 
     // API response shape: Course[] or { courses: Course[] } or { message: string, courses: Course[] }
     const courses: Course[] = Array.isArray(data) 
@@ -319,11 +325,19 @@ const deleteCourse = async (courseId: string, dispatch: AppDispatch): Promise<vo
 
 const getCoursesByCategory = async (
   categoryId: string,
-  dispatch: AppDispatch
+  dispatch: AppDispatch,
+  sort?: string
 ): Promise<{ category: Category; courses: Course[]; message?: string }> => {
   try {
     dispatch(setLoading(true));
-    const { data } = await api.get(`/courses/category/${categoryId}`);
+    
+    // Build query params - supports sort=popular
+    const queryParams: Record<string, string> = {};
+    if (sort) queryParams.sort = sort;
+    
+    const { data } = await api.get(`/courses/category/${categoryId}`, {
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    });
 
     // API response shape:
     // { message: string, category: Category, courses: Course[] }

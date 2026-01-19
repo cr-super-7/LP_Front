@@ -1,18 +1,25 @@
 // Order Interfaces
 
+export interface OrderCourse {
+  _id: string;
+  title: {
+    ar: string;
+    en: string;
+  };
+  currency?: string;
+  thumbnail?: string;
+  // Popularity fields (included in order response)
+  enrollCount?: number;
+  playCount?: number;
+  purchaseCount?: number;
+  popularityScore?: number;
+  [key: string]: unknown;
+}
+
 export interface OrderItem {
   courseId: string;
   price: number;
-  course?: {
-    _id: string;
-    title: {
-      ar: string;
-      en: string;
-    };
-    currency?: string;
-    thumbnail?: string;
-    [key: string]: any;
-  };
+  course?: OrderCourse;
 }
 
 export interface Order {
@@ -20,10 +27,14 @@ export interface Order {
   user: string | {
     _id: string;
     email: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
-  items: OrderItem[];
-  total: number;
+  courses?: OrderCourse[]; // New format from API
+  items?: OrderItem[]; // Legacy format
+  discount?: number;
+  subtotal?: number;
+  totalPayment?: number;
+  total?: number; // Legacy field
   status: "pending" | "completed" | "cancelled";
   createdAt: string;
   updatedAt?: string;

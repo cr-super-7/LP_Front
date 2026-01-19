@@ -93,10 +93,25 @@ const createResearch = async (
   }
 };
 
-const getResearches = async (dispatch: AppDispatch): Promise<Research[]> => {
+// Parameters for getResearches
+interface GetResearchesParams {
+  sort?: string; // supports "popular" for popularity sorting
+}
+
+const getResearches = async (
+  dispatch: AppDispatch,
+  params?: GetResearchesParams
+): Promise<Research[]> => {
   try {
     dispatch(setLoading(true));
-    const { data } = await api.get("/researches");
+    
+    // Build query params - supports sort=popular
+    const queryParams: Record<string, string> = {};
+    if (params?.sort) queryParams.sort = params.sort;
+    
+    const { data } = await api.get("/researches", {
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    });
 
     const researchesResponse: ResearchesResponse = data;
     const researches = (researchesResponse.researches || data.result?.researches || []) as Research[];

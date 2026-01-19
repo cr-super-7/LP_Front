@@ -11,6 +11,15 @@ export interface ScheduleItem {
   duration: number; // hours
 }
 
+// Review interface for private lessons
+export interface PrivateLessonReview {
+  _id: string;
+  user: string;
+  comment: string;
+  rate: number;
+  createdAt: string;
+}
+
 export interface PrivateLesson {
   _id: string;
   instructor: string | {
@@ -46,7 +55,12 @@ export interface PrivateLesson {
   isPublished?: boolean;
   status?: "pending" | "approved" | "rejected";
   rejectionReason?: string | null;
-  reviews?: any[];
+  // Popularity/Stats fields (new)
+  bookingCount?: number;
+  viewCount?: number;
+  popularityScore?: number;
+  // Reviews
+  reviews?: PrivateLessonReview[];
   averageRating?: number;
   totalReviews?: number;
   createdAt: string;

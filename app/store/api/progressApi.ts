@@ -4,6 +4,7 @@ import type {
   LessonProgress,
   CourseProgress,
   ProgressResponse,
+  CourseProgressResponse,
   ProgressesResponse,
   UpdateProgressRequest,
 } from "../interface/progressInterface";
@@ -21,10 +22,19 @@ interface ErrorResponse {
   message?: string;
 }
 
+/**
+ * Update lesson progress - this also increments playCount for lesson and course
+ * and updates popularityScore for the course
+ * 
+ * @param lessonId - The lesson ID
+ * @param progressData - { progress?: number (0-100), watchTime?: number (seconds) }
+ * @param dispatch - Redux dispatch
+ * @returns LessonProgress
+ */
 const updateLessonProgress = async (
   lessonId: string,
   progressData: UpdateProgressRequest,
-  dispatch: AppDispatch
+  _dispatch: AppDispatch
 ): Promise<LessonProgress> => {
   try {
     const { data } = await api.put<ProgressResponse>(
@@ -33,7 +43,7 @@ const updateLessonProgress = async (
     );
 
     const progress = (data.progress || data) as LessonProgress;
-    toast.success(data.message || "Progress updated successfully");
+    // Don't show toast for progress updates as they happen frequently
     return progress;
   } catch (error: unknown) {
     let errorMessage = "Failed to update progress";
@@ -45,19 +55,36 @@ const updateLessonProgress = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
-    toast.error(errorMessage);
+    // Silent fail for progress updates
+    console.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
+/**
+ * Get course progress with lessons
+ * 
+ * @param courseId - The course ID
+ * @param dispatch - Redux dispatch
+ * @returns CourseProgress with lessons array
+ */
 const getCourseProgress = async (
   courseId: string,
-  dispatch: AppDispatch
+  _dispatch: AppDispatch
 ): Promise<CourseProgress> => {
   try {
-    const { data } = await api.get<ProgressResponse>(`/progress/course/${courseId}`);
+    const { data } = await api.get<CourseProgressResponse>(`/progress/course/${courseId}`);
 
-    const progress = (data.progress || data) as CourseProgress;
+    // Transform response to CourseProgress format
+    const progress: CourseProgress = {
+      course: data.course,
+      enrollment: data.enrollment,
+      overallProgress: data.overallProgress || 0,
+      completedLessons: data.completedLessons || 0,
+      totalLessons: data.totalLessons || 0,
+      lessons: data.lessons || [],
+    };
+    
     return progress;
   } catch (error: unknown) {
     let errorMessage = "Failed to fetch course progress";
@@ -74,7 +101,13 @@ const getCourseProgress = async (
   }
 };
 
-const getMyProgress = async (dispatch: AppDispatch): Promise<CourseProgress[]> => {
+/**
+ * Get all my progress records
+ * 
+ * @param dispatch - Redux dispatch
+ * @returns Array of LessonProgress
+ */
+const getMyProgress = async (_dispatch: AppDispatch): Promise<LessonProgress[]> => {
   try {
     const { data } = await api.get<ProgressesResponse>("/progress/my");
 

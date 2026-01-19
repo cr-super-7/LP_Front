@@ -5,6 +5,15 @@ export interface LocalizedText {
   en: string;
 }
 
+// Review interface for courses
+export interface CourseReview {
+  _id: string;
+  user: string;
+  comment: string;
+  rate: number;
+  createdAt: string;
+}
+
 export interface Course {
   _id: string;
   title: LocalizedText;
@@ -21,6 +30,15 @@ export interface Course {
   totalLessons?: number;
   isPublished?: boolean;
   thumbnail?: string;
+  // Popularity/Stats fields (new)
+  enrollCount?: number;
+  playCount?: number;
+  purchaseCount?: number;
+  popularityScore?: number;
+  // Reviews (new)
+  reviews?: CourseReview[];
+  averageRating?: number;
+  totalReviews?: number;
   createdAt: string;
   updatedAt?: string;
 }

@@ -41,6 +41,9 @@ export interface Research {
   isApproved: boolean;
   approvedBy?: User | string | null;
   approvedAt?: string | null;
+  // Popularity/Stats fields (new)
+  viewCount?: number;
+  popularityScore?: number;
   createdAt: string;
   updatedAt?: string;
 }

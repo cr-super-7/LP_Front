@@ -111,11 +111,25 @@ const createPrivateLesson = async (
   }
 };
 
-const getPrivateLessons = async (dispatch?: AppDispatch): Promise<PrivateLesson[]> => {
+// Parameters for getPrivateLessons
+interface GetPrivateLessonsParams {
+  sort?: string; // supports "popular" for popularity sorting
+}
+
+const getPrivateLessons = async (
+  dispatch?: AppDispatch,
+  params?: GetPrivateLessonsParams
+): Promise<PrivateLesson[]> => {
   try {
     if (dispatch) dispatch(setLoading(true));
 
-    const { data } = await api.get<PrivateLessonsResponse>("/private-lessons");
+    // Build query params - supports sort=popular
+    const queryParams: Record<string, string> = {};
+    if (params?.sort) queryParams.sort = params.sort;
+
+    const { data } = await api.get<PrivateLessonsResponse>("/private-lessons", {
+      params: Object.keys(queryParams).length > 0 ? queryParams : undefined,
+    });
 
     // API response shape: { privateLessons: PrivateLesson[] }
     const lessons: PrivateLesson[] = Array.isArray(data.privateLessons)

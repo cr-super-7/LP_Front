@@ -5,6 +5,15 @@ export interface LocalizedText {
   en: string;
 }
 
+// Review interface for lessons
+export interface LessonReview {
+  _id: string;
+  user: string;
+  comment: string;
+  rate: number;
+  createdAt: string;
+}
+
 export interface Lesson {
   _id: string;
   course: string;
@@ -15,6 +24,12 @@ export interface Lesson {
   isFree?: boolean;
   status?: "pending" | "approved" | "rejected";
   rejectionReason?: string;
+  // Play count (new)
+  playCount?: number;
+  // Reviews (new)
+  reviews?: LessonReview[];
+  averageRating?: number;
+  totalReviews?: number;
   createdAt: string;
   updatedAt?: string;
 }
