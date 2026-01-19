@@ -16,7 +16,7 @@ import {
   BookOpen,
   Heart,
   User,
-
+  Package,
   HelpCircle,
   LogOut,
   ChevronDown,
@@ -127,6 +127,12 @@ export default function Sidebar() {
       href: "/courses/my-courses",
       icon: BookOpen,
       label: t("sidebar.myCourses"),
+    },
+    {
+      key: "myOrders",
+      href: "/orders",
+      icon: Package,
+      label: language === "ar" ? "طلباتي" : "My Orders",
     },
     {
       key: "liked",

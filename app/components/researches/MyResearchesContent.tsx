@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
-import { Lightbulb, Link2, User, ExternalLink, ChevronRight, ChevronLeft, CheckCircle, Clock, Filter, ChevronDown, Trash2 } from "lucide-react";
+import { Lightbulb, Link2, User, ExternalLink, ChevronRight, ChevronLeft, CheckCircle, Clock, Filter, ChevronDown, Trash2, Eye, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getMyResearches, deleteResearch } from "../../store/api/researchApi";
@@ -321,6 +321,17 @@ function ResearchCard({
   // Get image URL - using file URL as thumbnail or default image
   const imageUrl = research.file || "/home/privet_lessons.png";
 
+  // Format number for display (e.g., 1500 -> 1.5K)
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toString();
+  };
+
   return (
     <div
       className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl ${
@@ -390,20 +401,56 @@ function ResearchCard({
           {description}
         </p>
 
-        {/* Author */}
-        <div className="flex items-center gap-2">
-          <User
-            className={`h-4 w-4 ${
-              theme === "dark" ? "text-white" : "text-blue-600"
-            }`}
-          />
-          <span
-            className={`text-sm ${
-              theme === "dark" ? "text-white" : "text-blue-700"
-            }`}
-          >
-            {researcherName}
-          </span>
+        {/* Author & Stats */}
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <User
+              className={`h-4 w-4 ${
+                theme === "dark" ? "text-white" : "text-blue-600"
+              }`}
+            />
+            <span
+              className={`text-sm ${
+                theme === "dark" ? "text-white" : "text-blue-700"
+              }`}
+            >
+              {researcherName}
+            </span>
+          </div>
+          {/* View Count - New */}
+          {research.viewCount !== undefined && research.viewCount > 0 && (
+            <div className="flex items-center gap-1">
+              <Eye
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-purple-300" : "text-purple-600"
+                }`}
+              />
+              <span
+                className={`text-sm ${
+                  theme === "dark" ? "text-white" : "text-blue-700"
+                }`}
+              >
+                {formatNumber(research.viewCount)} {language === "ar" ? "مشاهدة" : "views"}
+              </span>
+            </div>
+          )}
+          {/* Popularity Score - New */}
+          {research.popularityScore !== undefined && research.popularityScore > 0 && (
+            <div className="flex items-center gap-1">
+              <TrendingUp
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-green-300" : "text-green-600"
+                }`}
+              />
+              <span
+                className={`text-sm ${
+                  theme === "dark" ? "text-white" : "text-blue-700"
+                }`}
+              >
+                {research.popularityScore.toFixed(0)}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}

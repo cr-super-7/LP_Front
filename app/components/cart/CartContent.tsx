@@ -210,12 +210,10 @@ export default function CartContent() {
     const itemsToCheckout = Array.from(selectedItems);
     
     try {
-      const orderItems = selectedCartItems.map((item) => ({
-        courseId: item.courseId,
-        price: item.price,
-      }));
+      // New API format: courseIds array and optional discount
+      const courseIds = selectedCartItems.map((item) => item.courseId);
 
-      await createOrder({ items: orderItems }, dispatch);
+      await createOrder({ courseIds, discount: discount || 0 }, dispatch);
 
       // Clear selected items from cart
       for (const courseId of itemsToCheckout) {

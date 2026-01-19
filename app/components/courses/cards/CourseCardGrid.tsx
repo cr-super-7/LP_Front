@@ -11,6 +11,8 @@ import {
   Clock,
   ShoppingCart,
   ArrowRight,
+  Eye,
+  TrendingUp,
 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -72,8 +74,12 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
     return null;
   };
 
-  // Get total students from Teacher data
+  // Get total students/enrollments - prioritize enrollCount from new API
   const getTotalStudents = () => {
+    // New API field: enrollCount
+    if (courseData.enrollCount !== undefined && courseData.enrollCount > 0) {
+      return courseData.enrollCount;
+    }
     if (courseData.Teacher?.totalStudents !== undefined) {
       return courseData.Teacher.totalStudents;
     }
@@ -84,8 +90,28 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
     return null;
   };
 
+  // Get play count (views)
+  const getPlayCount = () => {
+    if (courseData.playCount !== undefined && courseData.playCount > 0) {
+      return courseData.playCount;
+    }
+    return null;
+  };
+
+  // Format number for display (e.g., 1500 -> 1.5K)
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toString();
+  };
+
   const rating = getRating();
   const totalStudents = getTotalStudents();
+  const playCount = getPlayCount();
 
   const handleCardClick = () => {
     router.push(`/courses/${course._id}`);
@@ -254,7 +280,7 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
         </p>
 
         {/* Course Stats */}
-        <div className="flex items-center gap-4 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
           {course.totalLessons && (
             <div className="flex items-center gap-1">
               <BookOpen
@@ -274,13 +300,27 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
             <div className="flex items-center gap-1">
               <Users
                 className={`h-4 w-4 ${
-                  theme === "dark" ? "text-red-400" : "text-red-600"
+                  theme === "dark" ? "text-green-400" : "text-green-600"
                 }`}
               />
               <span
                 className={theme === "dark" ? "text-white" : "text-gray-900"}
               >
-                {totalStudents} {language === "ar" ? "طالب" : "Std"}
+                {formatNumber(totalStudents)} {language === "ar" ? "مسجل" : "Enrolled"}
+              </span>
+            </div>
+          )}
+          {playCount !== null && (
+            <div className="flex items-center gap-1">
+              <Eye
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-purple-400" : "text-purple-600"
+                }`}
+              />
+              <span
+                className={theme === "dark" ? "text-white" : "text-gray-900"}
+              >
+                {formatNumber(playCount)} {language === "ar" ? "مشاهدة" : "Views"}
               </span>
             </div>
           )}
@@ -288,7 +328,7 @@ export default function CourseCardGrid({ course }: CourseCardGridProps) {
             <div className="flex items-center gap-1">
               <Clock
                 className={`h-4 w-4 ${
-                  theme === "dark" ? "text-green-400" : "text-green-600"
+                  theme === "dark" ? "text-orange-400" : "text-orange-600"
                 }`}
               />
               <span

@@ -40,7 +40,14 @@ export interface Order {
   updatedAt?: string;
 }
 
+// New API format
 export interface CreateOrderRequest {
+  courseIds: string[];
+  discount?: number;
+}
+
+// Legacy format (kept for backward compatibility)
+export interface CreateOrderRequestLegacy {
   items: Array<{
     courseId: string;
     price: number;

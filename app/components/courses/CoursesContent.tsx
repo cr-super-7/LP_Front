@@ -8,6 +8,7 @@ import Background from "../layout/Background";
 import Footer from "../layout/Footer";
 import CoursesProperties from "./CoursesProperties";
 import LatestCourses from "./LatestCourses";
+import PopularCourses from "./PopularCourses";
 import RecentlyAdded from "./RecentlyAdded";
 
 export default function CoursesContent() {
@@ -29,6 +30,7 @@ export default function CoursesContent() {
           <div className="max-w-7xl mx-auto">
             <CoursesProperties />
             <LatestCourses />
+            <PopularCourses />
             <div id="all-courses">
               <RecentlyAdded />
             </div>

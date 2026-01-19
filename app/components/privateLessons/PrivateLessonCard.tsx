@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Clock, RefreshCw, ExternalLink, Trash2 } from "lucide-react";
+import { Clock, RefreshCw, ExternalLink, Trash2, Eye, Users, Star } from "lucide-react";
 import type { PrivateLesson } from "../../store/interface/privateLessonInterface";
 
 interface PrivateLessonCardProps {
@@ -56,6 +56,17 @@ export default function PrivateLessonCard({
   // Get image URL
   const imageUrl = lesson.instructorImage || "/home/privet_lessons.png";
 
+  // Format number for display (e.g., 1500 -> 1.5K)
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    }
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toString();
+  };
+
   // Get status text
   const getStatusText = () => {
     if (lesson.status === "pending") {
@@ -101,9 +112,9 @@ export default function PrivateLessonCard({
         </h3>
 
         {/* Stats */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
           {lesson.courseHours !== undefined && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Clock
                 className={`h-4 w-4 ${
                   theme === "dark" ? "text-blue-300" : "text-blue-600"
@@ -115,6 +126,55 @@ export default function PrivateLessonCard({
                 }`}
               >
                 {lesson.courseHours} {language === "ar" ? "س" : "h"}
+              </span>
+            </div>
+          )}
+          {/* View Count - New */}
+          {lesson.viewCount !== undefined && lesson.viewCount > 0 && (
+            <div className="flex items-center gap-1">
+              <Eye
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-purple-300" : "text-purple-600"
+                }`}
+              />
+              <span
+                className={`text-sm ${
+                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                }`}
+              >
+                {formatNumber(lesson.viewCount)} {language === "ar" ? "مشاهدة" : "views"}
+              </span>
+            </div>
+          )}
+          {/* Booking Count - New */}
+          {lesson.bookingCount !== undefined && lesson.bookingCount > 0 && (
+            <div className="flex items-center gap-1">
+              <Users
+                className={`h-4 w-4 ${
+                  theme === "dark" ? "text-green-300" : "text-green-600"
+                }`}
+              />
+              <span
+                className={`text-sm ${
+                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                }`}
+              >
+                {formatNumber(lesson.bookingCount)} {language === "ar" ? "حجز" : "bookings"}
+              </span>
+            </div>
+          )}
+          {/* Rating */}
+          {lesson.averageRating !== undefined && lesson.averageRating > 0 && (
+            <div className="flex items-center gap-1">
+              <Star
+                className={`h-4 w-4 text-yellow-400 fill-yellow-400`}
+              />
+              <span
+                className={`text-sm ${
+                  theme === "dark" ? "text-blue-200" : "text-gray-600"
+                }`}
+              >
+                {lesson.averageRating.toFixed(1)}
               </span>
             </div>
           )}
