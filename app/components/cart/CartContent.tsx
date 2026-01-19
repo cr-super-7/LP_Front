@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ShoppingCart, Trash2, ArrowLeft, Ticket, FileText } from "lucide-react";
 import { useTheme } from "../../contexts/ThemeContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { useAppDispatch } from "../../store/hooks";
 import { getCart, removeFromCart } from "../../store/api/cartApi";
 import { createOrder } from "../../store/api/orderApi";
 import type { Cart } from "../../store/interface/cartInterface";
@@ -17,7 +17,6 @@ export default function CartContent() {
   const { language } = useLanguage();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const isRTL = language === "ar";
 
   const [cart, setCart] = useState<Cart | null>(null);
@@ -28,12 +27,14 @@ export default function CartContent() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
-  // Load cart data
+  // Track if cart has been loaded to prevent multiple loads
+  const hasLoadedRef = useRef(false);
+
+  // Load cart data - only once on mount
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-      return;
-    }
+    // Prevent multiple loads
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
 
     const loadCart = async () => {
       try {
@@ -57,12 +58,13 @@ export default function CartContent() {
     };
 
     loadCart();
-  }, [dispatch, isAuthenticated, router]);
+  }, [dispatch]);
 
-  // Calculate totals
-  const selectedCartItems = (cart?.items && Array.isArray(cart.items))
-    ? cart.items.filter((item) => selectedItems.has(item.courseId))
-    : [];
+  // Memoized calculation of selected cart items
+  const selectedCartItems = useMemo(() => {
+    if (!cart?.items || !Array.isArray(cart.items)) return [];
+    return cart.items.filter((item) => selectedItems.has(item.courseId));
+  }, [cart, selectedItems]);
 
   const subtotal = selectedCartItems.reduce((sum, item) => sum + item.price, 0);
   const total = subtotal - discount;
@@ -88,37 +90,68 @@ export default function CartContent() {
     setSelectedItems(newSelected);
   };
 
-  // Handle delete item
-  const handleDeleteItem = async (courseId: string) => {
+  // Reusable function to reload cart data
+  const reloadCart = useCallback(async () => {
     try {
-      await removeFromCart(courseId, dispatch);
-      // Reload cart
       const cartData = await getCart(dispatch);
       setCart(cartData);
+      return cartData;
+    } catch (error) {
+      console.error("Failed to reload cart:", error);
+      return null;
+    }
+  }, [dispatch]);
+
+  // Handle delete item
+  const handleDeleteItem = useCallback(async (courseId: string) => {
+    try {
+      await removeFromCart(courseId, dispatch);
+      // Update local state optimistically
+      setCart((prevCart) => {
+        if (!prevCart?.items) return prevCart;
+        return {
+          ...prevCart,
+          items: prevCart.items.filter((item) => item.courseId !== courseId),
+        };
+      });
       // Remove from selected items
-      const newSelected = new Set(selectedItems);
-      newSelected.delete(courseId);
-      setSelectedItems(newSelected);
-      } catch (err) {
-        console.error("Failed to remove item:", err);
-      }
-  };
+      setSelectedItems((prev) => {
+        const newSelected = new Set(prev);
+        newSelected.delete(courseId);
+        return newSelected;
+      });
+    } catch (err) {
+      console.error("Failed to remove item:", err);
+      // Reload cart on error to sync state
+      await reloadCart();
+    }
+  }, [dispatch, reloadCart]);
 
   // Handle delete selected
-  const handleDeleteSelected = async () => {
+  const handleDeleteSelected = useCallback(async () => {
     if (selectedItems.size === 0) {
       toast.error(language === "ar" ? "لم يتم اختيار أي عناصر" : "No items selected");
       return;
     }
 
+    const itemsToDelete = Array.from(selectedItems);
+    
     try {
-      for (const courseId of selectedItems) {
+      // Update local state optimistically first
+      setCart((prevCart) => {
+        if (!prevCart?.items) return prevCart;
+        return {
+          ...prevCart,
+          items: prevCart.items.filter((item) => !selectedItems.has(item.courseId)),
+        };
+      });
+      setSelectedItems(new Set());
+
+      // Then perform the API calls
+      for (const courseId of itemsToDelete) {
         await removeFromCart(courseId, dispatch);
       }
-      // Reload cart
-      const cartData = await getCart(dispatch);
-      setCart(cartData);
-      setSelectedItems(new Set());
+      
       toast.success(
         language === "ar"
           ? "تم حذف العناصر المحددة"
@@ -126,8 +159,10 @@ export default function CartContent() {
       );
     } catch (error) {
       console.error("Failed to delete items:", error);
+      // Reload cart on error to sync state
+      await reloadCart();
     }
-  };
+  }, [selectedItems, language, dispatch, reloadCart]);
 
   // Handle apply coupon
   const handleApplyCoupon = async () => {
@@ -161,7 +196,7 @@ export default function CartContent() {
   };
 
   // Handle checkout
-  const handleCheckout = async () => {
+  const handleCheckout = useCallback(async () => {
     if (selectedItems.size === 0) {
       toast.error(
         language === "ar"
@@ -172,6 +207,8 @@ export default function CartContent() {
     }
 
     setIsCheckingOut(true);
+    const itemsToCheckout = Array.from(selectedItems);
+    
     try {
       const orderItems = selectedCartItems.map((item) => ({
         courseId: item.courseId,
@@ -181,13 +218,18 @@ export default function CartContent() {
       await createOrder({ items: orderItems }, dispatch);
 
       // Clear selected items from cart
-      for (const courseId of selectedItems) {
+      for (const courseId of itemsToCheckout) {
         await removeFromCart(courseId, dispatch);
       }
 
-      // Reload cart
-      const cartData = await getCart(dispatch);
-      setCart(cartData);
+      // Update local state
+      setCart((prevCart) => {
+        if (!prevCart?.items) return prevCart;
+        return {
+          ...prevCart,
+          items: prevCart.items.filter((item) => !selectedItems.has(item.courseId)),
+        };
+      });
       setSelectedItems(new Set());
       setDiscount(0);
       setCouponCode("");
@@ -201,10 +243,12 @@ export default function CartContent() {
       router.push("/orders");
     } catch (error) {
       console.error("Failed to checkout:", error);
+      // Reload cart on error to sync state
+      await reloadCart();
     } finally {
       setIsCheckingOut(false);
     }
-  };
+  }, [selectedItems, selectedCartItems, language, dispatch, router, reloadCart]);
 
   if (isLoading) {
     return (

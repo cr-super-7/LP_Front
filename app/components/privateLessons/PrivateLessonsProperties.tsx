@@ -168,16 +168,26 @@ export default function PrivateLessonsProperties() {
           viewport={{ once: true, margin: "-50px" }}
         >
           <motion.div
-            className={`flex gap-4 ${isRTL ? "flex-row-reverse" : ""}`}
+            className={`flex gap-4 items-center ${isRTL ? "flex-row-reverse" : ""}`}
             animate={{ x: `${currentIndex * slidePercent * direction}%` }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
           >
-            {displayedAds.map((ad) => (
+            {displayedAds.map((ad, index) => {
+              // الصورة الوسطى المرئية دائماً (currentIndex + 1) تكون أكبر في العرض والارتفاع
+              const isMiddle = index === currentIndex + 1;
+              const imageWidth = isMiddle 
+                ? "w-full md:w-[calc(40%-0.67rem)] lg:w-[calc(40%-0.67rem)]" 
+                : "w-full md:w-[calc(30%-0.67rem)] lg:w-[calc(30%-0.67rem)]";
+              const imageHeight = isMiddle 
+                ? "h-54 md:h-70 lg:h-86" 
+                : "h-48 md:h-56 lg:h-64";
+              
+              return (
               <div
                 key={ad._id}
-                className="shrink-0 w-full md:w-[calc(33.333%-0.67rem)] lg:w-[calc(33.333%-0.67rem)]"
+                className={`shrink-0 ${imageWidth}`}
               >
-                <div className="relative h-44 md:h-52 lg:h-60 rounded-2xl overflow-hidden group shadow-lg shadow-black/10">
+                <div className={`relative ${imageHeight} rounded-2xl overflow-hidden group shadow-lg shadow-black/10`}>
                   <Image
                     src={ad.image}
                     alt={getDescription(ad)}
@@ -192,7 +202,8 @@ export default function PrivateLessonsProperties() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </motion.div>
 
           {/* Dots indicators */}
