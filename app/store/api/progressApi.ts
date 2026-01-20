@@ -7,7 +7,20 @@ import type {
   CourseProgressResponse,
   ProgressesResponse,
   UpdateProgressRequest,
+  OverallProgressResponse,
+  OverallProgressSummary,
+  OverallCourseProgress,
+  LessonProgressResponse,
+  LessonProgressData,
 } from "../interface/progressInterface";
+import {
+  setProgressLoading,
+  setProgressError,
+  setProgress,
+  setCourseProgress,
+  updateLessonProgressState,
+  setOverallProgress,
+} from "../slice/progressSlice";
 import toast from "react-hot-toast";
 
 // Define error response interface
@@ -34,7 +47,7 @@ interface ErrorResponse {
 const updateLessonProgress = async (
   lessonId: string,
   progressData: UpdateProgressRequest,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<LessonProgress> => {
   try {
     const { data } = await api.put<ProgressResponse>(
@@ -43,7 +56,10 @@ const updateLessonProgress = async (
     );
 
     const progress = (data.progress || data) as LessonProgress;
-    // Don't show toast for progress updates as they happen frequently
+    
+    // Update Redux store
+    dispatch(updateLessonProgressState(progress));
+    
     return progress;
   } catch (error: unknown) {
     let errorMessage = "Failed to update progress";
@@ -70,9 +86,11 @@ const updateLessonProgress = async (
  */
 const getCourseProgress = async (
   courseId: string,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<CourseProgress> => {
   try {
+    dispatch(setProgressLoading(true));
+    
     const { data } = await api.get<CourseProgressResponse>(`/progress/course/${courseId}`);
 
     // Transform response to CourseProgress format
@@ -85,6 +103,9 @@ const getCourseProgress = async (
       lessons: data.lessons || [],
     };
     
+    // Update Redux store
+    dispatch(setCourseProgress(progress));
+    
     return progress;
   } catch (error: unknown) {
     let errorMessage = "Failed to fetch course progress";
@@ -96,6 +117,8 @@ const getCourseProgress = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setProgressError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -107,11 +130,17 @@ const getCourseProgress = async (
  * @param dispatch - Redux dispatch
  * @returns Array of LessonProgress
  */
-const getMyProgress = async (_dispatch: AppDispatch): Promise<LessonProgress[]> => {
+const getMyProgress = async (dispatch: AppDispatch): Promise<LessonProgress[]> => {
   try {
+    dispatch(setProgressLoading(true));
+    
     const { data } = await api.get<ProgressesResponse>("/progress/my");
 
     const progress = data.progress || [];
+    
+    // Update Redux store
+    dispatch(setProgress(progress));
+    
     return progress;
   } catch (error: unknown) {
     let errorMessage = "Failed to fetch progress";
@@ -123,6 +152,90 @@ const getMyProgress = async (_dispatch: AppDispatch): Promise<LessonProgress[]> 
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setProgressError(errorMessage));
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Get lesson progress for a specific lesson
+ * 
+ * @param lessonId - The lesson ID
+ * @param dispatch - Redux dispatch
+ * @returns LessonProgressData
+ */
+const getLessonProgress = async (
+  lessonId: string,
+  dispatch: AppDispatch
+): Promise<LessonProgressData> => {
+  try {
+    dispatch(setProgressLoading(true));
+    
+    const { data } = await api.get<LessonProgressResponse>(`/progress/lesson/${lessonId}`);
+    
+    dispatch(setProgressLoading(false));
+    
+    return data.data;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch lesson progress";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    dispatch(setProgressLoading(false));
+    console.error(errorMessage);
+    
+    // Return default progress instead of throwing
+    return {
+      lesson: { _id: lessonId, title: "" },
+      progress: {
+        progress: 0,
+        completed: false,
+        completedAt: null,
+        watchTime: 0,
+        lastWatchedAt: null,
+      },
+    };
+  }
+};
+
+/**
+ * Get overall progress summary for all enrolled courses
+ * 
+ * @param dispatch - Redux dispatch
+ * @returns { summary: OverallProgressSummary, courses: OverallCourseProgress[] }
+ */
+const getMyOverallProgress = async (
+  dispatch: AppDispatch
+): Promise<{ summary: OverallProgressSummary; courses: OverallCourseProgress[] }> => {
+  try {
+    dispatch(setProgressLoading(true));
+    
+    const { data } = await api.get<OverallProgressResponse>("/progress/my/overall");
+    
+    // Update Redux store
+    dispatch(setOverallProgress(data.data));
+    
+    return data.data;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch overall progress";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    dispatch(setProgressError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -132,4 +245,6 @@ export {
   updateLessonProgress,
   getCourseProgress,
   getMyProgress,
+  getLessonProgress,
+  getMyOverallProgress,
 };

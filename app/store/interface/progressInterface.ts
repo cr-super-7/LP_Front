@@ -102,3 +102,75 @@ export interface ProgressState {
   isLoading: boolean;
   error: string | null;
 }
+
+// Overall Progress Response (GET /api/progress/my/overall)
+export interface OverallProgressSummary {
+  totalEnrolledCourses: number;
+  completedCourses: number;
+  inProgressCourses: number;
+  notStartedCourses: number;
+  totalLessons: number;
+  totalCompletedLessons: number;
+  overallProgress: number;
+  totalWatchTime: number;
+  totalWatchTimeFormatted: string;
+}
+
+export interface OverallCourseProgress {
+  course: {
+    _id: string;
+    title: {
+      ar: string;
+      en: string;
+    };
+    thumbnail?: string;
+    category?: string;
+  };
+  enrolledAt: string;
+  progress: number;
+  totalLessons: number;
+  completedLessons: number;
+  lessonsInProgress: number;
+  notStartedLessons: number;
+  watchTime: number;
+  watchTimeFormatted: string;
+  lastWatchedAt: string | null;
+  isCompleted: boolean;
+}
+
+export interface OverallProgressResponse {
+  message?: string;
+  data: {
+    summary: OverallProgressSummary;
+    courses: OverallCourseProgress[];
+  };
+}
+
+// Lesson Progress Response (GET /api/progress/lesson/:lessonId)
+export interface LessonProgressData {
+  lesson: {
+    _id: string;
+    title: string | { ar: string; en: string };
+    duration?: number;
+    order?: number;
+    course?: {
+      _id: string;
+      title: string | { ar: string; en: string };
+      thumbnail?: string;
+    };
+  };
+  progress: {
+    _id?: string;
+    progress: number;
+    completed: boolean;
+    completedAt: string | null;
+    watchTime: number;
+    watchTimeFormatted?: string;
+    lastWatchedAt: string | null;
+  };
+}
+
+export interface LessonProgressResponse {
+  message?: string;
+  data: LessonProgressData;
+}

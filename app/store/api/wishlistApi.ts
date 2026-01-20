@@ -81,7 +81,6 @@ const addToWishlist = async (
 
     // API response shape: { message: string, wishlistItem: {...} }
     const wishlistItem = data.wishlistItem || data;
-    toast.success(data.message || "Course added to wishlist");
     return wishlistItem;
   } catch (error: unknown) {
     let errorMessage = "Failed to add course to wishlist";

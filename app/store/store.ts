@@ -13,6 +13,7 @@ import privateLessonReducer from "./slice/privateLessonSlice";
 import researchReducer from "./slice/researchSlice";
 import advertisementReducer from "./slice/advertisementSlice";
 import notificationReducer from "./slice/notificationSlice";
+import progressReducer from "./slice/progressSlice";
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     research: researchReducer,
     advertisement: advertisementReducer,
     notification: notificationReducer,
+    progress: progressReducer,
   },
 });
 
