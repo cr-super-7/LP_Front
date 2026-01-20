@@ -4,6 +4,13 @@ import type {
   Cart,
   AddToCartRequest,
 } from "../interface/cartInterface";
+import {
+  setCartLoading,
+  setCartError,
+  setCart,
+  removeCartItem,
+  clearCartState,
+} from "../slice/cartSlice";
 import toast from "react-hot-toast";
 
 // Define error response interface
@@ -40,11 +47,20 @@ interface CartApiResponse {
   updatedAt?: string;
 }
 
+/**
+ * Add course to cart
+ * 
+ * @param cartData - Cart item data
+ * @param dispatch - Redux dispatch
+ * @returns Updated cart
+ */
 const addToCart = async (
   cartData: AddToCartRequest,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<Cart> => {
   try {
+    dispatch(setCartLoading(true));
+    
     const { data } = await api.post<CartApiResponse>("/cart", cartData);
 
     // API response might have cartItems or cart
@@ -70,6 +86,8 @@ const addToCart = async (
       cart = (data.cart || data) as Cart;
     }
 
+    // Update Redux store
+    dispatch(setCart(cart));
   
     return cart;
   } catch (error: unknown) {
@@ -82,17 +100,28 @@ const addToCart = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setCartError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
-const getCart = async (_dispatch: AppDispatch): Promise<Cart> => {
+/**
+ * Get current cart
+ * 
+ * @param dispatch - Redux dispatch
+ * @returns Cart with items
+ */
+const getCart = async (dispatch: AppDispatch): Promise<Cart> => {
   try {
+    dispatch(setCartLoading(true));
+    
     const { data } = await api.get<CartApiResponse>("/cart");
 
     // API response shape: { cartItems: [...] }
     // Convert to Cart interface format
+    let cart: Cart;
     if (data.cartItems && Array.isArray(data.cartItems)) {
       const items = data.cartItems.map((item) => ({
         courseId: item.course?._id || "",
@@ -102,7 +131,7 @@ const getCart = async (_dispatch: AppDispatch): Promise<Cart> => {
 
       const total = items.reduce((sum: number, item) => sum + item.price, 0);
 
-      return {
+      cart = {
         _id: data._id,
         user: data.user || data.cartItems[0]?.user || "",
         items: items,
@@ -110,19 +139,22 @@ const getCart = async (_dispatch: AppDispatch): Promise<Cart> => {
         createdAt: data.createdAt,
         updatedAt: data.updatedAt,
       };
+    } else if (data.cart) {
+      // Fallback to old format if exists
+      cart = data.cart as Cart;
+    } else {
+      // If no items, return empty cart
+      cart = {
+        user: "",
+        items: [],
+        total: 0,
+      };
     }
 
-    // Fallback to old format if exists
-    if (data.cart) {
-      return data.cart as Cart;
-    }
-
-    // If no items, return empty cart
-    return {
-      user: "",
-      items: [],
-      total: 0,
-    };
+    // Update Redux store
+    dispatch(setCart(cart));
+    
+    return cart;
   } catch (error: unknown) {
     let errorMessage = "Failed to fetch cart";
     const err = error as ErrorResponse;
@@ -133,18 +165,32 @@ const getCart = async (_dispatch: AppDispatch): Promise<Cart> => {
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setCartError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
+/**
+ * Remove course from cart
+ * 
+ * @param courseId - Course ID to remove
+ * @param dispatch - Redux dispatch
+ */
 const removeFromCart = async (
   courseId: string,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<void> => {
   try {
+    dispatch(setCartLoading(true));
+    
     const { data } = await api.delete<{ message: string }>(`/cart/${courseId}`);
 
+    // Update Redux store
+    dispatch(removeCartItem(courseId));
+    dispatch(setCartLoading(false));
+    
     toast.success(data.message || "Course removed from cart");
   } catch (error: unknown) {
     let errorMessage = "Failed to remove course from cart";
@@ -156,15 +202,28 @@ const removeFromCart = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setCartError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
-const clearCart = async (_dispatch: AppDispatch): Promise<void> => {
+/**
+ * Clear entire cart
+ * 
+ * @param dispatch - Redux dispatch
+ */
+const clearCart = async (dispatch: AppDispatch): Promise<void> => {
   try {
+    dispatch(setCartLoading(true));
+    
     const { data } = await api.delete<{ message: string }>("/cart");
 
+    // Update Redux store
+    dispatch(clearCartState());
+    dispatch(setCartLoading(false));
+    
     toast.success(data.message || "Cart cleared");
   } catch (error: unknown) {
     let errorMessage = "Failed to clear cart";
@@ -176,6 +235,8 @@ const clearCart = async (_dispatch: AppDispatch): Promise<void> => {
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setCartError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }

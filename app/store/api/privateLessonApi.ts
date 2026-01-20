@@ -134,7 +134,7 @@ const getPrivateLessons = async (
     // API response shape: { privateLessons: PrivateLesson[] }
     const lessons: PrivateLesson[] = Array.isArray(data.privateLessons)
       ? data.privateLessons
-      : data.result?.privateLessons || (Array.isArray(data) ? data : []);
+      : (data as unknown as { result?: { privateLessons?: PrivateLesson[] } }).result?.privateLessons || (Array.isArray(data) ? (data as unknown as PrivateLesson[]) : []);
 
     if (dispatch) {
       dispatch(setPrivateLessons(lessons));

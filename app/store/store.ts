@@ -14,6 +14,12 @@ import researchReducer from "./slice/researchSlice";
 import advertisementReducer from "./slice/advertisementSlice";
 import notificationReducer from "./slice/notificationSlice";
 import progressReducer from "./slice/progressSlice";
+import bookingReducer from "./slice/bookingSlice";
+import cartReducer from "./slice/cartSlice";
+import consultationReducer from "./slice/consultationSlice";
+import enrollmentReducer from "./slice/enrollmentSlice";
+import orderReducer from "./slice/orderSlice";
+import wishlistReducer from "./slice/wishlistSlice";
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +38,12 @@ export const store = configureStore({
     advertisement: advertisementReducer,
     notification: notificationReducer,
     progress: progressReducer,
+    booking: bookingReducer,
+    cart: cartReducer,
+    consultation: consultationReducer,
+    enrollment: enrollmentReducer,
+    order: orderReducer,
+    wishlist: wishlistReducer,
   },
 });
 

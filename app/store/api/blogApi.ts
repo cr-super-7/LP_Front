@@ -2,7 +2,6 @@ import api from "../utils/api";
 import { setLoading, setError, setBlogs, setCurrentBlog } from "../slice/blogSlice";
 import { AppDispatch } from "../store";
 import type { Blog, BlogsResponse, BlogResponse, GetBlogsParams } from "../interface/blogInterface";
-import toast from "react-hot-toast";
 
 // Define error response interface
 interface ErrorResponse {

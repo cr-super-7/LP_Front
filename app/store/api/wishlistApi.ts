@@ -5,6 +5,12 @@ import type {
   WishlistResponse,
   AddToWishlistRequest,
 } from "../interface/wishlistInterface";
+import {
+  setWishlistLoading,
+  setWishlistError,
+  setWishlist,
+  removeWishlistItem,
+} from "../slice/wishlistSlice";
 import toast from "react-hot-toast";
 
 // Define error response interface
@@ -69,18 +75,31 @@ interface WishlistApiResponse {
     [key: string]: unknown;
   }>;
   wishlist?: Wishlist;
+  wishlistItem?: unknown;
   [key: string]: unknown;
 }
 
+/**
+ * Add course to wishlist
+ * 
+ * @param wishlistData - Wishlist item data
+ * @param dispatch - Redux dispatch
+ * @returns Added wishlist item
+ */
 const addToWishlist = async (
   wishlistData: AddToWishlistRequest,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<unknown> => {
   try {
+    dispatch(setWishlistLoading(true));
+    
     const { data } = await api.post<WishlistApiResponse>("/wishlist", wishlistData);
 
     // API response shape: { message: string, wishlistItem: {...} }
     const wishlistItem = data.wishlistItem || data;
+    
+    dispatch(setWishlistLoading(false));
+    
     return wishlistItem;
   } catch (error: unknown) {
     let errorMessage = "Failed to add course to wishlist";
@@ -92,17 +111,28 @@ const addToWishlist = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setWishlistError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
-const getWishlist = async (_dispatch: AppDispatch): Promise<Wishlist> => {
+/**
+ * Get current wishlist
+ * 
+ * @param dispatch - Redux dispatch
+ * @returns Wishlist with items
+ */
+const getWishlist = async (dispatch: AppDispatch): Promise<Wishlist> => {
   try {
+    dispatch(setWishlistLoading(true));
+    
     const { data } = await api.get<WishlistApiResponse>("/wishlist");
 
     // API response shape: { wishlistItems: [...] }
     // Convert to Wishlist interface format
+    let wishlist: Wishlist;
     if (data.wishlistItems && Array.isArray(data.wishlistItems)) {
       const items = data.wishlistItems.map((item) => ({
         courseId: item.course?._id || "",
@@ -110,25 +140,28 @@ const getWishlist = async (_dispatch: AppDispatch): Promise<Wishlist> => {
         addedAt: item.createdAt || new Date().toISOString(),
       }));
 
-      return {
+      wishlist = {
         _id: data.wishlistItems[0]?._id,
         user: data.wishlistItems[0]?.user || "",
         items: items,
         createdAt: data.wishlistItems[0]?.createdAt,
         updatedAt: data.wishlistItems[0]?.createdAt,
       };
+    } else if (data.wishlist) {
+      // Fallback to old format if exists
+      wishlist = data.wishlist as Wishlist;
+    } else {
+      // If no items, return empty wishlist
+      wishlist = {
+        user: "",
+        items: [],
+      };
     }
 
-    // Fallback to old format if exists
-    if (data.wishlist) {
-      return data.wishlist as Wishlist;
-    }
-
-    // If no items, return empty wishlist
-    return {
-      user: "",
-      items: [],
-    };
+    // Update Redux store
+    dispatch(setWishlist(wishlist));
+    
+    return wishlist;
   } catch (error: unknown) {
     let errorMessage = "Failed to fetch wishlist";
     const err = error as ErrorResponse;
@@ -139,18 +172,32 @@ const getWishlist = async (_dispatch: AppDispatch): Promise<Wishlist> => {
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setWishlistError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
 };
 
+/**
+ * Remove course from wishlist
+ * 
+ * @param courseId - Course ID to remove
+ * @param dispatch - Redux dispatch
+ */
 const removeFromWishlist = async (
   courseId: string,
-  _dispatch: AppDispatch
+  dispatch: AppDispatch
 ): Promise<void> => {
   try {
+    dispatch(setWishlistLoading(true));
+    
     const { data } = await api.delete<{ message: string }>(`/wishlist/${courseId}`);
 
+    // Update Redux store
+    dispatch(removeWishlistItem(courseId));
+    dispatch(setWishlistLoading(false));
+    
     toast.success(data.message || "Course removed from wishlist");
   } catch (error: unknown) {
     let errorMessage = "Failed to remove course from wishlist";
@@ -162,6 +209,8 @@ const removeFromWishlist = async (
     } else if (err.message) {
       errorMessage = err.message;
     }
+    
+    dispatch(setWishlistError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
   }
