@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Phone, Pencil, Lock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Phone, Pencil, Lock, BookOpen, Sparkles, ArrowRight, ArrowLeft, GraduationCap } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import Sidebar from "../../layout/Sidebar";
@@ -34,6 +36,7 @@ type StudentProfileProps = {
 export default function StudentProfile({ user: propUser, onUpdate }: StudentProfileProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((state) => state.auth.user);
   const isRTL = language === "ar";
@@ -70,43 +73,48 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
         if (userId) {
           // Load user profile
           const userProfile = await getUserProfile(userId, dispatch);
-          setUser(userProfile as StudentProfileData);
 
           // Load enrollments
           const myEnrollments = await getMyEnrollments(dispatch);
           setEnrollments(myEnrollments);
           const totalCourses = myEnrollments.length;
-          const activeEnrollments = myEnrollments.filter((e) => e.status === "active");
-          setInProgressCount(activeEnrollments.length);
-          setCompletedCount(myEnrollments.filter((e) => e.status === "completed").length);
+          const completedCoursesCount = myEnrollments.filter((e) => e.status === "completed").length;
+          let inProgressCoursesCount = myEnrollments.filter((e) => e.status === "active").length;
 
-          // Load cart
+          // Load cart - get actual count from API
+          let cartItemsCount = 0;
           try {
             const cart = await getCart(dispatch);
-            setCartCount(cart.items?.length || 0);
+            cartItemsCount = cart.items?.length || 0;
           } catch (error) {
             // Cart might be empty
-            setCartCount(0);
+            cartItemsCount = 0;
           }
 
           // Load progress to calculate in-progress courses
           try {
             const progress = await getMyProgress(dispatch);
             const inProgress = progress.filter((p) => p.overallProgress > 0 && p.overallProgress < 100);
-            setInProgressCount(inProgress.length);
+            if (inProgress.length > 0) {
+              inProgressCoursesCount = inProgress.length;
+            }
           } catch (error) {
-            // Progress might not be available
+            // Progress might not be available, use active enrollments count
           }
 
+          // Update all states with actual values
+          setCartCount(cartItemsCount);
+          setInProgressCount(inProgressCoursesCount);
+          setCompletedCount(completedCoursesCount);
+
           // Update user with statistics
-          setUser((prev) => ({
-            ...prev,
+          setUser({
             ...userProfile,
             totalCourses,
-            cartCount: cartCount,
-            inProgressCount: inProgressCount,
-            completedCount: completedCount,
-          } as StudentProfileData));
+            cartCount: cartItemsCount,
+            inProgressCount: inProgressCoursesCount,
+            completedCount: completedCoursesCount,
+          } as StudentProfileData);
         }
       } catch (error) {
         console.error("Failed to load student data:", error);
@@ -406,13 +414,7 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
                 </div>
               ) : enrollments.length === 0 ? (
-                <div className={`text-center py-12 ${
-                  theme === "dark" ? "text-blue-200" : "text-gray-600"
-                }`}>
-                  {language === "ar" 
-                    ? "لا توجد دورات مسجلة حالياً" 
-                    : "No enrolled courses yet"}
-                </div>
+                <EmptyCoursesSection theme={theme} language={language} isRTL={isRTL} onBrowse={() => router.push("/courses")} />
               ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {enrollments.map((enrollment) => {
@@ -869,4 +871,247 @@ function CourseCard({ highlight, course, enrollment }: CourseCardProps) {
   );
 }
 
+// Empty Courses Section with beautiful animation
+type EmptyCoursesSectionProps = {
+  theme: "dark" | "light";
+  language: "ar" | "en";
+  isRTL: boolean;
+  onBrowse: () => void;
+};
 
+function EmptyCoursesSection({ theme, language, isRTL, onBrowse }: EmptyCoursesSectionProps) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+        delayChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const floatingVariants = {
+    animate: {
+      y: [-10, 10, -10],
+      rotate: [-5, 5, -5],
+      transition: {
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  const pulseVariants = {
+    animate: {
+      scale: [1, 1.05, 1],
+      opacity: [0.5, 0.8, 0.5],
+      transition: {
+        duration: 3,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      className={`relative overflow-hidden rounded-3xl p-8 md:p-12 ${
+        theme === "dark"
+          ? "bg-linear-to-br from-blue-900/80 via-indigo-900/60 to-purple-900/40 border border-blue-700/50"
+          : "bg-linear-to-br from-blue-50 via-indigo-50 to-purple-50 border border-blue-200"
+      }`}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Background Decorations */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating circles */}
+        <motion.div
+          className={`absolute -top-10 -right-10 h-40 w-40 rounded-full blur-3xl ${
+            theme === "dark" ? "bg-blue-500/20" : "bg-blue-300/30"
+          }`}
+          variants={pulseVariants}
+          animate="animate"
+        />
+        <motion.div
+          className={`absolute -bottom-10 -left-10 h-32 w-32 rounded-full blur-3xl ${
+            theme === "dark" ? "bg-purple-500/20" : "bg-purple-300/30"
+          }`}
+          variants={pulseVariants}
+          animate="animate"
+          style={{ animationDelay: "1s" }}
+        />
+        <motion.div
+          className={`absolute top-1/2 right-1/4 h-24 w-24 rounded-full blur-2xl ${
+            theme === "dark" ? "bg-indigo-500/15" : "bg-indigo-300/25"
+          }`}
+          variants={pulseVariants}
+          animate="animate"
+          style={{ animationDelay: "2s" }}
+        />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center text-center">
+        {/* Animated Icon */}
+        <motion.div
+          className="relative mb-6"
+          variants={itemVariants}
+        >
+          {/* Glowing background */}
+          <motion.div
+            className={`absolute inset-0 rounded-full blur-xl ${
+              theme === "dark" ? "bg-blue-500/30" : "bg-blue-400/20"
+            }`}
+            variants={pulseVariants}
+            animate="animate"
+          />
+          
+          {/* Icon container */}
+          <motion.div
+            className={`relative p-6 rounded-full ${
+              theme === "dark"
+                ? "bg-linear-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30"
+                : "bg-linear-to-br from-blue-500 to-indigo-500 shadow-lg shadow-blue-400/30"
+            }`}
+            variants={floatingVariants}
+            animate="animate"
+          >
+            <GraduationCap className="h-12 w-12 text-white" />
+          </motion.div>
+
+          {/* Sparkles around icon */}
+          <motion.div
+            className="absolute -top-2 -right-2"
+            animate={{
+              scale: [0.8, 1.2, 0.8],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <Sparkles className={`h-6 w-6 ${theme === "dark" ? "text-yellow-400" : "text-yellow-500"}`} />
+          </motion.div>
+          <motion.div
+            className="absolute -bottom-1 -left-3"
+            animate={{
+              scale: [1, 0.8, 1],
+              opacity: [0.7, 1, 0.7],
+            }}
+            transition={{
+              duration: 2.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5,
+            }}
+          >
+            <Sparkles className={`h-4 w-4 ${theme === "dark" ? "text-purple-400" : "text-purple-500"}`} />
+          </motion.div>
+        </motion.div>
+
+        {/* Title */}
+        <motion.h3
+          className={`text-2xl md:text-3xl font-bold mb-3 ${
+            theme === "dark" ? "text-white" : "text-gray-900"
+          }`}
+          variants={itemVariants}
+        >
+          {language === "ar" ? "ابدأ رحلة التعلم!" : "Start Your Learning Journey!"}
+        </motion.h3>
+
+        {/* Description */}
+        <motion.p
+          className={`text-base md:text-lg max-w-md mb-8 ${
+            theme === "dark" ? "text-blue-200" : "text-gray-600"
+          }`}
+          variants={itemVariants}
+        >
+          {language === "ar"
+            ? "لم تسجل في أي دورة بعد. استكشف مجموعتنا الواسعة من الدورات وابدأ في تطوير مهاراتك اليوم!"
+            : "You haven't enrolled in any courses yet. Explore our wide range of courses and start developing your skills today!"}
+        </motion.p>
+
+        {/* Features */}
+        <motion.div
+          className="flex flex-wrap justify-center gap-4 mb-8"
+          variants={itemVariants}
+        >
+          {[
+            { icon: BookOpen, text: language === "ar" ? "دورات متنوعة" : "Diverse Courses" },
+            { icon: GraduationCap, text: language === "ar" ? "شهادات معتمدة" : "Certificates" },
+            { icon: Sparkles, text: language === "ar" ? "تعلم تفاعلي" : "Interactive Learning" },
+          ].map((feature, index) => (
+            <motion.div
+              key={index}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                theme === "dark"
+                  ? "bg-blue-800/50 text-blue-200 border border-blue-700/50"
+                  : "bg-white text-gray-700 border border-gray-200 shadow-sm"
+              }`}
+              whileHover={{ scale: 1.05, y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <feature.icon className={`h-4 w-4 ${theme === "dark" ? "text-blue-400" : "text-blue-500"}`} />
+              <span className="text-sm font-medium">{feature.text}</span>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* CTA Button */}
+        <motion.button
+          onClick={onBrowse}
+          className={`group flex items-center gap-3 px-8 py-4 rounded-2xl font-semibold text-lg transition-all ${
+            theme === "dark"
+              ? "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:from-blue-500 hover:to-indigo-500"
+              : "bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-400/30 hover:shadow-blue-400/50 hover:from-blue-500 hover:to-indigo-500"
+          }`}
+          variants={itemVariants}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <span>{language === "ar" ? "استكشف الدورات" : "Explore Courses"}</span>
+          <motion.div
+            animate={{ x: isRTL ? [-5, 0, -5] : [0, 5, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            {isRTL ? (
+              <ArrowLeft className="h-5 w-5" />
+            ) : (
+              <ArrowRight className="h-5 w-5" />
+            )}
+          </motion.div>
+        </motion.button>
+
+        {/* Bottom hint */}
+        <motion.p
+          className={`mt-6 text-sm ${
+            theme === "dark" ? "text-blue-300/70" : "text-gray-500"
+          }`}
+          variants={itemVariants}
+        >
+          {language === "ar"
+            ? "🎓 انضم لآلاف الطلاب الآخرين"
+            : "🎓 Join thousands of other students"}
+        </motion.p>
+      </div>
+    </motion.div>
+  );
+}
