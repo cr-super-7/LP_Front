@@ -1,38 +1,53 @@
-"use client";
+import type { Metadata } from "next";
+import ExplorePageClient from "./ExplorePageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import ExploreContent from "../components/explore/ExploreContent";
+export const metadata: Metadata = {
+  title: "Explore - LP Company | استكشف - شركة LP",
+  description:
+    "Explore universities, colleges, departments, categories, and courses on LP Company. استكشف الجامعات والكليات والأقسام والفئات والدورات على منصة شركة LP.",
+  keywords: [
+    "explore",
+    "universities",
+    "colleges",
+    "departments",
+    "categories",
+    "courses",
+    "LP Company",
+    "استكشف",
+    "جامعات",
+    "كليات",
+    "أقسام",
+    "فئات",
+    "دورات",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/explore",
+    languages: {
+      "ar-SA": "/explore",
+      "en-US": "/explore",
+      "x-default": "/explore",
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    alternateLocale: ["en_US"],
+    url: "/explore",
+    siteName: "LP Company",
+    title: "Explore - LP Company | استكشف - شركة LP",
+    description:
+      "Explore universities, colleges, departments, categories, and courses on LP Company. استكشف الجامعات والكليات والأقسام والفئات والدورات على منصة شركة LP.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Explore - LP Company | استكشف - شركة LP",
+    description:
+      "Explore universities, colleges, departments, categories, and courses on LP Company. استكشف الجامعات والكليات والأقسام والفئات والدورات على منصة شركة LP.",
+  },
+};
 
 export default function ExplorePage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <ExploreContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <ExplorePageClient />;
 }

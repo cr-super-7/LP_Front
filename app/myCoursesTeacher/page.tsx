@@ -1,39 +1,34 @@
-"use client";
+import type { Metadata } from "next";
+import MyCoursesTeacherPageClient from "./MyCoursesTeacherPageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import MyCoursesTeacherContent from "../components/myCoursesTeacher/MyCoursesTeacherContent";
+export const metadata: Metadata = {
+  title: "My Courses - LP Company | دوراتي - شركة LP",
+  description:
+    "View and manage your courses on LP Company. استعرض وأدر دوراتك على منصة شركة LP.",
+  keywords: [
+    "my courses",
+    "courses",
+    "LP Company",
+    "دوراتي",
+    "دورات",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/myCoursesTeacher",
+    languages: {
+      "ar-SA": "/myCoursesTeacher",
+      "en-US": "/myCoursesTeacher",
+      "x-default": "/myCoursesTeacher",
+    },
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function MyCoursesTeacherPage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16`}>
-          <MyCoursesTeacherContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <MyCoursesTeacherPageClient />;
 }
 

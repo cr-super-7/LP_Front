@@ -1,38 +1,33 @@
-"use client";
+import type { Metadata } from "next";
+import ReportPageClient from "./ReportPageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import ReportContent from "../components/report/ReportContent";
+export const metadata: Metadata = {
+  title: "Reports - LP Company | التقارير - شركة LP",
+  description:
+    "Access reports and insights on LP Company. الوصول إلى التقارير والرؤى على منصة شركة LP.",
+  keywords: [
+    "reports",
+    "analytics",
+    "LP Company",
+    "تقارير",
+    "تحليلات",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/report",
+    languages: {
+      "ar-SA": "/report",
+      "en-US": "/report",
+      "x-default": "/report",
+    },
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function ReportPage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <ReportContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <ReportPageClient />;
 }

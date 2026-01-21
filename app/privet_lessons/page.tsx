@@ -1,38 +1,47 @@
-"use client";
+import type { Metadata } from "next";
+import PrivateLessonsPageClient from "./PrivateLessonsPageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import PrivateLessonsContent from "../components/privateLessons/PrivateLessonsContent";
+export const metadata: Metadata = {
+  title: "Private Lessons - LP Company | الدروس الخاصة - شركة LP",
+  description:
+    "Find private lessons with qualified instructors on LP Company. اعثر على دروس خاصة مع مدربين مؤهلين على منصة شركة LP.",
+  keywords: [
+    "private lessons",
+    "tutoring",
+    "instructors",
+    "LP Company",
+    "دروس خاصة",
+    "دروس خصوصية",
+    "مدربين",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/privet_lessons",
+    languages: {
+      "ar-SA": "/privet_lessons",
+      "en-US": "/privet_lessons",
+      "x-default": "/privet_lessons",
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    alternateLocale: ["en_US"],
+    url: "/privet_lessons",
+    siteName: "LP Company",
+    title: "Private Lessons - LP Company | الدروس الخاصة - شركة LP",
+    description:
+      "Find private lessons with qualified instructors on LP Company. اعثر على دروس خاصة مع مدربين مؤهلين على منصة شركة LP.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Private Lessons - LP Company | الدروس الخاصة - شركة LP",
+    description:
+      "Find private lessons with qualified instructors on LP Company. اعثر على دروس خاصة مع مدربين مؤهلين على منصة شركة LP.",
+  },
+};
 
 export default function PrivateLessonsPage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <PrivateLessonsContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <PrivateLessonsPageClient />;
 }

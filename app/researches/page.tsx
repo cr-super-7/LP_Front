@@ -1,38 +1,49 @@
-"use client";
+import type { Metadata } from "next";
+import ResearchesPageClient from "./ResearchesPageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import ResearchesContent from "../components/researches/ResearchesContent";
+export const metadata: Metadata = {
+  title: "Researches - LP Company | الأبحاث - شركة LP",
+  description:
+    "Browse academic researches and resources on LP Company. تصفح الأبحاث الأكاديمية والموارد التعليمية على منصة شركة LP.",
+  keywords: [
+    "researches",
+    "research",
+    "academic",
+    "resources",
+    "LP Company",
+    "أبحاث",
+    "بحث علمي",
+    "أبحاث أكاديمية",
+    "موارد تعليمية",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/researches",
+    languages: {
+      "ar-SA": "/researches",
+      "en-US": "/researches",
+      "x-default": "/researches",
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "ar_SA",
+    alternateLocale: ["en_US"],
+    url: "/researches",
+    siteName: "LP Company",
+    title: "Researches - LP Company | الأبحاث - شركة LP",
+    description:
+      "Browse academic researches and resources on LP Company. تصفح الأبحاث الأكاديمية والموارد التعليمية على منصة شركة LP.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Researches - LP Company | الأبحاث - شركة LP",
+    description:
+      "Browse academic researches and resources on LP Company. تصفح الأبحاث الأكاديمية والموارد التعليمية على منصة شركة LP.",
+  },
+};
 
 export default function ResearchesPage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <ResearchesContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <ResearchesPageClient />;
 }

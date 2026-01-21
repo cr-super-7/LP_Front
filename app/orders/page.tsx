@@ -1,38 +1,33 @@
-"use client";
+import type { Metadata } from "next";
+import OrdersPageClient from "./OrdersPageClient";
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import Sidebar from "../components/layout/Sidebar";
-import Navbar from "../components/layout/Navbar";
-import Background from "../components/layout/Background";
-import Footer from "../components/layout/Footer";
-import OrdersContent from "../components/orders/OrdersContent";
+export const metadata: Metadata = {
+  title: "Orders - LP Company | الطلبات - شركة LP",
+  description:
+    "Track and manage your orders on LP Company. تتبع وأدر طلباتك على منصة شركة LP.",
+  keywords: [
+    "orders",
+    "order history",
+    "LP Company",
+    "الطلبات",
+    "سجل الطلبات",
+    "شركة LP",
+  ],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  alternates: {
+    canonical: "/orders",
+    languages: {
+      "ar-SA": "/orders",
+      "en-US": "/orders",
+      "x-default": "/orders",
+    },
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function OrdersPage() {
-  const { theme } = useTheme();
-  const { language } = useLanguage();
-  const isRTL = language === "ar";
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <OrdersContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
-  );
+  return <OrdersPageClient />;
 }
