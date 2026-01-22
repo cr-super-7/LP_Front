@@ -8,6 +8,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getProfessorById } from "../../store/api/professorApi";
 import type { Professor } from "../../store/interface/professorInterface";
+import ProfessorReviews from "./ProfessorReviews";
 
 export default function InquiryDetailsContent() {
   const { language } = useLanguage();
@@ -256,6 +257,8 @@ export default function InquiryDetailsContent() {
           </div>
         </section>
       )}
+
+      <ProfessorReviews professorId={professor._id} />
 
       <section
         className={`rounded-2xl p-6 ${

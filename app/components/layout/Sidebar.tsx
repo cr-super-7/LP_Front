@@ -28,6 +28,7 @@ import {
   Building2,
   Search,
   Users,
+  MessageSquare,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -159,6 +160,12 @@ export default function Sidebar() {
       label: language === "ar" ? "الأبحاث" : "Researches",
     },
     {
+      key: "inquiry",
+      href: "/inquiry",
+      icon: MessageSquare,
+      label: language === "ar" ? "الاستشارات" : "Inquiry",
+    },
+    {
       key: "profile",
       href: "/profile",
       icon: User,
@@ -219,6 +226,12 @@ export default function Sidebar() {
         { key: "myAdvertisements", href: "/advertisements/my-advertisements", label: t("sidebar.myAdvertisements") },
         { key: "createAdvertisement", href: "/advertisements/create", label: t("sidebar.createAdvertisement") },
       ],
+    },
+    {
+      key: "inquiry",
+      href: "/inquiry",
+      icon: MessageSquare,
+      label: language === "ar" ? "الاستشارات" : "Inquiry",
     },
     {
       key: "profile",

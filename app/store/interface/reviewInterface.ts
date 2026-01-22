@@ -30,6 +30,7 @@ export interface Review {
   course: string | null;
   lesson: Lesson | null;
   teacher: string | null;
+  professor?: string | null;
   rate: number;
   createdAt: string;
   __v?: number;
@@ -50,5 +51,9 @@ export interface CreateCourseReviewRequest {
 }
 
 export interface CreateLessonReviewRequest {
+  rate: number;
+}
+
+export interface CreateProfessorReviewRequest {
   rate: number;
 }
