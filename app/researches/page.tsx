@@ -45,5 +45,5 @@ export const metadata: Metadata = {
 };
 
 export default function ResearchesPage() {
-  return <ResearchesPageClient />;
+  return <ResearchesPageClient/>;
 }
