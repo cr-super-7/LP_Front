@@ -24,4 +24,13 @@ const getProfessors = async (params: GetProfessorsParams = {}): Promise<Professo
   );
 };
 
-export { getProfessors };
+const getProfessorById = async (professorId: string): Promise<Professor | null> => {
+  const { data } = await api.get<{ professor?: Professor }>(`/professors/${professorId}`);
+  const professor =
+    data.professor ||
+    (data as unknown as { result?: { professor?: Professor } }).result?.professor ||
+    (data as unknown as Professor);
+  return professor || null;
+};
+
+export { getProfessors, getProfessorById };

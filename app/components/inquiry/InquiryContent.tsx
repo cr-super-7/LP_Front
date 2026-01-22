@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import Link from "next/link";
 import { getProfessors } from "../../store/api/professorApi";
 import type { Professor } from "../../store/interface/professorInterface";
 
@@ -16,7 +17,6 @@ export default function InquiryContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [professors, setProfessors] = useState<Professor[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [specialization, setSpecialization] = useState("all");
   const [availability, setAvailability] = useState<AvailabilityFilter>("all");
 
   useEffect(() => {
@@ -25,7 +25,6 @@ export default function InquiryContent() {
       try {
         setIsLoading(true);
         const data = await getProfessors({
-          specialization: specialization === "all" ? undefined : specialization,
           isAvailable:
             availability === "all"
               ? undefined
@@ -45,7 +44,7 @@ export default function InquiryContent() {
     return () => {
       isActive = false;
     };
-  }, [availability, specialization]);
+  }, [availability]);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -53,24 +52,26 @@ export default function InquiryContent() {
     if (!normalizedQuery) return professors;
     return professors.filter((professor) => {
       const haystack = [
+        professor.name.ar,
+        professor.name.en,
+        professor.description.ar,
+        professor.description.en,
+        professor.vision.ar,
+        professor.vision.en,
+        professor.message.ar,
+        professor.message.en,
         professor.user.email,
         professor.user.phone || "",
-        professor.specialization,
-        professor.bio,
+        ...(professor.achievements || []).flatMap((achievement) => [
+          achievement.ar,
+          achievement.en,
+        ]),
       ]
         .join(" ")
         .toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [normalizedQuery, professors]);
-
-  const specializations = useMemo(() => {
-    const values = new Set<string>();
-    professors.forEach((professor) => {
-      if (professor.specialization) values.add(professor.specialization);
-    });
-    return Array.from(values);
-  }, [professors]);
 
   const getAvailabilityLabel = (value: AvailabilityFilter) => {
     if (language === "ar") {
@@ -108,7 +109,7 @@ export default function InquiryContent() {
         </div>
 
         <div
-          className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-xl p-4 ${
+          className={`grid grid-cols-1 md:grid-cols-2 gap-4 rounded-xl p-4 ${
             theme === "dark" ? "bg-blue-900/40 border border-blue-800" : "bg-white border border-gray-200 shadow-sm"
           }`}
         >
@@ -125,8 +126,8 @@ export default function InquiryContent() {
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={
                 language === "ar"
-                  ? "ابحث بالاسم أو التخصص أو البريد"
-                  : "Search by name, specialization, or email"
+                  ? "ابحث بالاسم أو الرسالة أو البريد"
+                  : "Search by name, message, or email"
               }
               className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
                 theme === "dark"
@@ -134,31 +135,6 @@ export default function InquiryContent() {
                   : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-500"
               }`}
             />
-          </div>
-          <div>
-            <label
-              className={`text-sm font-medium ${
-                theme === "dark" ? "text-gray-200" : "text-gray-700"
-              }`}
-            >
-              {language === "ar" ? "التخصص" : "Specialization"}
-            </label>
-            <select
-              value={specialization}
-              onChange={(event) => setSpecialization(event.target.value)}
-              className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm ${
-                theme === "dark"
-                  ? "bg-blue-950 border-blue-800 text-white"
-                  : "bg-gray-50 border-gray-200 text-gray-900"
-              }`}
-            >
-              <option value="all">{language === "ar" ? "كل التخصصات" : "All specializations"}</option>
-              {specializations.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
           </div>
           <div>
             <label
@@ -212,22 +188,32 @@ export default function InquiryContent() {
             const ratingValue = Number.isFinite(professor.rating)
               ? professor.rating
               : 0;
+            const displayName =
+              language === "ar" ? professor.name.ar : professor.name.en;
+            const description =
+              language === "ar"
+                ? professor.description.ar
+                : professor.description.en;
+            const message =
+              language === "ar" ? professor.message.ar : professor.message.en;
+            const achievements = professor.achievements || [];
             return (
-              <div
+              <Link
                 key={professor._id}
-                className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                href={`/inquiry/${professor._id}`}
+                className={`rounded-2xl overflow-hidden transition-all duration-300 group ${
                   theme === "dark"
                     ? "bg-blue-900/50 border border-blue-800"
                     : "bg-white border border-gray-200 shadow-md hover:shadow-xl"
                 }`}
               >
                 <div className="relative h-44">
-                  {professor.user.profilePicture ? (
+                  {professor.image || professor.user.profilePicture ? (
                     <Image
-                      src={professor.user.profilePicture}
-                      alt={professor.user.email}
+                      src={professor.image || professor.user.profilePicture || ""}
+                      alt={displayName}
                       fill
-                      className="object-cover"
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
                       sizes="(max-width: 768px) 100vw, 33vw"
                     />
                   ) : (
@@ -271,29 +257,54 @@ export default function InquiryContent() {
                         theme === "dark" ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      {professor.specialization}
+                      {displayName}
                     </h3>
                     <p
                       className={`text-sm line-clamp-2 ${
                         theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
-                      {professor.bio}
+                      {description}
                     </p>
                   </div>
+
                   <div
-                    className={`flex flex-wrap items-center gap-3 text-xs ${
-                      theme === "dark" ? "text-gray-300" : "text-gray-600"
+                    className={`rounded-lg px-3 py-2 text-xs ${
+                      theme === "dark" ? "bg-blue-950/70 text-blue-100" : "bg-blue-50 text-blue-800"
                     }`}
                   >
-                    <span>
-                      {language === "ar" ? "الخبرة" : "Experience"}: {professor.experience}{" "}
-                      {language === "ar" ? "سنة" : "years"}
-                    </span>
-                    <span>
-                      {language === "ar" ? "الاستشارات" : "Consultations"}: {professor.totalConsultations}
-                    </span>
+                    {language === "ar" ? "رسالة الأستاذ" : "Professor message"}:{" "}
+                    <span className="line-clamp-2">{message}</span>
                   </div>
+
+                  {achievements.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {achievements.slice(0, 3).map((achievement) => (
+                        <span
+                          key={achievement._id}
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            theme === "dark"
+                              ? "bg-blue-900/80 text-blue-200"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          {language === "ar" ? achievement.ar : achievement.en}
+                        </span>
+                      ))}
+                      {achievements.length > 3 && (
+                        <span
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            theme === "dark"
+                              ? "bg-blue-900/80 text-blue-200"
+                              : "bg-blue-100 text-blue-700"
+                          }`}
+                        >
+                          +{achievements.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between pt-2">
                     <span
                       className={`text-base font-semibold ${
@@ -302,24 +313,17 @@ export default function InquiryContent() {
                     >
                       {formatPrice(professor.consultationPrice, professor.currency)}
                     </span>
-                    <button
-                      type="button"
-                      className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                        professor.isAvailable
-                          ? theme === "dark"
-                            ? "bg-blue-600 text-white hover:bg-blue-500"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                          : theme === "dark"
-                          ? "bg-gray-800 text-gray-400"
-                          : "bg-gray-200 text-gray-500"
+                    <span
+                      className={`text-xs font-semibold ${
+                        theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
-                      disabled={!professor.isAvailable}
                     >
-                      {language === "ar" ? "احجز استشارة" : "Book Inquiry"}
-                    </button>
+                      {language === "ar" ? "التقييمات" : "Reviews"}:{" "}
+                      {professor.totalReviews ?? 0}
+                    </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

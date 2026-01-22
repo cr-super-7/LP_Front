@@ -148,7 +148,7 @@ export default function Sidebar() {
     },
     {
       key: "privateLessons",
-      href: "/privet_lessons",
+      href: "/privet_lessons_student",
       icon: Users,
       label: language === "ar" ? "الدروس الخصوصية" : "Private Lessons",
     },

@@ -6,9 +6,9 @@ import Sidebar from "../layout/Sidebar";
 import Navbar from "../layout/Navbar";
 import Background from "../layout/Background";
 import Footer from "../layout/Footer";
-import InquiryContent from "./InquiryContent";
+import InquiryDetailsContent from "./InquiryDetailsContent";
 
-export default function InquiryPageClient() {
+export default function InquiryDetailsPageClient() {
   const { theme } = useTheme();
   const { language } = useLanguage();
   const isRTL = language === "ar";
@@ -27,7 +27,7 @@ export default function InquiryPageClient() {
         <Sidebar />
         <Navbar />
         <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <InquiryContent />
+          <InquiryDetailsContent />
         </main>
         <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
           <Footer />

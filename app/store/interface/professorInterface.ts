@@ -1,3 +1,8 @@
+export interface LocalizedText {
+  ar: string;
+  en: string;
+}
+
 export interface ProfessorUser {
   _id: string;
   email: string;
@@ -8,18 +13,29 @@ export interface ProfessorUser {
   bio?: string | null;
 }
 
+export interface Achievement {
+  _id: string;
+  ar: string;
+  en: string;
+}
+
 export interface Professor {
   _id: string;
+  name: LocalizedText;
+  description: LocalizedText;
+  vision: LocalizedText;
+  message: LocalizedText;
   user: ProfessorUser;
-  specialization: string;
-  bio: string;
-  experience: number;
+  image?: string | null;
+  achievements?: Achievement[];
   consultationPrice: number;
   currency: string;
   isAvailable: boolean;
   rating: number;
+  totalReviews?: number;
   totalConsultations: number;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ProfessorsResponse {

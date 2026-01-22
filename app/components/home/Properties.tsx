@@ -154,6 +154,8 @@ export default function Properties() {
                   <Link href="/researches">{MobileCircleContent}</Link>
                 ) : property.id === 3 ? (
                   <Link href="/inquiry">{MobileCircleContent}</Link>
+                ) : property.id === 2 ? (
+                  <Link href="/privet_lessons_student">{MobileCircleContent}</Link>
                 ) : (
                   MobileCircleContent
                 )}
@@ -249,6 +251,8 @@ export default function Properties() {
                   <Link href="/researches">{CircleContent}</Link>
                 ) : property.id === 3 ? (
                   <Link href="/inquiry">{CircleContent}</Link>
+                ) : property.id === 2 ? (
+                  <Link href="/privet_lessons_student">{CircleContent}</Link>
                 ) : (
                   CircleContent
                 )}
