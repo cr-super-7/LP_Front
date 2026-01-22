@@ -17,6 +17,7 @@ export default function CoursesProperties() {
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(3);
   const isRTL = language === "ar";
 
   useEffect(() => {
@@ -44,18 +45,36 @@ export default function CoursesProperties() {
     loadAdvertisements();
   }, [dispatch]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(min-width: 768px)");
+    const updateCount = () => setVisibleCount(media.matches ? 3 : 1);
+    updateCount();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", updateCount);
+      return () => media.removeEventListener("change", updateCount);
+    }
+    media.addListener(updateCount);
+    return () => media.removeListener(updateCount);
+  }, []);
+
+  useEffect(() => {
+    const maxIndex = Math.max(0, ads.length - visibleCount);
+    setCurrentIndex((prev) => (prev > maxIndex ? maxIndex : prev));
+  }, [ads.length, visibleCount]);
+
   // Auto-slide effect - move one ad at a time, loop من آخر إعلان إلى الأول
   useEffect(() => {
-    if (ads.length <= 3) return; // Don't auto-slide if 3 or fewer ads
+    if (ads.length <= visibleCount) return; // Don't auto-slide if 3 or fewer ads
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         // Move one ad at a time, stop when we can't show 3 more ads
-        const maxIndex = Math.max(0, ads.length - 3);
+        const maxIndex = Math.max(0, ads.length - visibleCount);
         return prev >= maxIndex ? 0 : prev + 1;
       });
     }, 5000);
     return () => clearInterval(interval);
-  }, [ads.length]);
+  }, [ads.length, visibleCount]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -69,7 +88,7 @@ export default function CoursesProperties() {
 
   // ترتيب الإعلانات حسب اتجاه اللغة (للـ RTL نعرضها بالعكس)
   const displayedAds = isRTL ? [...ads].reverse() : ads;
-  const slidePercent = 100 / 3;
+  const slidePercent = 100 / visibleCount;
   const direction = isRTL ? 1 : -1; // RTL يتحرك لليمين، LTR لليسار
 
   return (
@@ -168,26 +187,30 @@ export default function CoursesProperties() {
           viewport={{ once: true, margin: "-50px" }}
         >
           <motion.div
-            className={`flex gap-4 items-center ${isRTL ? "flex-row-reverse" : ""}`}
+            className={`flex items-center w-full ${isRTL ? "flex-row-reverse" : ""}`}
             animate={{ x: `${currentIndex * slidePercent * direction}%` }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
           >
             {displayedAds.map((ad, index) => {
               // الصورة الوسطى المرئية دائماً (currentIndex + 1) تكون أكبر في العرض والارتفاع
-              const isMiddle = index === currentIndex + 1;
-              const imageWidth = isMiddle 
-                ? "w-full md:w-[calc(40%-0.67rem)] lg:w-[calc(40%-0.67rem)]" 
-                : "w-full md:w-[calc(30%-0.67rem)] lg:w-[calc(30%-0.67rem)]";
+              const middleOffset = visibleCount === 1 ? 0 : 1;
+              const isMiddle = index === currentIndex + middleOffset;
+              const imageWidth = "basis-full md:basis-1/3";
               const imageHeight = isMiddle 
-                ? "h-54 md:h-70 lg:h-86" 
-                : "h-48 md:h-56 lg:h-64";
+                ? "h-52 md:h-72 lg:h-80" 
+                : "h-48 md:h-60 lg:h-68";
+              const cardScale = isMiddle
+                ? "md:scale-110 md:z-10"
+                : "md:scale-95";
               
               return (
               <div
                 key={ad._id}
-                className={`shrink-0 ${imageWidth}`}
+                className={`shrink-0 ${imageWidth} px-2`}
               >
-                <div className={`relative ${imageHeight} rounded-2xl overflow-hidden group shadow-lg shadow-black/10`}>
+                <div
+                  className={`relative ${imageHeight} rounded-2xl overflow-hidden group shadow-lg shadow-black/10 transition-transform duration-300 ${cardScale}`}
+                >
                   <Image
                     src={ad.image}
                     alt={getDescription(ad)}
@@ -207,9 +230,11 @@ export default function CoursesProperties() {
           </motion.div>
 
           {/* Dots indicators */}
-          {ads.length > 3 && (
-            <div className="flex justify-center gap-2 mt-4">
-              {Array.from({ length: Math.max(1, ads.length - 2) }).map((_, index) => (
+          {ads.length > visibleCount && (
+            <div className="flex justify-center gap-2 mt-8">
+              {Array.from({
+                length: Math.max(1, ads.length - visibleCount + 1),
+              }).map((_, index) => (
                 <button
                   key={index}
                   type="button"
