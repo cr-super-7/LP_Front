@@ -62,7 +62,7 @@ export default function Navbar() {
           try {
             const cart = await getCart(dispatch);
             setCartCount(cart.items?.length || 0);
-          } catch (error) {
+          } catch {
             // Cart might be empty or not available
             setCartCount(0);
           }
@@ -102,6 +102,14 @@ export default function Navbar() {
             placeholder={t("navbar.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const query = searchQuery.trim();
+                if (query.length > 0) {
+                  router.push(`/search?q=${encodeURIComponent(query)}`);
+                }
+              }
+            }}
             className={`w-full px-4 py-2 pl-10 rounded-lg border ${
               theme === "dark"
                 ? "bg-blue-900 border-blue-800 text-white placeholder-gray-400"
