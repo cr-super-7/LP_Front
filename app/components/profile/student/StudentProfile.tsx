@@ -16,10 +16,12 @@ import { updateProfile, changePassword, getUserProfile } from "../../../store/ap
 import { getMyEnrollments } from "../../../store/api/enrollmentApi";
 import { getCart } from "../../../store/api/cartApi";
 import { getMyProgress } from "../../../store/api/progressApi";
+import { getMyConsultations } from "../../../store/api/consultationApi";
 import type { UserProfile } from "../../../store/interface/auth.interface";
 import type { UpdateProfileRequest, ChangePasswordRequest } from "../../../store/interface/auth.interface";
 import type { Enrollment } from "../../../store/interface/enrollmentInterface";
 import type { Course } from "../../../store/interface/courseInterface";
+import type { Consultation } from "../../../store/interface/consultationInterface";
 
 type StudentProfileData = UserProfile & {
   totalCourses?: number;
@@ -39,6 +41,7 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
   const router = useRouter();
   const dispatch = useAppDispatch();
   const authUser = useAppSelector((state) => state.auth.user);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const isRTL = language === "ar";
 
   const [user, setUser] = useState<StudentProfileData | null>(propUser || null);
@@ -47,6 +50,10 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
   const [inProgressCount, setInProgressCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [isConsultationsLoading, setIsConsultationsLoading] = useState(false);
+  const [consultationStatus, setConsultationStatus] = useState("");
+  const [consultationType, setConsultationType] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -126,8 +133,67 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
     loadData();
   }, [authUser, dispatch]);
 
+  useEffect(() => {
+    const loadConsultations = async () => {
+      if (!isAuthenticated) return;
+      try {
+        setIsConsultationsLoading(true);
+        const data = await getMyConsultations(
+          consultationStatus || undefined,
+          consultationType || undefined,
+          dispatch
+        );
+        setConsultations(data);
+      } catch (error) {
+        console.error("Failed to load consultations:", error);
+      } finally {
+        setIsConsultationsLoading(false);
+      }
+    };
+
+    loadConsultations();
+  }, [consultationStatus, consultationType, dispatch, isAuthenticated]);
+
   const textAlign = isRTL ? "text-right" : "text-left";
   const roleLabel = language === "ar" ? "الطالب" : "Student";
+  const locale = language === "ar" ? "ar" : "en";
+
+  const getConsultationTypeLabel = (type: Consultation["type"]) =>
+    type === "chat"
+      ? language === "ar"
+        ? "دردشة"
+        : "Chat"
+      : language === "ar"
+      ? "مكالمة"
+      : "Call";
+
+  const getConsultationStatusLabel = (status: Consultation["status"]) => {
+    switch (status) {
+      case "pending":
+        return language === "ar" ? "قيد الانتظار" : "Pending";
+      case "active":
+        return language === "ar" ? "نشطة" : "Active";
+      case "completed":
+        return language === "ar" ? "مكتملة" : "Completed";
+      case "cancelled":
+        return language === "ar" ? "ملغاة" : "Cancelled";
+      default:
+        return status;
+    }
+  };
+
+  const formatConsultationDate = (value?: string) => {
+    if (!value) return language === "ar" ? "غير محدد" : "Not scheduled";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -401,6 +467,171 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                 </div>
               </section>
             )}
+
+            {/* Consultations */}
+            <section className="space-y-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className={`text-xl font-bold ${
+                  theme === "dark" ? "text-white" : "text-blue-950"
+                }`}>
+                  {language === "ar" ? "الاستشارات" : "Consultations"}
+                </h2>
+                <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    value={consultationStatus}
+                    onChange={(e) => setConsultationStatus(e.target.value)}
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      theme === "dark"
+                        ? "bg-blue-950 text-blue-100 border-blue-800"
+                        : "bg-white text-gray-800 border-gray-300"
+                    }`}
+                  >
+                    <option value="">
+                      {language === "ar" ? "كل الحالات" : "All statuses"}
+                    </option>
+                    <option value="pending">
+                      {language === "ar" ? "قيد الانتظار" : "Pending"}
+                    </option>
+                    <option value="active">
+                      {language === "ar" ? "نشطة" : "Active"}
+                    </option>
+                    <option value="completed">
+                      {language === "ar" ? "مكتملة" : "Completed"}
+                    </option>
+                    <option value="cancelled">
+                      {language === "ar" ? "ملغاة" : "Cancelled"}
+                    </option>
+                  </select>
+                  <select
+                    value={consultationType}
+                    onChange={(e) => setConsultationType(e.target.value)}
+                    className={`rounded-lg border px-3 py-2 text-sm ${
+                      theme === "dark"
+                        ? "bg-blue-950 text-blue-100 border-blue-800"
+                        : "bg-white text-gray-800 border-gray-300"
+                    }`}
+                  >
+                    <option value="">
+                      {language === "ar" ? "كل الأنواع" : "All types"}
+                    </option>
+                    <option value="call">
+                      {language === "ar" ? "مكالمة" : "Call"}
+                    </option>
+                    <option value="chat">
+                      {language === "ar" ? "دردشة" : "Chat"}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              {isConsultationsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+                </div>
+              ) : consultations.length === 0 ? (
+                <div
+                  className={`rounded-2xl border p-6 ${
+                    theme === "dark"
+                      ? "bg-blue-900/40 border-blue-800 text-blue-100"
+                      : "bg-white border-gray-200 text-gray-700"
+                  }`}
+                >
+                  {language === "ar"
+                    ? "لا توجد استشارات لعرضها حالياً."
+                    : "No consultations to display yet."}
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {consultations.map((consultation) => {
+                    const professor =
+                      typeof consultation.professor === "object"
+                        ? consultation.professor
+                        : null;
+                    const professorLabel =
+                      professor?.name
+                        ? language === "ar"
+                          ? professor.name.ar
+                          : professor.name.en
+                        : professor?.user?.email ||
+                          (typeof consultation.professor === "string"
+                            ? consultation.professor
+                            : language === "ar"
+                            ? "أستاذ"
+                            : "Professor");
+                    const professorImage =
+                      professor?.image || professor?.user?.profilePicture || null;
+                    return (
+                      <div
+                        key={consultation._id}
+                        className={`rounded-2xl border p-5 ${
+                          theme === "dark"
+                            ? "bg-blue-900/40 border-blue-800 text-blue-100"
+                            : "bg-white border-gray-200 text-gray-700"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 font-semibold">
+                            {professorImage ? (
+                              <Image
+                                src={professorImage}
+                                alt={professorLabel}
+                                width={40}
+                                height={40}
+                                className="rounded-full object-cover"
+                              />
+                            ) : (
+                              <div
+                                className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                                  theme === "dark"
+                                    ? "bg-blue-950 text-blue-200"
+                                    : "bg-blue-100 text-blue-700"
+                                }`}
+                              >
+                                {professorLabel.slice(0, 2)}
+                              </div>
+                            )}
+                            <span>
+                              {language === "ar" ? "الأستاذ: " : "Professor: "}
+                              {professorLabel}
+                            </span>
+                          </div>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              theme === "dark"
+                                ? "bg-blue-950 text-blue-200"
+                                : "bg-blue-50 text-blue-700"
+                            }`}
+                          >
+                            {getConsultationTypeLabel(consultation.type)}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                          <span
+                            className={`rounded-full px-3 py-1 ${
+                              theme === "dark"
+                                ? "bg-blue-950 text-blue-200"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {getConsultationStatusLabel(consultation.status)}
+                          </span>
+                          <span className="text-sm">
+                            {language === "ar" ? "الموعد: " : "Scheduled: "}
+                            {formatConsultationDate(consultation.scheduledAt)}
+                          </span>
+                          {consultation.price && consultation.currency && (
+                            <span className="text-sm">
+                              {language === "ar" ? "السعر: " : "Price: "}
+                              {consultation.price} {consultation.currency}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
             {/* All courses */}
             <section className="space-y-6">

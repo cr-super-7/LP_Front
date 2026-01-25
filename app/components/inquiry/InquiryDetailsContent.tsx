@@ -3,21 +3,39 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { MessageCircle, PhoneCall } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import type { RootState } from "../../store/store";
 import { getProfessorById } from "../../store/api/professorApi";
+import { createConsultation } from "../../store/api/consultationApi";
 import type { Professor } from "../../store/interface/professorInterface";
 import ProfessorReviews from "./ProfessorReviews";
+import toast from "react-hot-toast";
 
 export default function InquiryDetailsContent() {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const params = useParams();
+  const router = useRouter();
   const professorId = params?.id as string;
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((state: RootState) => state.auth);
 
   const [isLoading, setIsLoading] = useState(true);
   const [professor, setProfessor] = useState<Professor | null>(null);
+  const [selectedType, setSelectedType] = useState<"chat" | "call" | null>(null);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const minScheduledAt = useMemo(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+    const pad = (value: number) => value.toString().padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(
+      now.getHours()
+    )}:${pad(now.getMinutes())}`;
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -88,6 +106,58 @@ export default function InquiryDetailsContent() {
   }
 
   const ratingValue = Number.isFinite(professor.rating) ? professor.rating : 0;
+
+  const handleTypeSelect = (type: "chat" | "call") => {
+    if (!isAuthenticated) {
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please log in first");
+      router.push("/login");
+      return;
+    }
+    if (!professor.isAvailable) return;
+    setSelectedType(type);
+    setScheduledAt("");
+  };
+
+  const handleSubmit = async () => {
+    if (!isAuthenticated) {
+      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please log in first");
+      router.push("/login");
+      return;
+    }
+    if (!selectedType) {
+      toast.error(language === "ar" ? "اختر نوع الاستشارة أولاً" : "Select a consultation type");
+      return;
+    }
+    if (!scheduledAt) {
+      toast.error(language === "ar" ? "اختر تاريخاً مناسباً" : "Select a date and time");
+      return;
+    }
+    const scheduledDate = new Date(scheduledAt);
+    if (Number.isNaN(scheduledDate.getTime()) || scheduledDate <= new Date()) {
+      toast.error(
+        language === "ar"
+          ? "الرجاء اختيار وقت في المستقبل"
+          : "Please choose a future date and time"
+      );
+      return;
+    }
+    if (!professor) return;
+    setIsSubmitting(true);
+    try {
+      await createConsultation(
+        {
+          professorId: professor._id,
+          type: selectedType,
+          scheduledAt: scheduledDate.toISOString(),
+        },
+        dispatch
+      );
+      setSelectedType(null);
+      setScheduledAt("");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -281,7 +351,11 @@ export default function InquiryDetailsContent() {
               theme === "dark"
                 ? "bg-blue-950/70 text-blue-100"
                 : "bg-blue-50 text-blue-900"
+            } ${selectedType === "chat" ? "ring-2 ring-blue-400" : ""} ${
+              professor.isAvailable && isAuthenticated ? "" : "opacity-60 cursor-not-allowed"
             }`}
+            onClick={() => handleTypeSelect("chat")}
+            disabled={!professor.isAvailable || !isAuthenticated}
           >
             <div
               className={`mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full ${
@@ -305,7 +379,11 @@ export default function InquiryDetailsContent() {
               theme === "dark"
                 ? "bg-blue-950/70 text-blue-100"
                 : "bg-blue-50 text-blue-900"
+            } ${selectedType === "call" ? "ring-2 ring-blue-400" : ""} ${
+              professor.isAvailable && isAuthenticated ? "" : "opacity-60 cursor-not-allowed"
             }`}
+            onClick={() => handleTypeSelect("call")}
+            disabled={!professor.isAvailable || !isAuthenticated}
           >
             <div
               className={`mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full ${
@@ -324,6 +402,58 @@ export default function InquiryDetailsContent() {
             </p>
           </button>
         </div>
+
+        {selectedType && isAuthenticated && (
+          <div
+            className={`mt-6 rounded-2xl p-4 md:p-5 ${
+              theme === "dark" ? "bg-blue-950/70" : "bg-gray-50"
+            }`}
+          >
+            <p className={`text-sm font-semibold ${theme === "dark" ? "text-blue-100" : "text-gray-800"}`}>
+              {language === "ar" ? "اختر موعد الاستشارة" : "Select consultation date"}
+            </p>
+            <div className="mt-3 grid gap-3 md:grid-cols-[1fr_auto] md:items-center">
+              <input
+                type="datetime-local"
+                value={scheduledAt}
+                onChange={(event) => setScheduledAt(event.target.value)}
+                min={minScheduledAt}
+                className={`w-full rounded-lg border px-3 py-2 text-sm ${
+                  theme === "dark"
+                    ? "bg-blue-950 text-blue-100 border-blue-800"
+                    : "bg-white text-gray-800 border-gray-300"
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!scheduledAt || isSubmitting || !professor.isAvailable || !isAuthenticated}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                  !scheduledAt || isSubmitting || !professor.isAvailable || !isAuthenticated
+                    ? theme === "dark"
+                      ? "bg-gray-800 text-gray-400"
+                      : "bg-gray-200 text-gray-500"
+                    : theme === "dark"
+                    ? "bg-blue-600 text-white hover:bg-blue-500"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                {isSubmitting
+                  ? language === "ar"
+                    ? "جارٍ الحجز..."
+                    : "Booking..."
+                  : language === "ar"
+                  ? "تأكيد الحجز"
+                  : "Confirm booking"}
+              </button>
+            </div>
+            <p className={`mt-2 text-xs ${theme === "dark" ? "text-blue-200/80" : "text-gray-500"}`}>
+              {language === "ar"
+                ? "سيتم إرسال تأكيد بعد إتمام الحجز."
+                : "You will receive a confirmation after booking."}
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

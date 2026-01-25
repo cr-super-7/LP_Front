@@ -9,7 +9,21 @@ export interface Consultation {
   };
   professor: string | {
     _id: string;
-    email: string;
+    name?: {
+      ar: string;
+      en: string;
+    };
+    image?: string | null;
+    consultationPrice?: number;
+    currency?: string;
+    user?: {
+      _id: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+      profilePicture?: string | null;
+      [key: string]: any;
+    };
     [key: string]: any;
   };
   type: "call" | "chat";
@@ -17,6 +31,12 @@ export interface Consultation {
   scheduledAt?: string;
   startedAt?: string;
   endedAt?: string;
+  duration?: number;
+  price?: number;
+  currency?: string;
+  paymentStatus?: string;
+  notes?: string | null;
+  cancelledBy?: string | null;
   cancellationReason?: string;
   createdAt: string;
   updatedAt?: string;
