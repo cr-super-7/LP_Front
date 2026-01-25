@@ -7,6 +7,7 @@ import Navbar from "../../components/layout/Navbar";
 import Background from "../../components/layout/Background";
 import Footer from "../../components/layout/Footer";
 import CourseDetailsContent from "../../components/courses/CourseDetailsContent";
+import RoleRedirect from "../../components/auth/RoleRedirect";
 
 export default function CourseDetailPage() {
   const { theme } = useTheme();
@@ -14,25 +15,27 @@ export default function CourseDetailPage() {
   const isRTL = language === "ar";
 
   return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
+    <RoleRedirect>
+      <div
+        className={`relative min-h-screen overflow-x-hidden ${
+          theme === "dark"
+            ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
+            : "bg-linear-to-b from-white via-gray-50 to-white"
+        }`}
+      >
+        <Background />
 
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <CourseDetailsContent />
-        </main>
-        <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
-          <Footer />
+        <div className="relative z-10">
+          <Sidebar />
+          <Navbar />
+          <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16 p-6`}>
+            <CourseDetailsContent />
+          </main>
+          <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
+            <Footer />
+          </div>
         </div>
       </div>
-    </div>
+    </RoleRedirect>
   );
 }

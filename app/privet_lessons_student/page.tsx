@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import PrivateLessonsPageClient from "./PrivateLessonsPageClient";
+import RoleRedirect from "../components/auth/RoleRedirect";
 
 export const metadata: Metadata = {
   title: "Private Lessons - LP Company | الدروس الخاصة - شركة LP",
@@ -43,5 +44,9 @@ export const metadata: Metadata = {
 };
 
 export default function PrivateLessonsPage() {
-  return <PrivateLessonsPageClient />;
+  return (
+    <RoleRedirect>
+      <PrivateLessonsPageClient />
+    </RoleRedirect>
+  );
 }

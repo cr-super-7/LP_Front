@@ -8,6 +8,7 @@ import Sidebar from "../../../components/layout/Sidebar";
 import Navbar from "../../../components/layout/Navbar";
 import Background from "../../../components/layout/Background";
 import Footer from "../../../components/layout/Footer";
+import RoleRedirect from "../../../components/auth/RoleRedirect";
 import { useAppDispatch } from "../../../store/hooks";
 import { getCourseById } from "../../../store/api/courseApi";
 import { getLessonsByCourse, getLessonById } from "../../../store/api/lessonApi";
@@ -81,29 +82,58 @@ export default function CourseWatchPage() {
 
   if (isLoading) {
     return (
-      <div
-        className={`relative min-h-screen overflow-x-hidden ${
-          theme === "dark"
-            ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-            : "bg-linear-to-b from-white via-gray-50 to-white"
-        }`}
-      >
-        <Background />
-        <div className="relative z-10">
-          <Sidebar />
-          <Navbar />
-          <main className={`${language === "ar" ? "mr-64" : "ml-64"} mt-16 p-6`}>
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-            </div>
-          </main>
+      <RoleRedirect>
+        <div
+          className={`relative min-h-screen overflow-x-hidden ${
+            theme === "dark"
+              ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
+              : "bg-linear-to-b from-white via-gray-50 to-white"
+          }`}
+        >
+          <Background />
+          <div className="relative z-10">
+            <Sidebar />
+            <Navbar />
+            <main className={`${language === "ar" ? "mr-64" : "ml-64"} mt-16 p-6`}>
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
+      </RoleRedirect>
     );
   }
 
   if (!course) {
     return (
+      <RoleRedirect>
+        <div
+          className={`relative min-h-screen overflow-x-hidden ${
+            theme === "dark"
+              ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
+              : "bg-linear-to-b from-white via-gray-50 to-white"
+          }`}
+        >
+          <Background />
+          <div className="relative z-10">
+            <Sidebar />
+            <Navbar />
+            <main className={`${language === "ar" ? "mr-64" : "ml-64"} mt-16 p-6`}>
+              <div className="text-center py-12">
+                <p className={`text-lg ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>
+                  {language === "ar" ? "الدورة غير موجودة" : "Course not found"}
+                </p>
+              </div>
+            </main>
+          </div>
+        </div>
+      </RoleRedirect>
+    );
+  }
+
+  return (
+    <RoleRedirect>
       <div
         className={`relative min-h-screen overflow-x-hidden ${
           theme === "dark"
@@ -116,41 +146,18 @@ export default function CourseWatchPage() {
           <Sidebar />
           <Navbar />
           <main className={`${language === "ar" ? "mr-64" : "ml-64"} mt-16 p-6`}>
-            <div className="text-center py-12">
-              <p className={`text-lg ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>
-                {language === "ar" ? "الدورة غير موجودة" : "Course not found"}
-              </p>
-            </div>
+            <CourseWatchContent
+              course={course}
+              lessons={lessons}
+              selectedLesson={selectedLesson}
+              onLessonSelect={handleLessonSelect}
+            />
           </main>
+          <div className={`${language === "ar" ? "mr-64" : "ml-64"}`}>
+            <Footer />
+          </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div
-      className={`relative min-h-screen overflow-x-hidden ${
-        theme === "dark"
-          ? "bg-linear-to-b from-blue-950 via-blue-900 to-blue-950"
-          : "bg-linear-to-b from-white via-gray-50 to-white"
-      }`}
-    >
-      <Background />
-      <div className="relative z-10">
-        <Sidebar />
-        <Navbar />
-        <main className={`${language === "ar" ? "mr-64" : "ml-64"} mt-16 p-6`}>
-          <CourseWatchContent
-            course={course}
-            lessons={lessons}
-            selectedLesson={selectedLesson}
-            onLessonSelect={handleLessonSelect}
-          />
-        </main>
-        <div className={`${language === "ar" ? "mr-64" : "ml-64"}`}>
-          <Footer />
-        </div>
-      </div>
-    </div>
+    </RoleRedirect>
   );
 }

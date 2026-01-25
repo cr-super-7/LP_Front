@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import CoursesContent from "../components/courses/CoursesContent";
+import RoleRedirect from "../components/auth/RoleRedirect";
 
 export const metadata: Metadata = {
   title: {
@@ -177,7 +178,9 @@ export default function CoursesPage() {
           __html: JSON.stringify(organizationStructuredData),
         }}
       />
-      <CoursesContent />
+      <RoleRedirect>
+        <CoursesContent />
+      </RoleRedirect>
     </>
   );
 }

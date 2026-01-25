@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ResearchesPageClient from "./ResearchesPageClient";
+import RoleRedirect from "../components/auth/RoleRedirect";
 
 export const metadata: Metadata = {
   title: "Researches - LP Company | الأبحاث - شركة LP",
@@ -45,5 +46,9 @@ export const metadata: Metadata = {
 };
 
 export default function ResearchesPage() {
-  return <ResearchesPageClient/>;
+  return (
+    <RoleRedirect>
+      <ResearchesPageClient />
+    </RoleRedirect>
+  );
 }

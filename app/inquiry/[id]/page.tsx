@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import InquiryDetailsPageClient from "../../components/inquiry/InquiryDetailsPageClient";
+import RoleRedirect from "../../components/auth/RoleRedirect";
 
 export const metadata: Metadata = {
   title: "Inquiry Details - LP Company | تفاصيل الاستشارة - شركة LP",
@@ -9,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function InquiryDetailsPage() {
-  return <InquiryDetailsPageClient />;
+  return (
+    <RoleRedirect>
+      <InquiryDetailsPageClient />
+    </RoleRedirect>
+  );
 }
