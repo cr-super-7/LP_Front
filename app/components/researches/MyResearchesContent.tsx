@@ -304,6 +304,7 @@ function ResearchCard({
   onContinue,
   onDelete,
 }: ResearchCardProps) {
+  const isPending = !research.isApproved;
   // Get localized content
   const title =
     language === "ar" ? research.title.ar || research.title.en : research.title.en || research.title.ar;
@@ -456,12 +457,13 @@ function ResearchCard({
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
-            onClick={onContinue}
+            onClick={isPending ? undefined : onContinue}
+            disabled={isPending}
             className={`flex-1 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 border-2 ${
               theme === "dark"
                 ? "bg-transparent border-blue-500 text-blue-500 hover:bg-blue-500/10"
                 : "bg-transparent border-blue-400 text-blue-600 hover:bg-blue-400/10"
-            }`}
+            } ${isPending ? "opacity-50 cursor-not-allowed hover:bg-transparent" : ""}`}
           >
             <span>{language === "ar" ? "متابعة" : "Continue"}</span>
             <ExternalLink className="h-4 w-4" />
