@@ -44,6 +44,12 @@ const createResearch = async (
       formData.append("file", researchData.file);
     }
 
+    // Add cover image only if provided (optional)
+    if (researchData.cover) {
+      // IMPORTANT: backend expects the key to be exactly "cover"
+      formData.append("cover", researchData.cover);
+    }
+
     // Add required fields
     formData.append("researcherName.ar", researchData["researcherName.ar"]);
     formData.append("researcherName.en", researchData["researcherName.en"]);

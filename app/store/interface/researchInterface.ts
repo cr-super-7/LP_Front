@@ -34,6 +34,7 @@ export interface Research {
   title: LocalizedText;
   description: LocalizedText;
   file: string | null; // URL to the research file
+  coverImage?: string | null; // URL to the research cover image
   researchType: "university" | "others";
   department?: Department | string;
   othersCourses?: OthersPlace | string;
@@ -50,6 +51,7 @@ export interface Research {
 
 export interface CreateResearchRequest {
   file?: File; // Optional file
+  cover?: File; // Optional cover image, sent with key "cover"
   "researcherName.ar": string;
   "researcherName.en": string;
   "title.ar": string;

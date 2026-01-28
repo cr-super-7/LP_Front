@@ -319,9 +319,9 @@ function ResearchCard({
       ? research.researcherName.ar || research.researcherName.en
       : research.researcherName.en || research.researcherName.ar;
 
-  // Get image URL - using file URL as thumbnail or default image
-  const imageUrl = research.file || "/home/privet_lessons.png";
-
+  // Get image URL - prefer coverImage, then fallback to file or default image
+  const imageUrl =
+    (research.coverImage as string)
   // Format number for display (e.g., 1500 -> 1.5K)
   const formatNumber = (num: number) => {
     if (num >= 1000000) {
@@ -349,6 +349,7 @@ function ResearchCard({
           fill
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          unoptimized
         />
         {/* Approval Status Badge */}
         <div

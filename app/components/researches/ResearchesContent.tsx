@@ -79,9 +79,13 @@ export default function ResearchesContent() {
     return null;
   };
 
-  // Get image URL
+  // Get image URL - prefer coverImage for thumbnail
   const getImageUrl = (research: Research): string => {
-    return research.file as string;
+    return (
+      (research.coverImage as string | undefined) ||
+      (research.file as string | undefined) ||
+      "/home/privet_lessons.png"
+    );
   };
 
   const handleResearchClick = (researchId: string) => {

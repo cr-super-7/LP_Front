@@ -144,6 +144,12 @@ export default function CreateResearchContent() {
         researchData.file = formData.researchFile;
       }
 
+      // Add cover image only if provided
+      if (formData.coverImage) {
+        // This will be sent to backend with key "cover" via FormData
+        researchData.cover = formData.coverImage;
+      }
+
       if (formData.researchType === "university" && formData.department) {
         researchData.department = formData.department;
       }
