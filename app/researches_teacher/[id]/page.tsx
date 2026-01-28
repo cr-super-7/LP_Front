@@ -11,7 +11,7 @@ import Footer from "../../components/layout/Footer";
 import RoleRedirect from "../../components/auth/RoleRedirect";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getResearchById } from "../../store/api/researchApi";
-import ResearchDetailsContent from "../../components/researches/student/ResearchDetailsContent";
+import ResearchDetailsContent from "../../components/researches/ResearchDetailsContent";
 
 export default function ResearchTeacherDetailPage() {
   const { theme } = useTheme();

@@ -1,13 +1,13 @@
 "use client";
 
-import { useTheme } from "../../../contexts/ThemeContext";
-import { useLanguage } from "../../../contexts/LanguageContext";
-import Sidebar from "../../../components/layout/Sidebar";
-import Navbar from "../../../components/layout/Navbar";
-import Background from "../../../components/layout/Background";
-import Footer from "../../../components/layout/Footer";
-import MyResearchesContent from "../../../components/researches/instructor/MyResearchesContent";
-import RoleRedirect from "../../../components/auth/RoleRedirect";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import Sidebar from "../../components/layout/Sidebar";
+import Navbar from "../../components/layout/Navbar";
+import Background from "../../components/layout/Background";
+import Footer from "../../components/layout/Footer";
+import MyResearchesContent from "../../components/researches/MyResearchesContent";
+import RoleRedirect from "../../components/auth/RoleRedirect";
 
 export default function MyTeacherResearchesPage() {
   const { theme } = useTheme();

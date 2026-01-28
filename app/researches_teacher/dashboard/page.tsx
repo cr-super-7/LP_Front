@@ -1,13 +1,13 @@
 "use client";
 
-import { useTheme } from "../../../contexts/ThemeContext";
-import { useLanguage } from "../../../contexts/LanguageContext";
-import Sidebar from "../../../components/layout/Sidebar";
-import Navbar from "../../../components/layout/Navbar";
-import Background from "../../../components/layout/Background";
-import Footer from "../../../components/layout/Footer";
-import ResearchesDashboardContent from "../../../components/researches/instructor/ResearchesDashboardContent";
-import RoleRedirect from "../../../components/auth/RoleRedirect";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import Sidebar from "../../components/layout/Sidebar";
+import Navbar from "../../components/layout/Navbar";
+import Background from "../../components/layout/Background";
+import Footer from "../../components/layout/Footer";
+import ResearchesDashboardContent from "../../components/researches/ResearchesDashboardContent";
+import RoleRedirect from "../../components/auth/RoleRedirect";
 
 export default function ResearchesTeacherDashboardPage() {
   const { theme } = useTheme();
