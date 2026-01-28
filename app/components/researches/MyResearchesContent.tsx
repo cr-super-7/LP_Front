@@ -41,7 +41,7 @@ export default function MyResearchesContent() {
   };
 
   const handleContinue = (researchId: string) => {
-    router.push(`/researches/${researchId}`);
+    router.push(`/researches_teacher/${researchId}`);
   };
 
   // Filter researches based on selected filter

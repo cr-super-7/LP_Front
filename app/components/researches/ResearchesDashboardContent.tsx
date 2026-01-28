@@ -520,7 +520,7 @@ export default function ResearchesDashboardContent() {
                         } hover:bg-opacity-50 ${
                           theme === "dark" ? "hover:bg-blue-800/30" : "hover:bg-gray-50"
                         } transition-colors cursor-pointer`}
-                        onClick={() => router.push(`/researches/${research.id}`)}
+                        onClick={() => router.push(`/researches_teacher/${research.id}`)}
                       >
                         <td className="py-4 px-4">
                           <p

@@ -81,11 +81,11 @@ export default function ResearchesContent() {
 
   // Get image URL
   const getImageUrl = (research: Research): string => {
-    return research.file || "/home/privet_lessons.png";
+    return research.file as string;
   };
 
   const handleResearchClick = (researchId: string) => {
-    router.push(`/researches/${researchId}`);
+    router.push(`/researches_student/${researchId}`);
   };
 
   if (isLoading) {

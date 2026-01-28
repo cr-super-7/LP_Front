@@ -155,7 +155,7 @@ export default function Sidebar() {
     },
     {
       key: "researches",
-      href: "/researches",
+      href: "/researches_student",
       icon: Search,
       label: language === "ar" ? "الأبحاث" : "Researches",
     },
@@ -201,13 +201,13 @@ export default function Sidebar() {
     },
     {
       key: "researches",
-      href: "/researches",
+      href: "/researches_teacher/dashboard",
       icon: FileText,
       label: t("sidebar.researches"),
       hasSubmenu: true,
       subItems: [
-        { key: "researchesDashboard", href: "/researches/dashboard", label: t("sidebar.researchesDashboard") },
-        { key: "myResearches", href: "/researches/my-researches", label: t("sidebar.myResearches") },
+        { key: "researchesDashboard", href: "/researches_teacher/dashboard", label: t("sidebar.researchesDashboard") },
+        { key: "myResearches", href: "/researches_teacher/my-researches", label: t("sidebar.myResearches") },
       ],
     },
     {

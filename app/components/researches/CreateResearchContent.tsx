@@ -30,7 +30,7 @@ export default function CreateResearchContent() {
   useEffect(() => {
     if (!researchTypeParam || (researchTypeParam !== "university" && researchTypeParam !== "others")) {
       toast.error(language === "ar" ? "يرجى اختيار نوع البحث" : "Please select research type");
-      router.push("/researches/my-researches");
+      router.push("/researches_teacher/my-researches");
     }
   }, [researchTypeParam, router, language]);
 
@@ -153,7 +153,7 @@ export default function CreateResearchContent() {
 
       await createResearch(researchData, dispatch);
       toast.success(language === "ar" ? "تم إنشاء البحث بنجاح" : "Research created successfully");
-      router.push("/researches/my-researches");
+      router.push("/researches_teacher/my-researches");
     } catch (error) {
       console.error("Failed to create research:", error);
     }

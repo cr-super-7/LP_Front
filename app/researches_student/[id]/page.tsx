@@ -11,9 +11,9 @@ import Footer from "../../components/layout/Footer";
 import RoleRedirect from "../../components/auth/RoleRedirect";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getResearchById } from "../../store/api/researchApi";
-import ResearchDetailsContent from "../../components/researches/ResearchDetailsContent";
+import ResearchDetailsContent from "../../components/researches/student/ResearchDetailsContent";
 
-export default function ResearchDetailPage() {
+export default function ResearchStudentDetailPage() {
   const { theme } = useTheme();
   const { language } = useLanguage();
   const isRTL = language === "ar";
@@ -140,3 +140,4 @@ export default function ResearchDetailPage() {
     </RoleRedirect>
   );
 }
+

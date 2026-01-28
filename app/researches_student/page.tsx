@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import ResearchesPageClient from "./ResearchesPageClient";
+import ResearchesPageClient from "../researches/ResearchesPageClient";
 import RoleRedirect from "../components/auth/RoleRedirect";
 
 export const metadata: Metadata = {
@@ -20,18 +20,18 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   alternates: {
-    canonical: "/researches",
+    canonical: "/researches_student",
     languages: {
-      "ar-SA": "/researches",
-      "en-US": "/researches",
-      "x-default": "/researches",
+      "ar-SA": "/researches_student",
+      "en-US": "/researches_student",
+      "x-default": "/researches_student",
     },
   },
   openGraph: {
     type: "website",
     locale: "ar_SA",
     alternateLocale: ["en_US"],
-    url: "/researches",
+    url: "/researches_student",
     siteName: "LP Company",
     title: "Researches - LP Company | الأبحاث - شركة LP",
     description:
@@ -45,10 +45,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ResearchesPage() {
+export default function ResearchesStudentPage() {
   return (
     <RoleRedirect>
       <ResearchesPageClient />
     </RoleRedirect>
   );
 }
+

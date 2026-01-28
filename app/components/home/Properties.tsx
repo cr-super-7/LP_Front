@@ -151,7 +151,7 @@ export default function Properties() {
                 {property.id === 1 ? (
                   <Link href="/courses">{MobileCircleContent}</Link>
                 ) : property.id === 4 ? (
-                  <Link href="/researches">{MobileCircleContent}</Link>
+                  <Link href="/researches_student">{MobileCircleContent}</Link>
                 ) : property.id === 3 ? (
                   <Link href="/inquiry">{MobileCircleContent}</Link>
                 ) : property.id === 2 ? (
@@ -248,7 +248,7 @@ export default function Properties() {
                 {property.id === 1 ? (
                   <Link href="/courses">{CircleContent}</Link>
                 ) : property.id === 4 ? (
-                  <Link href="/researches">{CircleContent}</Link>
+                  <Link href="/researches_student">{CircleContent}</Link>
                 ) : property.id === 3 ? (
                   <Link href="/inquiry">{CircleContent}</Link>
                 ) : property.id === 2 ? (

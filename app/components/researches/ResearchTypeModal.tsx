@@ -19,7 +19,7 @@ export default function ResearchTypeModal({ isOpen, onClose }: ResearchTypeModal
 
   const handleSelectType = (type: "university" | "others") => {
     onClose();
-    router.push(`/researches/create?researchType=${type}`);
+    router.push(`/researches_teacher/create?researchType=${type}`);
   };
 
   return (

@@ -296,7 +296,7 @@ export default function SearchResultsContent() {
                 {filteredResearches.map((research) =>
                   renderCard({
                     keyValue: research._id,
-                    href: `/researches/${research._id}`,
+                    href: `/researches_student/${research._id}`,
                     title:
                       language === "ar" ? research.title.ar : research.title.en,
                     description:
