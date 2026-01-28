@@ -13,7 +13,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { updateCourse } from "../../store/api/courseApi";
 import { getCategories } from "../../store/api/categoryApi";
 import { getDepartments } from "../../store/api/departmentApi";
-import { getUniversities } from "../../store/api/universityApi";
+import { getOthersCourses } from "../../store/api/othersCoursesApi";
 import type { Course } from "../../store/interface/courseInterface";
 import type { CreateCourseRequest } from "../../store/interface/courseInterface";
 
@@ -35,7 +35,7 @@ export default function UpdateCourseModal({
   const dispatch = useAppDispatch();
   const { categories } = useAppSelector((state) => state.category);
   const { departments } = useAppSelector((state) => state.department);
-  const { universities } = useAppSelector((state) => state.university);
+  const { othersCourses } = useAppSelector((state) => state.othersCourses);
   const { isLoading } = useAppSelector((state) => state.course);
 
   // Initialize form data from course
@@ -51,7 +51,7 @@ export default function UpdateCourseModal({
     durationHours: course.durationHours?.toString() || "",
     totalLessons: course.totalLessons?.toString() || "",
     department: course.department || "",
-    othersPlace: course.othersPlace || "",
+    othersCourses: course.othersCourses || "",
     coverImage: null as File | null,
     coverImagePreview: course.thumbnail || null as string | null,
     isPublished: course.isPublished || false,
@@ -65,8 +65,8 @@ export default function UpdateCourseModal({
         if (course.courseType === "university") {
           await getDepartments(dispatch);
         }
-        if (course.courseType === "professional") {
-          await getUniversities(dispatch);
+        if (course.courseType === "others") {
+          await getOthersCourses(dispatch);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -133,8 +133,8 @@ export default function UpdateCourseModal({
       if (course.courseType === "university" && formData.department) {
         courseData.department = formData.department;
       }
-      if (course.courseType === "professional" && formData.othersPlace) {
-        courseData.othersPlace = formData.othersPlace;
+      if (course.courseType === "others" && formData.othersCourses) {
+        courseData.othersCourses = formData.othersCourses;
       }
       if (formData.totalLessons) {
         courseData.totalLessons = parseInt(formData.totalLessons);
@@ -555,8 +555,8 @@ export default function UpdateCourseModal({
                 </div>
               )}
 
-              {/* Others Place (for professional courses) */}
-              {course.courseType === "professional" && (
+              {/* Others Courses (for others courses) */}
+              {course.courseType === "others" && (
                 <div>
                   <label
                     className={`block text-sm font-semibold mb-2 ${
@@ -567,10 +567,10 @@ export default function UpdateCourseModal({
                   </label>
                   <div className="relative">
                     <select
-                      name="othersPlace"
-                      value={formData.othersPlace}
+                      name="othersCourses"
+                      value={formData.othersCourses}
                       onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, othersPlace: e.target.value }))
+                        setFormData((prev) => ({ ...prev, othersCourses: e.target.value }))
                       }
                       className={`w-full px-4 py-3 rounded-lg border appearance-none ${
                         theme === "dark"
@@ -581,13 +581,13 @@ export default function UpdateCourseModal({
                       <option value="">
                         {language === "ar" ? "اختر المكان" : "Select place"}
                       </option>
-                      {universities.map((uni) => (
-                        <option key={uni._id} value={uni._id}>
-                          {typeof uni.name === "string"
-                            ? uni.name
+                      {othersCourses.map((place) => (
+                        <option key={place._id} value={place._id}>
+                          {typeof place.name === "string"
+                            ? place.name
                             : language === "ar"
-                            ? uni.name.ar
-                            : uni.name.en}
+                            ? place.name.ar
+                            : place.name.en}
                         </option>
                       ))}
                     </select>

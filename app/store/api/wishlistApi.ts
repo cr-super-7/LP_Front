@@ -59,7 +59,7 @@ interface WishlistApiResponse {
         };
         [key: string]: unknown;
       };
-      othersPlace?: {
+      othersCourses?: {
         name?: { ar: string; en: string };
         location?: { ar: string; en: string };
         [key: string]: unknown;

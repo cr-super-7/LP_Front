@@ -22,7 +22,7 @@ export interface Course {
   category: string;
   courseType: "university" | "others";
   department?: string;
-  othersPlace?: string;
+  othersCourses?: string;
   level: "beginner" | "intermediate" | "advanced";
   price: number;
   currency: string;
@@ -52,7 +52,7 @@ export interface CreateCourseRequest {
   category: string;
   courseType: "university" | "others";
   department?: string;
-  othersPlace?: string;
+  othersCourses?: string;
   level: "beginner" | "intermediate" | "advanced";
   price: number;
   currency: string;

@@ -6,7 +6,7 @@ import universityReducer from "./slice/universitySlice";
 import collegeReducer from "./slice/collegeSlice";
 import categoryReducer from "./slice/categorySlice";
 import courseReducer from "./slice/courseSlice";
-import othersPlaceReducer from "./slice/othersPlaceSlice";
+import othersCoursesReducer from "./slice/othersCoursesSlice";
 import lessonReducer from "./slice/lessonSlice";
 import reviewReducer from "./slice/reviewSlice";
 import privateLessonReducer from "./slice/privateLessonSlice";
@@ -30,7 +30,7 @@ export const store = configureStore({
     college: collegeReducer,
     category: categoryReducer,
     course: courseReducer,
-    othersPlace: othersPlaceReducer,
+    othersCourses: othersCoursesReducer,
     lesson: lessonReducer,
     review: reviewReducer,
     privateLesson: privateLessonReducer,

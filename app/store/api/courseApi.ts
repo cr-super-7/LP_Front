@@ -36,7 +36,7 @@ const createCourse = async (courseData: CreateCourseRequest, dispatch: AppDispat
     formData.append("currency", courseData.currency);
     formData.append("durationHours", courseData.durationHours.toString());
     
-    // Add department or othersPlace based on courseType (required by API)
+    // Add department or othersCourses based on courseType (required by API)
     if (courseData.courseType === "university") {
       if (courseData.department) {
         formData.append("department", courseData.department);
@@ -44,10 +44,10 @@ const createCourse = async (courseData: CreateCourseRequest, dispatch: AppDispat
         throw new Error("Department is required for university courses");
       }
     } else if (courseData.courseType === "others") {
-      if (courseData.othersPlace && courseData.othersPlace.trim() !== "") {
-        formData.append("othersPlace", courseData.othersPlace);
+      if (courseData.othersCourses && courseData.othersCourses.trim() !== "") {
+        formData.append("othersCourses", courseData.othersCourses);
       } else {
-        throw new Error("othersPlace is required for others courses");
+        throw new Error("othersCourses is required for others courses");
       }
     }
     if (courseData.totalLessons !== undefined) {
@@ -258,7 +258,7 @@ const updateCourse = async (courseId: string, courseData: Partial<CreateCourseRe
     if (courseData.currency) formData.append("currency", courseData.currency);
     if (courseData.durationHours !== undefined) formData.append("durationHours", courseData.durationHours.toString());
     if (courseData.department) formData.append("department", courseData.department);
-    if (courseData.othersPlace) formData.append("othersPlace", courseData.othersPlace);
+    if (courseData.othersCourses) formData.append("othersCourses", courseData.othersCourses);
     if (courseData.totalLessons !== undefined) formData.append("totalLessons", courseData.totalLessons.toString());
     if (courseData.isPublished !== undefined) formData.append("isPublished", courseData.isPublished.toString());
     if (courseData.thumbnail) formData.append("thumbnail", courseData.thumbnail);

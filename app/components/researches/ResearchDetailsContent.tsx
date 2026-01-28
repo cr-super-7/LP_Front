@@ -82,10 +82,10 @@ export default function ResearchDetailsContent({ research }: ResearchDetailsCont
         college: research.department.college?.name,
         university: research.department.college?.university?.name,
       };
-    } else if (research.researchType === "others" && research.othersPlace) {
-      if (typeof research.othersPlace === "string") return null;
+    } else if (research.researchType === "others" && research.othersCourses) {
+      if (typeof research.othersCourses === "string") return null;
       return {
-        place: research.othersPlace.name,
+        place: research.othersCourses.name,
       };
     }
     return null;

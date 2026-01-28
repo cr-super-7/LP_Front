@@ -71,9 +71,9 @@ export default function ResearchesContent() {
       if (typeof research.department === "string") return null;
       const deptName = research.department.name;
       return language === "ar" ? deptName.ar : deptName.en;
-    } else if (research.researchType === "others" && research.othersPlace) {
-      if (typeof research.othersPlace === "string") return null;
-      const placeName = research.othersPlace.name;
+    } else if (research.researchType === "others" && research.othersCourses) {
+      if (typeof research.othersCourses === "string") return null;
+      const placeName = research.othersCourses.name;
       return language === "ar" ? placeName.ar : placeName.en;
     }
     return null;

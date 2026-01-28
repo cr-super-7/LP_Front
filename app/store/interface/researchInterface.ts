@@ -36,7 +36,7 @@ export interface Research {
   file: string | null; // URL to the research file
   researchType: "university" | "others";
   department?: Department | string;
-  othersPlace?: OthersPlace | string;
+  othersCourses?: OthersPlace | string;
   createdBy: User | string;
   isApproved: boolean;
   approvedBy?: User | string | null;
@@ -58,7 +58,7 @@ export interface CreateResearchRequest {
   "description.en": string;
   researchType: "university" | "others";
   department?: string; // Required if researchType is 'university'
-  othersPlace?: string; // Required if researchType is 'others'
+  othersCourses?: string; // Required if researchType is 'others'
 }
 
 export interface UpdateResearchRequest extends Partial<CreateResearchRequest> {

@@ -57,8 +57,8 @@ const createResearch = async (
     if (researchData.researchType === "university" && researchData.department) {
       formData.append("department", researchData.department);
     }
-    if (researchData.researchType === "others" && researchData.othersPlace) {
-      formData.append("othersPlace", researchData.othersPlace);
+    if (researchData.researchType === "others" && researchData.othersCourses) {
+      formData.append("othersCourses", researchData.othersCourses);
     }
 
     const { data } = await api.post("/researches", formData, {
@@ -220,8 +220,8 @@ const updateResearch = async (
     if (researchData.researchType === "university" && researchData.department) {
       formData.append("department", researchData.department);
     }
-    if (researchData.researchType === "others" && researchData.othersPlace) {
-      formData.append("othersPlace", researchData.othersPlace);
+    if (researchData.researchType === "others" && researchData.othersCourses) {
+      formData.append("othersCourses", researchData.othersCourses);
     }
 
     const { data } = await api.put(`/researches/${researchId}`, formData, {

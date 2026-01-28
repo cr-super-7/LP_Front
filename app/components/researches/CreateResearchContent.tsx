@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { createResearch } from "../../store/api/researchApi";
 import { getDepartments } from "../../store/api/departmentApi";
-import { getOthersPlaces } from "../../store/api/othersPlaceApi";
+import { getOthersCourses } from "../../store/api/othersCoursesApi";
 import type { CreateResearchRequest } from "../../store/interface/researchInterface";
 import toast from "react-hot-toast";
 
@@ -20,7 +20,7 @@ export default function CreateResearchContent() {
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const { departments } = useAppSelector((state) => state.department);
-  const { othersPlaces } = useAppSelector((state) => state.othersPlace);
+  const { othersCourses } = useAppSelector((state) => state.othersCourses);
   const { isLoading } = useAppSelector((state) => state.research);
 
   // Get researchType from query parameter
@@ -46,20 +46,20 @@ export default function CreateResearchContent() {
     researchDataAr: "",
     researchDataEn: "",
     department: "",
-    othersPlace: "",
+    othersCourses: "",
     coverImage: null as File | null,
     coverImagePreview: null as string | null,
     researchFile: null as File | null,
   });
 
-  // Load departments or othersPlaces on mount
+  // Load departments or othersCourses on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         if (formData.researchType === "university") {
           await getDepartments(dispatch);
         } else if (formData.researchType === "others") {
-          await getOthersPlaces(dispatch);
+          await getOthersCourses(dispatch);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -123,7 +123,7 @@ export default function CreateResearchContent() {
       toast.error(language === "ar" ? "يرجى اختيار القسم" : "Please select department");
       return;
     }
-    if (formData.researchType === "others" && !formData.othersPlace) {
+    if (formData.researchType === "others" && !formData.othersCourses) {
       toast.error(language === "ar" ? "يرجى اختيار المكان الآخر" : "Please select others place");
       return;
     }
@@ -147,8 +147,8 @@ export default function CreateResearchContent() {
       if (formData.researchType === "university" && formData.department) {
         researchData.department = formData.department;
       }
-      if (formData.researchType === "others" && formData.othersPlace) {
-        researchData.othersPlace = formData.othersPlace;
+      if (formData.researchType === "others" && formData.othersCourses) {
+        researchData.othersCourses = formData.othersCourses;
       }
 
       await createResearch(researchData, dispatch);
@@ -547,7 +547,7 @@ export default function CreateResearchContent() {
               </div>
             </div>
 
-            {/* Department or Others Place */}
+            {/* Department or Others Courses */}
             {formData.researchType === "university" ? (
               <div>
                 <label
@@ -592,13 +592,13 @@ export default function CreateResearchContent() {
                     theme === "dark" ? "text-white" : "text-blue-950"
                   }`}
                 >
-                  {language === "ar" ? "المكان الآخر" : "Others Place"}
+                  {language === "ar" ? "المكان الآخر" : "Others Course"}
                   <span className="text-red-500 ml-1">*</span>
                 </label>
                 <div className="relative">
                   <select
-                    name="othersPlace"
-                    value={formData.othersPlace}
+                    name="othersCourses"
+                    value={formData.othersCourses}
                     onChange={handleInputChange}
                     className={`w-full px-4 py-3 rounded-lg border appearance-none ${
                       theme === "dark"
@@ -609,7 +609,7 @@ export default function CreateResearchContent() {
                     <option value="">
                       {language === "ar" ? "اختر المكان الآخر" : "Select others place"}
                     </option>
-                    {othersPlaces.map((place) => {
+                    {othersCourses.map((place) => {
                       const placeName = typeof place.name === "string" 
                         ? place.name 
                         : language === "ar" 

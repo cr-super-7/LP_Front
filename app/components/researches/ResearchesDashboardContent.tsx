@@ -220,12 +220,13 @@ export default function ResearchesDashboardContent() {
             ? research.department.name.ar || research.department.name.en
             : research.department.name.en || research.department.name.ar;
       }
-    } else if (research.researchType === "others" && research.othersPlace) {
-      if (typeof research.othersPlace === "object" && research.othersPlace.name) {
+    } else if (research.researchType === "others" && research.othersCourses) {
+      const othersRef = research.othersCourses;
+      if (typeof othersRef === "object" && "name" in othersRef && othersRef.name) {
         departmentPlaceName =
           language === "ar"
-            ? research.othersPlace.name.ar || research.othersPlace.name.en
-            : research.othersPlace.name.en || research.othersPlace.name.ar;
+            ? othersRef.name.ar || othersRef.name.en
+            : othersRef.name.en || othersRef.name.ar;
       }
     }
 

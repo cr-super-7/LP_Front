@@ -5,13 +5,13 @@ import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 interface ProfessionalSpecialtyProps {
-  othersPlace: {
+  othersCourses: {
     name: { ar: string; en: string };
   };
 }
 
 export default function ProfessionalSpecialty({
-  othersPlace,
+  othersCourses,
 }: ProfessionalSpecialtyProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
@@ -54,8 +54,8 @@ export default function ProfessionalSpecialty({
               }`}
             >
               {language === "ar"
-                ? othersPlace.name?.ar
-                : othersPlace.name?.en}
+                ? othersCourses.name?.ar
+                : othersCourses.name?.en}
             </p>
           </div>
         </div>
