@@ -244,13 +244,6 @@ export default function Sidebar() {
 
   const menuItems = mounted && isAuthenticated ? (isStudent ? studentMenuItems : isInstructor ? instructorMenuItems : []) : studentMenuItems;
 
-  const helpItem = {
-    key: "help",
-    href: "/courses/help",
-    icon: HelpCircle,
-    label: t("sidebar.help"),
-  };
-
   return (
     <aside
       className={`fixed top-0 h-full w-64 z-40 transition-all duration-300 ${
@@ -351,25 +344,8 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        {/* Help Item */}
+        {/* Footer (Logout) */}
         <div className="mt-auto pt-4 border-t border-blue-800/50">
-          <Link
-            href={helpItem.href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              pathname === helpItem.href
-                ? theme === "dark"
-                  ? "bg-blue-900 text-blue-400"
-                  : "bg-blue-50 text-blue-600"
-                : theme === "dark"
-                ? "text-gray-300 hover:bg-blue-900/50"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            <HelpCircle size={20} className="shrink-0" />
-            <span className="font-medium">{helpItem.label}</span>
-          </Link>
-
-          {/* Logout Button (only if authenticated and mounted) */}
           {mounted && isAuthenticated && (
             <button
               onClick={handleLogout}
