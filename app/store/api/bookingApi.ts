@@ -122,9 +122,15 @@ const getMyBookings = async (
     if (dispatch) dispatch(setBookingLoading(true));
     
     const queryParams = status ? `?status=${status}` : "";
-    const { data } = await api.get<BookingsResponse>(`/bookings/my/bookings${queryParams}`);
+    const { data } = await api.get<BookingsResponse | Booking[]>(
+      `/bookings/my/bookings${queryParams}`
+    );
 
-    const bookings = data.bookings || [];
+    const bookings = Array.isArray(data)
+      ? (data as Booking[])
+      : ((data as BookingsResponse).bookings ||
+          (data as { result?: { bookings?: Booking[] } }).result?.bookings ||
+          []);
     
     // Update Redux store
     if (dispatch) {

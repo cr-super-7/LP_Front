@@ -29,6 +29,7 @@ import {
   Search,
   Users,
   MessageSquare,
+  CalendarDays,
 } from "lucide-react";
 
 type SidebarSubItem = {
@@ -193,6 +194,12 @@ export default function Sidebar() {
       label: language === "ar" ? "الأبحاث" : "Researches",
     },
     studentInquiryMenuItem,
+    {
+      key: "myBookings",
+      href: "/bookings_student",
+      icon: CalendarDays,
+      label: language === "ar" ? "حجوزاتي" : "My Bookings",
+    },
     {
       key: "profile",
       href: "/profile",

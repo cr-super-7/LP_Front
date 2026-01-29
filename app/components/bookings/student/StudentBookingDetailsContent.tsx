@@ -1,24 +1,30 @@
 "use client";
 
 import { useMemo } from "react";
-import { ExternalLink, User, Clock, MapPin, BadgeCheck, BadgeX, Clock3, Ban, CheckCircle2, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, BadgeCheck, BadgeX, Ban, CheckCircle2, Clock3, Clock, ExternalLink, MapPin, User } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { useTheme } from "../../../contexts/ThemeContext";
 import type { Booking } from "../../../store/interface/bookingInterface";
-import BookingChatPanel from "../../bookings/shared/BookingChatPanel";
+import BookingChatPanel from "../shared/BookingChatPanel";
 
-interface BookingDetailsContentProps {
+interface StudentBookingDetailsContentProps {
   booking: Booking;
 }
 
-export default function BookingDetailsContent({ booking }: BookingDetailsContentProps) {
+function resolveTeacherContact(teacher: Booking["teacher"]): { email?: string; phone?: string } {
+  if (!teacher || typeof teacher === "string") return {};
+  const user = teacher.user;
+  if (!user || typeof user === "string") return {};
+  return { email: user.email, phone: user.phone };
+}
+
+export default function StudentBookingDetailsContent({ booking }: StudentBookingDetailsContentProps) {
   const { language } = useLanguage();
   const { theme } = useTheme();
   const router = useRouter();
 
-  const studentEmail = typeof booking.student === "string" ? booking.student : booking.student.email;
-  const studentPhone = typeof booking.student === "string" ? undefined : booking.student.phone;
+  const teacher = resolveTeacherContact(booking.teacher);
 
   const scheduledAt = booking.scheduledAt || booking.createdAt;
   const scheduledAtDate = new Date(scheduledAt);
@@ -71,7 +77,10 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
   const primaryLink = booking.bookingType === "online" ? booking.meetLink : booking.location;
   const canOpenLink = typeof primaryLink === "string" && primaryLink.startsWith("http");
 
-  const chatTitle = useMemo(() => ({ ar: "الشات مع الطالب", en: "Chat with student" }), []);
+  const chatTitle = useMemo(
+    () => ({ ar: "الشات مع المدرس", en: "Chat with teacher" }),
+    []
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -79,9 +88,7 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
         <button
           onClick={() => router.back()}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            theme === "dark"
-              ? "hover:bg-blue-900/50 text-blue-200"
-              : "hover:bg-gray-100 text-gray-700"
+            theme === "dark" ? "hover:bg-blue-900/50 text-blue-200" : "hover:bg-gray-100 text-gray-700"
           }`}
         >
           <ArrowLeft className="h-5 w-5" />
@@ -96,9 +103,7 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
 
       <div
         className={`rounded-2xl p-6 shadow-xl ${
-          theme === "dark"
-            ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50"
-            : "bg-white border border-gray-200"
+          theme === "dark" ? "bg-blue-900/50 backdrop-blur-sm border border-blue-800/50" : "bg-white border border-gray-200"
         }`}
       >
         <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-blue-950"}`}>
@@ -111,11 +116,13 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
               <User className={`h-5 w-5 ${theme === "dark" ? "text-blue-300" : "text-blue-600"}`} />
               <div>
                 <p className={`text-xs ${theme === "dark" ? "text-blue-300" : "text-gray-600"}`}>
-                  {language === "ar" ? "الطالب" : "Student"}
+                  {language === "ar" ? "المدرس" : "Teacher"}
                 </p>
-                <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>{studentEmail}</p>
-                {studentPhone && (
-                  <p className={`text-sm ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>{studentPhone}</p>
+                <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>
+                  {teacher.email || (language === "ar" ? "غير متاح" : "N/A")}
+                </p>
+                {teacher.phone && (
+                  <p className={`text-sm ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>{teacher.phone}</p>
                 )}
               </div>
             </div>
@@ -137,7 +144,13 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
                   {language === "ar" ? "نوع الحجز" : "Booking type"}
                 </p>
                 <p className={`${theme === "dark" ? "text-white" : "text-gray-900"}`}>
-                  {booking.bookingType === "online" ? (language === "ar" ? "أونلاين" : "Online") : (language === "ar" ? "حضوري" : "Offline")}
+                  {booking.bookingType === "online"
+                    ? language === "ar"
+                      ? "أونلاين"
+                      : "Online"
+                    : language === "ar"
+                      ? "حضوري"
+                      : "Offline"}
                 </p>
               </div>
             </div>
@@ -186,7 +199,11 @@ export default function BookingDetailsContent({ booking }: BookingDetailsContent
               </div>
             )}
 
-            
+            {!primaryLink && (
+              <p className={`text-sm ${theme === "dark" ? "text-blue-200" : "text-gray-600"}`}>
+                {language === "ar" ? "لا يوجد رابط/موقع لهذا الحجز" : "No link/location for this booking"}
+              </p>
+            )}
           </div>
         </div>
       </div>
