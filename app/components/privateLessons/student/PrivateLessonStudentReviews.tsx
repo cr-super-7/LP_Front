@@ -62,7 +62,7 @@ export default function PrivateLessonStudentReviews({ privateLessonId }: Private
   const handleSubmitReview = async (rating: number) => {
     if (!isAuthenticated) {
       toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
 
@@ -152,7 +152,7 @@ export default function PrivateLessonStudentReviews({ privateLessonId }: Private
               onClick={() => {
                 if (!isAuthenticated) {
                   toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-                  router.push("/login");
+                  router.push("/auth/login");
                   return;
                 }
                 setIsReviewModalOpen(true);

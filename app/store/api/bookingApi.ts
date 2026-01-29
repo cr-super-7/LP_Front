@@ -5,6 +5,7 @@ import type {
   BookingResponse,
   BookingsResponse,
   CreateBookingRequest,
+  CreateBookingByScheduleRequest,
   UpdateBookingLocationRequest,
   CancelBookingRequest,
 } from "../interface/bookingInterface";
@@ -14,7 +15,6 @@ import {
   setBookings,
   setCurrentBooking,
   addBooking,
-  updateBookingState,
   removeBooking,
 } from "../slice/bookingSlice";
 import toast from "react-hot-toast";
@@ -73,6 +73,41 @@ const createBooking = async (
 };
 
 /**
+ * Create booking using scheduledAt (used by private lessons).
+ * Swagger shape: { teacherId, type: "online"|"offline", scheduledAt }
+ */
+const createBookingBySchedule = async (
+  bookingData: CreateBookingByScheduleRequest,
+  dispatch?: AppDispatch,
+  options?: { toast?: boolean }
+): Promise<Booking> => {
+  try {
+    if (dispatch) dispatch(setBookingLoading(true));
+    const { data } = await api.post<BookingResponse>("/bookings", bookingData);
+    const booking = (data.booking || data) as Booking;
+    if (dispatch) {
+      dispatch(addBooking(booking));
+      dispatch(setBookingLoading(false));
+    }
+    toast.success(data.message || "Booking created and approved successfully");
+    return booking;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to create booking";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    if (dispatch) dispatch(setBookingError(errorMessage));
+    if (options?.toast !== false) toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * Get my bookings with optional status filter
  * 
  * @param status - Optional status filter
@@ -108,6 +143,47 @@ const getMyBookings = async (
       errorMessage = err.message;
     }
     
+    if (dispatch) dispatch(setBookingError(errorMessage));
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
+ * Get teacher bookings with optional status filter
+ *
+ * Endpoint: GET /bookings/teacher/bookings?status=
+ */
+const getTeacherBookings = async (
+  status?: string,
+  dispatch?: AppDispatch
+): Promise<Booking[]> => {
+  try {
+    if (dispatch) dispatch(setBookingLoading(true));
+
+    const queryParams = status ? `?status=${status}` : "";
+    const { data } = await api.get<BookingsResponse>(`/bookings/teacher/bookings${queryParams}`);
+
+    const bookings = Array.isArray(data)
+      ? (data as Booking[])
+      : ((data as BookingsResponse).bookings || (data as { result?: { bookings?: Booking[] } }).result?.bookings || []);
+
+    if (dispatch) {
+      dispatch(setBookings(bookings));
+    }
+
+    return bookings;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch teacher bookings";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
     if (dispatch) dispatch(setBookingError(errorMessage));
     toast.error(errorMessage);
     throw new Error(errorMessage);
@@ -238,7 +314,9 @@ const updateBookingLocation = async (
 
 export {
   createBooking,
+  createBookingBySchedule,
   getMyBookings,
+  getTeacherBookings,
   getBookingById,
   cancelBooking,
   updateBookingLocation,

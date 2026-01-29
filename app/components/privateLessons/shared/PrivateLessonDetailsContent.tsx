@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -29,11 +29,14 @@ import {
   Building2,
   Trash2,
   Plus,
+  Ticket,
 } from "lucide-react";
-import type { PrivateLesson } from "../../../store/interface/privateLessonInterface";
+import type { PrivateLesson, ScheduleItem } from "../../../store/interface/privateLessonInterface";
 import type { RootState } from "../../../store/store";
 import toast from "react-hot-toast";
 import PrivateLessonStudentReviews from "../student/PrivateLessonStudentReviews";
+import PrivateLessonStudentBookingModal from "../student/PrivateLessonStudentBookingModal";
+import ConfirmDeleteModal from "../../myCoursesTeacher/lessons/ConfirmDeleteModal";
 
 interface PrivateLessonDetailsContentProps {
   lesson: PrivateLesson;
@@ -58,6 +61,42 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
   const [scheduleDuration, setScheduleDuration] = useState<number>(1);
   const [isScheduleSaving, setIsScheduleSaving] = useState(false);
   const [deletingSlotKey, setDeletingSlotKey] = useState<string | null>(null);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isDeleteSlotModalOpen, setIsDeleteSlotModalOpen] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState<ScheduleItem | null>(null);
+
+  const teacherIds = useMemo(() => {
+    // Build candidates from lesson.instructor (could be userId or teacherId depending on backend)
+    const instructor = lesson.instructor as unknown;
+    const candidates: string[] = [];
+    const push = (v: unknown) => {
+      if (typeof v === "string" && v.trim()) candidates.push(v);
+    };
+
+    if (typeof instructor === "string") {
+      push(instructor);
+    } else if (instructor && typeof instructor === "object") {
+      const obj = instructor as { _id?: unknown; user?: unknown };
+      // Many backends use instructor._id as teacherId (teacher doc)
+      push(obj._id);
+      // Some use instructor.user as userId
+      if (typeof obj.user === "string") push(obj.user);
+      else if (obj.user && typeof obj.user === "object") {
+        const u = obj.user as { _id?: unknown; id?: unknown };
+        push(u._id);
+        push(u.id);
+      }
+    }
+
+    // De-dupe preserving order
+    return Array.from(new Set(candidates));
+  }, [lesson.instructor]);
+
+  const selectedSlot = useMemo(() => {
+    if (selectedSlotIndex === null) return null;
+    return lesson.schedule?.[selectedSlotIndex] || null;
+  }, [lesson.schedule, selectedSlotIndex]);
 
   // Check if lesson is in wishlist
   useEffect(() => {
@@ -281,13 +320,15 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
     }
   };
 
-  const handleDeleteSchedule = async (slot: { date: string; time: string; duration: number }) => {
+  const handleDeleteSchedule = (slot: ScheduleItem) => {
     if (!isInstructorView) return;
-    const ok = window.confirm(
-      language === "ar" ? "هل تريد حذف هذا الموعد؟" : "Do you want to delete this schedule slot?"
-    );
-    if (!ok) return;
+    setSlotToDelete(slot);
+    setIsDeleteSlotModalOpen(true);
+  };
 
+  const confirmDeleteSchedule = async () => {
+    if (!isInstructorView || !slotToDelete) return;
+    const slot = slotToDelete;
     const key = `${slot.date}|${slot.time}|${slot.duration}`;
     setDeletingSlotKey(key);
     try {
@@ -511,6 +552,34 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
           </p>
         </div>
 
+        {/* Student booking CTA */}
+        {isStudentView && (
+          <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <p className={`text-sm ${theme === "dark" ? "text-blue-200" : "text-gray-700"}`}>
+              {language === "ar"
+                ? "اضغط على زر الحجز لاختيار الموعد المناسب."
+                : "Click book to choose your preferred time."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                if (!lesson.schedule || lesson.schedule.length === 0) return;
+                setSelectedSlotIndex(0);
+                setIsBookingModalOpen(true);
+              }}
+              disabled={!lesson.schedule || lesson.schedule.length === 0}
+              className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold transition-colors ${
+                !lesson.schedule || lesson.schedule.length === 0
+                  ? "opacity-60 cursor-not-allowed"
+                  : "hover:bg-blue-700"
+              } bg-blue-600 text-white`}
+            >
+              <Ticket className="h-4 w-4" />
+              {language === "ar" ? "احجز الآن" : "Book now"}
+            </button>
+          </div>
+        )}
+
         {/* Instructor Controls */}
         {isInstructorView && (
           <div
@@ -608,7 +677,10 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
                 {isInstructorView && (
                   <button
                     type="button"
-                    onClick={() => handleDeleteSchedule({ date: item.date, time: item.time, duration: item.duration })}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteSchedule(item);
+                    }}
                     disabled={deletingSlotKey === `${item.date}|${item.time}|${item.duration}`}
                     className={`absolute top-3 right-3 inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors ${
                       deletingSlotKey === `${item.date}|${item.time}|${item.duration}`
@@ -647,10 +719,31 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
                     </div>
                   </div>
                 </div>
+
+                {/* Student book button per slot */}
+                {isStudentView && (
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedSlotIndex(index);
+                        setIsBookingModalOpen(true);
+                      }}
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold ${
+                        theme === "dark"
+                          ? "bg-blue-950/40 border border-blue-700 text-blue-100 hover:bg-blue-950/60"
+                          : "bg-white border border-blue-200 text-blue-700 hover:bg-blue-50"
+                      }`}
+                    >
+                      <Ticket className="h-4 w-4" />
+                      {language === "ar" ? "حجز هذا الموعد" : "Book this slot"}
+                    </button>
+                  </div>
+                )}
                 {/* Hover Effect Overlay */}
                 {!isInstructorView && (
                   <div
-                    className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                    className={`pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
                       theme === "dark"
                         ? "bg-linear-to-br from-blue-600/20 to-blue-500/20"
                         : "bg-linear-to-br from-blue-100/50 to-blue-50/50"
@@ -910,6 +1003,38 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
           )}
         </aside>
       </div>
+
+      {/* Student Booking Modal */}
+      {isStudentView && (
+        <PrivateLessonStudentBookingModal
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          teacherIds={teacherIds}
+          slot={selectedSlot}
+        />
+      )}
+
+      {/* Instructor Delete Slot Modal */}
+      {isInstructorView && (
+        <ConfirmDeleteModal
+          isOpen={isDeleteSlotModalOpen}
+          onClose={() => {
+            setIsDeleteSlotModalOpen(false);
+            setSlotToDelete(null);
+          }}
+          onConfirm={() => {
+            void confirmDeleteSchedule();
+          }}
+          title={language === "ar" ? "تأكيد حذف الموعد" : "Confirm delete slot"}
+          message={
+            slotToDelete
+              ? language === "ar"
+                ? `هل تريد حذف موعد ${formatScheduleDate(slotToDelete.date)} - ${formatTime(slotToDelete.time)} (${slotToDelete.duration} ساعة)؟`
+                : `Delete ${formatScheduleDate(slotToDelete.date)} at ${formatTime(slotToDelete.time)} (${slotToDelete.duration} hours)?`
+              : undefined
+          }
+        />
+      )}
 
       {/* Reviews Section (Students only) */}
       {isStudentView && (
