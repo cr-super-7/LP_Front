@@ -15,6 +15,7 @@ import type {
   PrivateLessonResponse,
   CreatePrivateLessonRequest,
   UpdatePrivateLessonRequest,
+  ScheduleItem,
 } from "../interface/privateLessonInterface";
 import toast from "react-hot-toast";
 
@@ -224,6 +225,68 @@ const getPrivateLessonById = async (lessonId: string, dispatch: AppDispatch): Pr
   }
 };
 
+// Quiet fetch (no global loading state)
+const getPrivateLessonByIdQuiet = async (lessonId: string): Promise<PrivateLesson> => {
+  const { data } = await api.get(`/private-lessons/${lessonId}`);
+  const lessonResponse: PrivateLessonResponse = data;
+  return (lessonResponse.privateLesson || data.result?.privateLesson || data) as PrivateLesson;
+};
+
+// Schedule management (Teacher only - owner)
+const addPrivateLessonScheduleSlot = async (
+  lessonId: string,
+  slot: ScheduleItem,
+  dispatch: AppDispatch
+): Promise<PrivateLesson> => {
+  try {
+    await api.post(`/private-lessons/${lessonId}/schedule`, { slot });
+    const updated = await getPrivateLessonByIdQuiet(lessonId);
+    dispatch(setCurrentPrivateLesson(updated));
+    toast.success("Schedule updated");
+    return updated;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to add schedule slot";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+const removePrivateLessonScheduleSlot = async (
+  lessonId: string,
+  slot: ScheduleItem,
+  dispatch: AppDispatch
+): Promise<PrivateLesson> => {
+  try {
+    await api.delete(`/private-lessons/${lessonId}/schedule`, {
+      params: { date: slot.date, time: slot.time, duration: slot.duration },
+    });
+    const updated = await getPrivateLessonByIdQuiet(lessonId);
+    dispatch(setCurrentPrivateLesson(updated));
+    toast.success("Schedule updated");
+    return updated;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to remove schedule slot";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 const updatePrivateLesson = async (
   lessonId: string,
   lessonData: UpdatePrivateLessonRequest,
@@ -326,6 +389,9 @@ export {
   getPrivateLessons,
   getMyPrivateLessons,
   getPrivateLessonById,
+  getPrivateLessonByIdQuiet,
+  addPrivateLessonScheduleSlot,
+  removePrivateLessonScheduleSlot,
   updatePrivateLesson,
   deletePrivateLesson,
 };

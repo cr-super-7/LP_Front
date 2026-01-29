@@ -1,7 +1,7 @@
 "use client";
 
 import type { PrivateLesson } from "../../../store/interface/privateLessonInterface";
-import PrivateLessonDetailsContent from "../PrivateLessonDetailsContent";
+import PrivateLessonDetailsContent from "../shared/PrivateLessonDetailsContent";
 
 interface PrivateLessonStudentDetailsContentProps {
   lesson: PrivateLesson;
