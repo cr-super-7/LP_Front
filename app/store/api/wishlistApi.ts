@@ -5,6 +5,7 @@ import type {
   WishlistResponse,
   AddToWishlistRequest,
 } from "../interface/wishlistInterface";
+import type { PrivateLesson } from "../interface/privateLessonInterface";
 import {
   setWishlistLoading,
   setWishlistError,
@@ -30,7 +31,7 @@ interface WishlistApiResponse {
   wishlistItems?: Array<{
     _id: string;
     user: string;
-    course: {
+    course?: {
       _id: string;
       title: { ar: string; en: string };
       description: { ar: string; en: string };
@@ -71,6 +72,9 @@ interface WishlistApiResponse {
       };
       [key: string]: unknown;
     };
+    privateLesson?: PrivateLesson;
+    courseId?: string;
+    privateLessonId?: string;
     createdAt?: string;
     [key: string]: unknown;
   }>;
@@ -78,6 +82,31 @@ interface WishlistApiResponse {
   wishlistItem?: unknown;
   [key: string]: unknown;
 }
+
+const mapWishlistItems = (wishlistItems: NonNullable<WishlistApiResponse["wishlistItems"]>) => {
+  return wishlistItems.map((item) => {
+    if (item.course?._id) {
+      return {
+        courseId: item.course._id,
+        course: item.course,
+        addedAt: item.createdAt || new Date().toISOString(),
+      };
+    }
+    if (item.privateLesson?._id) {
+      return {
+        courseId: item.privateLesson._id, // keep stable id for existing UI checks
+        privateLessonId: item.privateLesson._id,
+        privateLesson: item.privateLesson,
+        addedAt: item.createdAt || new Date().toISOString(),
+      };
+    }
+    const fallbackId = item.courseId || item.privateLessonId || item._id || "";
+    return {
+      courseId: fallbackId,
+      addedAt: item.createdAt || new Date().toISOString(),
+    };
+  });
+};
 
 /**
  * Add course to wishlist
@@ -134,11 +163,7 @@ const getWishlist = async (dispatch: AppDispatch): Promise<Wishlist> => {
     // Convert to Wishlist interface format
     let wishlist: Wishlist;
     if (data.wishlistItems && Array.isArray(data.wishlistItems)) {
-      const items = data.wishlistItems.map((item) => ({
-        courseId: item.course?._id || "",
-        course: item.course,
-        addedAt: item.createdAt || new Date().toISOString(),
-      }));
+      const items = mapWishlistItems(data.wishlistItems);
 
       wishlist = {
         _id: data.wishlistItems[0]?._id,
@@ -182,7 +207,7 @@ const getWishlist = async (dispatch: AppDispatch): Promise<Wishlist> => {
 /**
  * Remove course from wishlist
  * 
- * @param courseId - Course ID to remove
+ * @param courseId - Item ID to remove (course/private lesson)
  * @param dispatch - Redux dispatch
  */
 const removeFromWishlist = async (
@@ -198,9 +223,9 @@ const removeFromWishlist = async (
     dispatch(removeWishlistItem(courseId));
     dispatch(setWishlistLoading(false));
     
-    toast.success(data.message || "Course removed from wishlist");
+    toast.success(data.message || "Item removed from wishlist");
   } catch (error: unknown) {
-    let errorMessage = "Failed to remove course from wishlist";
+    let errorMessage = "Failed to remove item from wishlist";
     const err = error as ErrorResponse;
     if (err.response?.data?.message) {
       errorMessage = err.response.data.message;

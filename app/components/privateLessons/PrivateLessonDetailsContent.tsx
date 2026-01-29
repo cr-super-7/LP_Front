@@ -84,7 +84,8 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
         setIsInWishlist(false);
         toast.success(language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from wishlist");
       } else {
-        await addToWishlist({ courseId: lesson._id }, dispatch);
+        // Wishlist API supports private lessons via privateLessonId
+        await addToWishlist({ privateLessonId: lesson._id }, dispatch);
         setIsInWishlist(true);
         toast.success(language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to wishlist");
       }

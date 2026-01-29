@@ -1,5 +1,7 @@
 // Wishlist Interfaces
 
+import type { PrivateLesson } from "./privateLessonInterface";
+
 export interface WishlistItem {
   courseId: string;
   course?: {
@@ -13,6 +15,9 @@ export interface WishlistItem {
     thumbnail?: string;
     [key: string]: any;
   };
+  // Private lesson support
+  privateLessonId?: string;
+  privateLesson?: PrivateLesson;
   addedAt: string;
 }
 
@@ -25,7 +30,8 @@ export interface Wishlist {
 }
 
 export interface AddToWishlistRequest {
-  courseId: string;
+  courseId?: string;
+  privateLessonId?: string;
 }
 
 export interface WishlistResponse {
