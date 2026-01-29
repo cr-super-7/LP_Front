@@ -87,6 +87,7 @@ const mapWishlistItems = (wishlistItems: NonNullable<WishlistApiResponse["wishli
   return wishlistItems.map((item) => {
     if (item.course?._id) {
       return {
+        itemId: item._id,
         courseId: item.course._id,
         course: item.course,
         addedAt: item.createdAt || new Date().toISOString(),
@@ -94,6 +95,7 @@ const mapWishlistItems = (wishlistItems: NonNullable<WishlistApiResponse["wishli
     }
     if (item.privateLesson?._id) {
       return {
+        itemId: item._id,
         courseId: item.privateLesson._id, // keep stable id for existing UI checks
         privateLessonId: item.privateLesson._id,
         privateLesson: item.privateLesson,
@@ -102,6 +104,7 @@ const mapWishlistItems = (wishlistItems: NonNullable<WishlistApiResponse["wishli
     }
     const fallbackId = item.courseId || item.privateLessonId || item._id || "";
     return {
+      itemId: item._id,
       courseId: fallbackId,
       addedAt: item.createdAt || new Date().toISOString(),
     };
@@ -207,20 +210,27 @@ const getWishlist = async (dispatch: AppDispatch): Promise<Wishlist> => {
 /**
  * Remove course from wishlist
  * 
- * @param courseId - Item ID to remove (course/private lesson)
+ * New API: DELETE /wishlist/{itemId}?type=course|privateLesson
+ * - itemId is courseId OR privateLessonId (NOT the wishlist record _id)
+ *
+ * @param itemId - courseId or privateLessonId to remove
+ * @param type - item type
  * @param dispatch - Redux dispatch
  */
 const removeFromWishlist = async (
-  courseId: string,
+  itemId: string,
+  type: "course" | "privateLesson",
   dispatch: AppDispatch
 ): Promise<void> => {
   try {
     dispatch(setWishlistLoading(true));
     
-    const { data } = await api.delete<{ message: string }>(`/wishlist/${courseId}`);
+    const { data } = await api.delete<{ message: string }>(`/wishlist/${itemId}`, {
+      params: { type },
+    });
 
     // Update Redux store
-    dispatch(removeWishlistItem(courseId));
+    dispatch(removeWishlistItem(itemId));
     dispatch(setWishlistLoading(false));
     
     toast.success(data.message || "Item removed from wishlist");

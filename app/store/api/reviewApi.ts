@@ -7,6 +7,7 @@ import type {
   CreateCourseReviewRequest,
   CreateLessonReviewRequest,
   CreateProfessorReviewRequest,
+  CreatePrivateLessonReviewRequest,
 } from "../interface/reviewInterface";
 
 
@@ -121,6 +122,42 @@ const getProfessorReviews = async (professorId: string, dispatch: AppDispatch): 
   }
 };
 
+const getPrivateLessonReviews = async (
+  privateLessonId: string,
+  dispatch: AppDispatch
+): Promise<Review[]> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.get(`/reviews/private-lesson/${privateLessonId}`);
+
+    const reviewsResponse: ReviewsResponse = data;
+    const reviews =
+      reviewsResponse.reviews ||
+      data.result?.reviews ||
+      (Array.isArray(data) ? data : data.reviews) ||
+      [];
+
+    dispatch(setReviews(reviews));
+    dispatch(setLoading(false));
+    return reviews;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch private lesson reviews";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 const createCourseReview = async (
   courseId: string,
   reviewData: CreateCourseReviewRequest,
@@ -213,11 +250,46 @@ const createProfessorReview = async (
   }
 };
 
+const createPrivateLessonReview = async (
+  privateLessonId: string,
+  reviewData: CreatePrivateLessonReviewRequest,
+  dispatch: AppDispatch
+): Promise<Review> => {
+  try {
+    dispatch(setLoading(true));
+    const { data } = await api.post(
+      `/reviews/private-lesson/${privateLessonId}`,
+      reviewData
+    );
+
+    const review = (data.review || data) as Review;
+    dispatch(setLoading(false));
+    return review;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to create review";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    dispatch(setError(errorMessage));
+    dispatch(setLoading(false));
+    throw new Error(errorMessage);
+  } finally {
+    dispatch(setLoading(false));
+  }
+};
+
 export {
   getLessonReviews,
   getCourseReviews,
   getProfessorReviews,
+  getPrivateLessonReviews,
   createCourseReview,
   createLessonReview,
   createProfessorReview,
+  createPrivateLessonReview,
 };

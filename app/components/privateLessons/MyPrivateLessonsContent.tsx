@@ -47,7 +47,7 @@ export default function MyPrivateLessonsContent() {
   };
 
   const handleContinue = (lessonId: string) => {
-    router.push(`/private-lessons/${lessonId}`);
+    router.push(`/private-lessons/my-lessons/${lessonId}`);
   };
 
   // Filter private lessons based on selected filter

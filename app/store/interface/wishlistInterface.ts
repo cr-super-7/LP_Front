@@ -3,6 +3,11 @@
 import type { PrivateLesson } from "./privateLessonInterface";
 
 export interface WishlistItem {
+  /**
+   * Unique wishlist record id returned by backend (wishlist item document _id).
+   * NOTE: New DELETE endpoint uses courseId/privateLessonId instead.
+   */
+  itemId?: string;
   courseId: string;
   course?: {
     _id: string;

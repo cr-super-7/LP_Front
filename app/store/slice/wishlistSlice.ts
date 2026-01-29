@@ -40,7 +40,7 @@ const wishlistSlice = createSlice({
     removeWishlistItem: (state, action: PayloadAction<string>) => {
       if (state.wishlist) {
         state.wishlist.items = state.wishlist.items.filter(
-          (item) => item.courseId !== action.payload
+          (item) => item.courseId !== action.payload && item.itemId !== action.payload
         );
       }
     },

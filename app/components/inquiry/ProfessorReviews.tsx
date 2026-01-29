@@ -206,6 +206,17 @@ export default function ProfessorReviews({ professorId }: ProfessorReviewsProps)
         ) : (
           <div className="space-y-4">
             {reviews.map((review) => (
+              (() => {
+                const reviewerName =
+                  typeof review.user === "string"
+                    ? review.user.includes("@")
+                      ? review.user
+                      : language === "ar"
+                      ? "مستخدم"
+                      : "User"
+                    : review.user.email;
+                const reviewerInitial = (reviewerName?.trim()?.[0] || "?").toUpperCase();
+                return (
               <div
                 key={review._id}
                 className={`p-4 rounded-lg ${
@@ -223,7 +234,7 @@ export default function ProfessorReviews({ professorId }: ProfessorReviewsProps)
                           : "bg-blue-100 text-blue-600"
                       }`}
                     >
-                      {review.user.email.charAt(0).toUpperCase()}
+                      {reviewerInitial}
                     </div>
                     <div>
                       <p
@@ -231,7 +242,7 @@ export default function ProfessorReviews({ professorId }: ProfessorReviewsProps)
                           theme === "dark" ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {review.user.email}
+                        {reviewerName}
                       </p>
                       <p
                         className={`text-xs ${
@@ -258,6 +269,8 @@ export default function ProfessorReviews({ professorId }: ProfessorReviewsProps)
                   </div>
                 </div>
               </div>
+                );
+              })()
             ))}
 
             {isAuthenticated && (

@@ -26,11 +26,13 @@ export interface Lesson {
 
 export interface Review {
   _id: string;
-  user: User;
+  // Some endpoints may return populated user object, others may return user id
+  user: User | string;
   course: string | null;
   lesson: Lesson | null;
   teacher: string | null;
   professor?: string | null;
+  privateLesson?: string | null;
   rate: number;
   createdAt: string;
   __v?: number;
@@ -56,4 +58,9 @@ export interface CreateLessonReviewRequest {
 
 export interface CreateProfessorReviewRequest {
   rate: number;
+}
+
+export interface CreatePrivateLessonReviewRequest {
+  rate: number;
+  // comment?: string; // enable when backend supports text comments
 }

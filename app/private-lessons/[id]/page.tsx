@@ -10,7 +10,7 @@ import Background from "../../components/layout/Background";
 import Footer from "../../components/layout/Footer";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getPrivateLessonById } from "../../store/api/privateLessonApi";
-import PrivateLessonDetailsContent from "../../components/privateLessons/PrivateLessonDetailsContent";
+import PrivateLessonStudentDetailsContent from "../../components/privateLessons/student/PrivateLessonStudentDetailsContent";
 
 export default function PrivateLessonDetailPage() {
   const { theme } = useTheme();
@@ -114,7 +114,7 @@ export default function PrivateLessonDetailPage() {
         <Sidebar />
         <Navbar />
         <main className={`${isRTL ? "mr-64" : "ml-64"} mt-16`}>
-          <PrivateLessonDetailsContent lesson={currentPrivateLesson} />
+          <PrivateLessonStudentDetailsContent lesson={currentPrivateLesson} />
         </main>
         <div className={`${isRTL ? "mr-64" : "ml-64"}`}>
           <Footer />

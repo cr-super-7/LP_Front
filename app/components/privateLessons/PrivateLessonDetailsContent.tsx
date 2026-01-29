@@ -30,21 +30,26 @@ import {
 import type { PrivateLesson } from "../../store/interface/privateLessonInterface";
 import type { RootState } from "../../store/store";
 import toast from "react-hot-toast";
+import PrivateLessonStudentReviews from "./student/PrivateLessonStudentReviews";
 
 interface PrivateLessonDetailsContentProps {
   lesson: PrivateLesson;
+  viewer?: "auto" | "student" | "instructor";
 }
 
-export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDetailsContentProps) {
+export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }: PrivateLessonDetailsContentProps) {
   const { language } = useLanguage(); 
   const { theme } = useTheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state: RootState) => state.auth);
+  const isInstructorRole = user?.role === "instructor" || user?.role === "teacher";
+  const isStudentRole = user?.role === "student";
+  const isStudentView = viewer === "student" || (viewer === "auto" && isStudentRole);
+  const isInstructorView = viewer === "instructor" || (viewer === "auto" && isInstructorRole);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [isEnrolling, setIsEnrolling] = useState(false);
 
   // Check if lesson is in wishlist
   useEffect(() => {
@@ -52,10 +57,8 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
       if (isAuthenticated && user?.role === "student") {
         try {
           const wishlist = await getWishlist(dispatch);
-          const inWishlist = wishlist.items?.some(
-            (item) => item.courseId === lesson._id
-          );
-          setIsInWishlist(inWishlist || false);
+          const matched = wishlist.items?.find((item) => item.courseId === lesson._id);
+          setIsInWishlist(!!matched);
         } catch {
           // Silently fail
         }
@@ -80,12 +83,14 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
     setIsAddingToWishlist(true);
     try {
       if (isInWishlist) {
-        await removeFromWishlist(lesson._id, dispatch);
+        // New API expects privateLessonId in path + type in query
+        await removeFromWishlist(lesson._id, "privateLesson", dispatch);
         setIsInWishlist(false);
         toast.success(language === "ar" ? "تمت الإزالة من المفضلة" : "Removed from wishlist");
       } else {
         // Wishlist API supports private lessons via privateLessonId
         await addToWishlist({ privateLessonId: lesson._id }, dispatch);
+        // Refresh state
         setIsInWishlist(true);
         toast.success(language === "ar" ? "تمت الإضافة إلى المفضلة" : "Added to wishlist");
       }
@@ -118,30 +123,6 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
     }
     setIsAddingToCart(false);
   };
-
-  // Handle enroll
-  const handleEnroll = async () => {
-    if (!isAuthenticated) {
-      toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.push("/auth/login");
-      return;
-    }
-
-    if (user?.role !== "student") {
-      toast.error(language === "ar" ? "هذه الميزة للطلاب فقط" : "This feature is for students only");
-      return;
-    }
-
-    setIsEnrolling(true);
-    try {
-      // Navigate to booking/checkout page
-      router.push(`/private-lessons/${lesson._id}/book`);
-    } catch {
-      toast.error(language === "ar" ? "حدث خطأ" : "Something went wrong");
-    }
-    setIsEnrolling(false);
-  };
-
 
   // Get localized content
   const lessonName =
@@ -294,8 +275,8 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
       <section
         className={`mb-8 rounded-3xl shadow-2xl transition-all duration-300 relative overflow-hidden ${
           theme === "dark"
-            ? "bg-gradient-to-br from-blue-900/90 to-blue-800/70 backdrop-blur-sm border border-blue-700/50"
-            : "bg-gradient-to-br from-blue-600 to-blue-700 border border-blue-500"
+            ? "bg-linear-to-br from-blue-900/90 to-blue-800/70 backdrop-blur-sm border border-blue-700/50"
+            : "bg-linear-to-br from-blue-600 to-blue-700 border border-blue-500"
         }`}
       >
         {/* Background decorative lines */}
@@ -319,22 +300,24 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
 
           {/* Content - Right Side */}
           <div className="flex-1 p-6 md:p-8 relative">
-            {/* Wishlist Heart Button - Top Right */}
-            <button
-              onClick={handleWishlistToggle}
-              disabled={isAddingToWishlist}
-              className={`absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full transition-all duration-300 ${
-                isInWishlist
-                  ? "text-red-500"
-                  : "text-white/60 hover:text-red-400"
-              } ${isAddingToWishlist ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
-              title={isInWishlist 
-                ? (language === "ar" ? "إزالة من المفضلة" : "Remove from wishlist")
-                : (language === "ar" ? "إضافة إلى المفضلة" : "Add to wishlist")
-              }
-            >
-              <Heart className={`h-6 w-6 ${isInWishlist ? "fill-red-500" : ""}`} />
-            </button>
+            {/* Wishlist Heart Button - Top Right (Students only) */}
+            {isStudentView && (
+              <button
+                onClick={handleWishlistToggle}
+                disabled={isAddingToWishlist}
+                className={`absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full transition-all duration-300 ${
+                  isInWishlist
+                    ? "text-red-500"
+                    : "text-white/60 hover:text-red-400"
+                } ${isAddingToWishlist ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}`}
+                title={isInWishlist 
+                  ? (language === "ar" ? "إزالة من المفضلة" : "Remove from wishlist")
+                  : (language === "ar" ? "إضافة إلى المفضلة" : "Add to wishlist")
+                }
+              >
+                <Heart className={`h-6 w-6 ${isInWishlist ? "fill-red-500" : ""}`} />
+              </button>
+            )}
 
             {/* Instructor Name */}
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-4 pr-10">
@@ -423,43 +406,28 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleAddToCart}
-                disabled={isAddingToCart}
-                className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 border-2 ${
-                  isAddingToCart
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-white/10"
-                } border-blue-300/30 text-white`}
-              >
-                <span>
-                  {isAddingToCart
-                    ? (language === "ar" ? "جاري الإضافة..." : "Adding...")
-                    : (language === "ar" ? "أضف إلى السلة" : "Add to cart")
-                  }
-                </span>
-                <ShoppingCart className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleEnroll}
-                disabled={isEnrolling}
-                className={`flex-1 sm:flex-[2] flex items-center justify-center gap-2 px-8 py-3 rounded-full font-bold transition-all duration-300 ${
-                  isEnrolling
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-blue-400"
-                } bg-blue-500 text-white shadow-lg`}
-              >
-                <span>
-                  {isEnrolling
-                    ? (language === "ar" ? "جاري التسجيل..." : "Enrolling...")
-                    : (language === "ar" ? "سجل الآن" : "Enroll")
-                  }
-                </span>
-                <ArrowLeft className={`h-4 w-4 ${language === "ar" ? "" : "rotate-180"}`} />
-              </button>
-            </div>
+            {/* Action Buttons (Students only) */}
+            {isStudentView && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                  className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full font-medium transition-all duration-300 border-2 ${
+                    isAddingToCart
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-white/10"
+                  } border-blue-300/30 text-white`}
+                >
+                  <span>
+                    {isAddingToCart
+                      ? (language === "ar" ? "جاري الإضافة..." : "Adding...")
+                      : (language === "ar" ? "أضف إلى السلة" : "Add to cart")
+                    }
+                  </span>
+                  <ShoppingCart className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -479,12 +447,18 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
             }`}
           >
             <CalendarDays className="h-8 w-8 text-blue-500" />
-            {language === "ar" ? "الأوقات المتاحة" : "Available Times"}
+            {isInstructorView
+              ? (language === "ar" ? "مواعيد الدرس" : "Lesson Schedule")
+              : (language === "ar" ? "الأوقات المتاحة" : "Available Times")}
           </h2>
           <p className={`text-sm ${theme === "dark" ? "text-blue-300" : "text-gray-600"}`}>
-            {language === "ar"
-              ? "اختر الوقت المناسب لحجز الدرس الخاص"
-              : "Choose the perfect time to book your private lesson"}
+            {isInstructorView
+              ? (language === "ar"
+                  ? "المواعيد التي قمت بتحديدها لهذا الدرس"
+                  : "Times you set for this lesson")
+              : (language === "ar"
+                  ? "اختر الوقت المناسب لحجز الدرس الخاص"
+                  : "Choose the perfect time to book your private lesson")}
           </p>
         </div>
 
@@ -494,10 +468,12 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
             {lesson.schedule.map((item, index) => (
               <div
                 key={index}
-                className={`group relative p-5 rounded-2xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer ${
+                className={`group relative p-5 rounded-2xl border-2 transition-all duration-300 ${
+                  isInstructorView ? "" : "hover:scale-105 hover:shadow-xl cursor-pointer"
+                } ${
                   theme === "dark"
-                    ? "bg-blue-800/40 border-blue-600/50 hover:border-blue-500 hover:bg-blue-800/60"
-                    : "bg-white border-blue-200 hover:border-blue-400 hover:bg-blue-50 shadow-md"
+                    ? `bg-blue-800/40 border-blue-600/50 ${isInstructorView ? "" : "hover:border-blue-500 hover:bg-blue-800/60"}`
+                    : `bg-white border-blue-200 shadow-md ${isInstructorView ? "" : "hover:border-blue-400 hover:bg-blue-50"}`
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -540,13 +516,15 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
                   </div>
                 </div>
                 {/* Hover Effect Overlay */}
-                <div
-                  className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                    theme === "dark"
-                      ? "bg-gradient-to-br from-blue-600/20 to-blue-500/20"
-                      : "bg-gradient-to-br from-blue-100/50 to-blue-50/50"
-                  }`}
-                />
+                {!isInstructorView && (
+                  <div
+                    className={`absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                      theme === "dark"
+                        ? "bg-linear-to-br from-blue-600/20 to-blue-500/20"
+                        : "bg-linear-to-br from-blue-100/50 to-blue-50/50"
+                    }`}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -574,16 +552,22 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
                 theme === "dark" ? "text-white" : "text-blue-950"
               }`}
             >
-              {language === "ar" ? "لا توجد أوقات متاحة حالياً" : "No Available Times"}
+              {isInstructorView
+                ? (language === "ar" ? "لم تقم بإضافة مواعيد بعد" : "No schedule added yet")
+                : (language === "ar" ? "لا توجد أوقات متاحة حالياً" : "No Available Times")}
             </h3>
             <p
               className={`text-sm md:text-base text-center max-w-md ${
                 theme === "dark" ? "text-blue-300" : "text-gray-600"
               }`}
             >
-              {language === "ar"
-                ? "لم يتم تحديد أوقات متاحة بعد. يرجى التحقق لاحقاً أو التواصل مع المدرس مباشرة."
-                : "No available times have been set yet. Please check back later or contact the instructor directly."}
+              {isInstructorView
+                ? (language === "ar"
+                    ? "لم يتم تحديد مواعيد لهذا الدرس بعد. يمكنك إضافتها من صفحة التعديل."
+                    : "No times have been added for this lesson yet. You can add them from the edit page.")
+                : (language === "ar"
+                    ? "لم يتم تحديد أوقات متاحة بعد. يرجى التحقق لاحقاً أو التواصل مع المدرس مباشرة."
+                    : "No available times have been set yet. Please check back later or contact the instructor directly.")}
             </p>
             {/* Animated Dots */}
             <div className="flex gap-2 mt-6">
@@ -871,6 +855,13 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
 
         </aside>
       </div>
+
+      {/* Reviews Section (Students only) */}
+      {isStudentView && (
+        <section className="mt-8">
+          <PrivateLessonStudentReviews privateLessonId={lesson._id} />
+        </section>
+      )}
 
     </div>
   );

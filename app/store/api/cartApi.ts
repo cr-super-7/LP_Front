@@ -59,6 +59,7 @@ const mapCartItems = (cartItems: NonNullable<CartApiResponse["cartItems"]>) => {
     // Course cart item
     if (item.course?._id) {
       return {
+        itemId: item._id,
         courseId: item.course._id,
         course: item.course,
         price: item.course.price || 0,
@@ -71,6 +72,7 @@ const mapCartItems = (cartItems: NonNullable<CartApiResponse["cartItems"]>) => {
       const derivedPrice =
         pl.oneLessonPrice ?? pl.packagePrice ?? pl.price ?? item.price ?? 0;
       return {
+        itemId: item._id,
         courseId: pl._id, // used as unique id across the cart UI
         privateLessonId: pl._id,
         privateLesson: pl,
@@ -81,6 +83,7 @@ const mapCartItems = (cartItems: NonNullable<CartApiResponse["cartItems"]>) => {
     // Fallback (unknown shape) - keep id to avoid crashes
     const fallbackId = item.courseId || item.privateLessonId || item._id || "";
     return {
+      itemId: item._id,
       courseId: fallbackId,
       price: item.price || 0,
     };
@@ -207,20 +210,27 @@ const getCart = async (dispatch: AppDispatch): Promise<Cart> => {
 /**
  * Remove item from cart (course/private lesson)
  * 
- * @param courseId - Item ID to remove
+ * New API: DELETE /cart/{itemId}?type=course|privateLesson
+ * - itemId is courseId OR privateLessonId (NOT the cart record _id)
+ *
+ * @param itemId - courseId or privateLessonId to remove
+ * @param type - item type
  * @param dispatch - Redux dispatch
  */
 const removeFromCart = async (
-  courseId: string,
+  itemId: string,
+  type: "course" | "privateLesson",
   dispatch: AppDispatch
 ): Promise<void> => {
   try {
     dispatch(setCartLoading(true));
     
-    const { data } = await api.delete<{ message: string }>(`/cart/${courseId}`);
+    const { data } = await api.delete<{ message: string }>(`/cart/${itemId}`, {
+      params: { type },
+    });
 
     // Update Redux store
-    dispatch(removeCartItem(courseId));
+    dispatch(removeCartItem(itemId));
     dispatch(setCartLoading(false));
     
     toast.success(data.message || "Item removed from cart");

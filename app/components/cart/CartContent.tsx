@@ -9,7 +9,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useAppDispatch } from "../../store/hooks";
 import { getCart, removeFromCart } from "../../store/api/cartApi";
 import { createOrder } from "../../store/api/orderApi";
-import type { Cart } from "../../store/interface/cartInterface";
+import type { Cart, CartItem } from "../../store/interface/cartInterface";
 import toast from "react-hot-toast";
 
 export default function CartContent() {
@@ -103,21 +103,25 @@ export default function CartContent() {
   }, [dispatch]);
 
   // Handle delete item
-  const handleDeleteItem = useCallback(async (courseId: string) => {
+  const handleDeleteItem = useCallback(async (item: CartItem) => {
+    const localId = item.courseId;
+    const itemType = item.privateLessonId || item.privateLesson ? "privateLesson" : "course";
+    // New API expects courseId/privateLessonId in the path
+    const itemId = item.privateLessonId || item.courseId;
     try {
-      await removeFromCart(courseId, dispatch);
+      await removeFromCart(itemId, itemType, dispatch);
       // Update local state optimistically
       setCart((prevCart) => {
         if (!prevCart?.items) return prevCart;
         return {
           ...prevCart,
-          items: prevCart.items.filter((item) => item.courseId !== courseId),
+          items: prevCart.items.filter((x) => x.courseId !== localId),
         };
       });
       // Remove from selected items
       setSelectedItems((prev) => {
         const newSelected = new Set(prev);
-        newSelected.delete(courseId);
+        newSelected.delete(localId);
         return newSelected;
       });
     } catch (err) {
@@ -147,9 +151,12 @@ export default function CartContent() {
       });
       setSelectedItems(new Set());
 
-      // Then perform the API calls
-      for (const courseId of itemsToDelete) {
-        await removeFromCart(courseId, dispatch);
+      // Then perform the API calls (need backend itemId)
+      for (const localId of itemsToDelete) {
+        const item = cart?.items?.find((x) => x.courseId === localId);
+        const itemType = item?.privateLessonId || item?.privateLesson ? "privateLesson" : "course";
+        const itemId = item?.privateLessonId || item?.courseId || localId;
+        await removeFromCart(itemId, itemType, dispatch);
       }
       
       toast.success(
@@ -226,8 +233,11 @@ export default function CartContent() {
       await createOrder({ courseIds, discount: discount || 0 }, dispatch);
 
       // Clear selected items from cart
-      for (const courseId of itemsToCheckout) {
-        await removeFromCart(courseId, dispatch);
+      for (const localId of itemsToCheckout) {
+        const item = cart?.items?.find((x) => x.courseId === localId);
+        const itemType = item?.privateLessonId || item?.privateLesson ? "privateLesson" : "course";
+        const itemId = item?.privateLessonId || item?.courseId || localId;
+        await removeFromCart(itemId, itemType, dispatch);
       }
 
       // Update local state
@@ -526,7 +536,7 @@ export default function CartContent() {
                     {/* Price & Delete */}
                     <div className="flex flex-col items-end justify-between">
                       <button
-                        onClick={() => handleDeleteItem(item.courseId)}
+                        onClick={() => handleDeleteItem(item)}
                         className="p-2 rounded-lg hover:bg-red-600/20 transition-colors"
                       >
                         <Trash2

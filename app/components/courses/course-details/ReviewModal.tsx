@@ -17,6 +17,7 @@ interface ReviewModalProps {
   onSuccess: () => void;
   onSubmitReview?: (rating: number) => Promise<void>;
   isLesson?: boolean;
+  target?: "course" | "lesson" | "privateLesson";
 }
 
 export default function ReviewModal({
@@ -26,6 +27,7 @@ export default function ReviewModal({
   onSuccess,
   onSubmitReview,
   isLesson = false,
+  target,
 }: ReviewModalProps) {
   const { theme } = useTheme();
   const { language } = useLanguage();
@@ -34,6 +36,20 @@ export default function ReviewModal({
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const effectiveTarget: "course" | "lesson" | "privateLesson" =
+    target ?? (isLesson ? "lesson" : "course");
+
+  const getAlreadyReviewedMessage = () => {
+    if (language === "ar") {
+      if (effectiveTarget === "lesson") return "لقد قيّمت هذا الدرس مسبقاً";
+      if (effectiveTarget === "privateLesson") return "لقد قيّمت هذا الدرس الخصوصي مسبقاً";
+      return "لقد قيّمت هذه الدورة مسبقاً";
+    }
+    if (effectiveTarget === "lesson") return "You have already reviewed this lesson";
+    if (effectiveTarget === "privateLesson") return "You have already reviewed this private lesson";
+    return "You have already reviewed this course";
+  };
 
   const handleSubmitReview = async () => {
     if (!isAuthenticated) {
@@ -104,13 +120,7 @@ export default function ReviewModal({
       if (apiErrorMessage?.toLowerCase().includes("already reviewed") || 
           apiErrorMessage?.includes("قيمت") ||
           apiErrorMessage?.includes("قيم")) {
-        errorMessage = language === "ar"
-          ? isLesson
-            ? "لقد قيّمت هذا الدرس مسبقاً"
-            : "لقد قيّمت هذه الدورة مسبقاً"
-          : isLesson
-          ? "You have already reviewed this lesson"
-          : "You have already reviewed this course";
+        errorMessage = getAlreadyReviewedMessage();
         onClose();
         setSelectedRating(0);
       } else if (!apiErrorMessage) {

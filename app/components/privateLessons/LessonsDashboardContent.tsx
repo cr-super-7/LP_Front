@@ -535,7 +535,7 @@ export default function LessonsDashboardContent() {
                             ? "border-blue-800 hover:bg-blue-800/30"
                             : "border-gray-200 hover:bg-gray-50"
                         }`}
-                        onClick={() => router.push(`/private-lessons/${lesson.id}`)}
+                        onClick={() => router.push(`/private-lessons/my-lessons/${lesson.id}`)}
                       >
                         <td className="py-4 px-4">
                           <p
@@ -578,7 +578,7 @@ export default function LessonsDashboardContent() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/private-lessons/${lesson.id}`);
+                                router.push(`/private-lessons/my-lessons/${lesson.id}`);
                               }}
                               className={`p-2 rounded-lg transition-colors ${
                                 theme === "dark"
