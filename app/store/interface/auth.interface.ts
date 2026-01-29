@@ -14,22 +14,25 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
   token: string;
-  user: {
-    id: string;
-    email: string;
-    phone: string;
-    role: "student" | "instructor";
-  };
+  user: AuthUser;
+}
+
+export interface AuthUser {
+  // Backend typically returns _id, some places may use id
+  _id?: string;
+  id?: string;
+  email: string;
+  phone: string;
+  role: "student" | "instructor" | "teacher";
+  inquiry?: boolean;
+  profilePicture?: string | null;
+  location?: string | null;
+  bio?: string | null;
 }
 
 export interface AuthState {
   token: string | null;
-  user: {
-    id: string;
-    email: string;
-    phone: string;
-    role: "student" | "instructor";
-  } | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;

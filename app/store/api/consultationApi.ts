@@ -121,6 +121,50 @@ const getMyConsultations = async (
 };
 
 /**
+ * Get authenticated professor consultations (instructor view)
+ *
+ * Endpoint (per Swagger): GET /api/consultations/professor/my
+ */
+const getProfessorConsultations = async (
+  status?: string,
+  type?: string,
+  dispatch?: AppDispatch
+): Promise<Consultation[]> => {
+  try {
+    if (dispatch) dispatch(setConsultationLoading(true));
+
+    const queryParams = new URLSearchParams();
+    if (status) queryParams.append("status", status);
+    if (type) queryParams.append("type", type);
+    const queryString = queryParams.toString();
+    const url = `/consultations/professor/my${queryString ? `?${queryString}` : ""}`;
+
+    const { data } = await api.get<ConsultationsResponse>(url);
+    const consultations = data.consultations || [];
+
+    if (dispatch) {
+      dispatch(setConsultations(consultations));
+    }
+
+    return consultations;
+  } catch (error: unknown) {
+    let errorMessage = "Failed to fetch consultations";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    if (dispatch) dispatch(setConsultationError(errorMessage));
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * Get consultation by ID
  * 
  * @param consultationId - Consultation ID
@@ -237,10 +281,49 @@ const cancelConsultation = async (
   }
 };
 
+/**
+ * Delete a consultation (and related chat messages if any)
+ *
+ * Endpoint (per Swagger): DELETE /api/consultations/{id}
+ */
+const deleteConsultation = async (
+  consultationId: string,
+  dispatch?: AppDispatch
+): Promise<void> => {
+  try {
+    if (dispatch) dispatch(setConsultationLoading(true));
+
+    const { data } = await api.delete<{ message?: string }>(`/consultations/${consultationId}`);
+
+    if (dispatch) {
+      dispatch(removeConsultation(consultationId));
+      dispatch(setConsultationLoading(false));
+    }
+
+    toast.success(data?.message || "Consultation deleted successfully");
+  } catch (error: unknown) {
+    let errorMessage = "Failed to delete consultation";
+    const err = error as ErrorResponse;
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    if (dispatch) dispatch(setConsultationError(errorMessage));
+    toast.error(errorMessage);
+    throw new Error(errorMessage);
+  }
+};
+
 export {
   createConsultation,
   getMyConsultations,
+  getProfessorConsultations,
   getConsultationById,
   endConsultation,
   cancelConsultation,
+  deleteConsultation,
 };

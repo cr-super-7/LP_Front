@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Phone, Pencil, Lock, BookOpen, Sparkles, ArrowRight, ArrowLeft, GraduationCap } from "lucide-react";
+import { Phone, Pencil, Lock, BookOpen, Sparkles, ArrowRight, ArrowLeft, GraduationCap, Trash2 } from "lucide-react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import Sidebar from "../../layout/Sidebar";
@@ -16,12 +16,13 @@ import { updateProfile, changePassword, getUserProfile } from "../../../store/ap
 import { getMyEnrollments } from "../../../store/api/enrollmentApi";
 import { getCart } from "../../../store/api/cartApi";
 import { getMyProgress } from "../../../store/api/progressApi";
-import { getMyConsultations } from "../../../store/api/consultationApi";
+import { deleteConsultation, getMyConsultations } from "../../../store/api/consultationApi";
 import type { UserProfile } from "../../../store/interface/auth.interface";
 import type { UpdateProfileRequest, ChangePasswordRequest } from "../../../store/interface/auth.interface";
 import type { Enrollment } from "../../../store/interface/enrollmentInterface";
 import type { Course } from "../../../store/interface/courseInterface";
 import type { Consultation } from "../../../store/interface/consultationInterface";
+import ConfirmDeleteModal from "../../myCoursesTeacher/lessons/ConfirmDeleteModal";
 
 type StudentProfileData = UserProfile & {
   totalCourses?: number;
@@ -54,6 +55,8 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
   const [isConsultationsLoading, setIsConsultationsLoading] = useState(false);
   const [consultationStatus, setConsultationStatus] = useState("");
   const [consultationType, setConsultationType] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [consultationToDelete, setConsultationToDelete] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
@@ -153,6 +156,31 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
 
     loadConsultations();
   }, [consultationStatus, consultationType, dispatch, isAuthenticated]);
+
+  const handleDeleteClick = (consultationId: string) => {
+    setConsultationToDelete(consultationId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!consultationToDelete) return;
+    try {
+      await deleteConsultation(consultationToDelete, dispatch);
+      // Update local list immediately
+      setConsultations((prev) => prev.filter((c) => c._id !== consultationToDelete));
+      // Re-fetch to ensure filters + server state are in sync
+      const data = await getMyConsultations(
+        consultationStatus || undefined,
+        consultationType || undefined,
+        dispatch
+      );
+      setConsultations(data);
+    } catch (error) {
+      console.error("Failed to delete consultation:", error);
+    } finally {
+      setConsultationToDelete(null);
+    }
+  };
 
   const textAlign = isRTL ? "text-right" : "text-left";
   const roleLabel = language === "ar" ? "الطالب" : "Student";
@@ -595,15 +623,32 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                               {professorLabel}
                             </span>
                           </div>
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              theme === "dark"
-                                ? "bg-blue-950 text-blue-200"
-                                : "bg-blue-50 text-blue-700"
-                            }`}
-                          >
-                            {getConsultationTypeLabel(consultation.type)}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                theme === "dark"
+                                  ? "bg-blue-950 text-blue-200"
+                                  : "bg-blue-50 text-blue-700"
+                              }`}
+                            >
+                              {getConsultationTypeLabel(consultation.type)}
+                            </span>
+
+                            {/* Student-only: delete consultation from profile */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(consultation._id)}
+                              className={`p-2 rounded-lg transition-colors ${
+                                theme === "dark"
+                                  ? "bg-red-600/20 hover:bg-red-600/30 text-red-300"
+                                  : "bg-red-50 hover:bg-red-100 text-red-600"
+                              }`}
+                              aria-label={language === "ar" ? "حذف الاستشارة" : "Delete consultation"}
+                              title={language === "ar" ? "حذف" : "Delete"}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                           <span
@@ -631,6 +676,21 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                   })}
                 </div>
               )}
+
+              <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                  setIsDeleteModalOpen(false);
+                  setConsultationToDelete(null);
+                }}
+                onConfirm={handleDeleteConfirm}
+                title={language === "ar" ? "تأكيد حذف الاستشارة" : "Confirm Delete Consultation"}
+                message={
+                  language === "ar"
+                    ? "هل أنت متأكد من حذف هذه الاستشارة؟ سيتم حذف المحادثة المرتبطة إن وُجدت."
+                    : "Are you sure you want to delete this consultation? Related chat messages (if any) will be deleted."
+                }
+              />
             </section>
 
             {/* All courses */}

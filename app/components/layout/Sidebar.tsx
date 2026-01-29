@@ -10,6 +10,7 @@ import { logout } from "../../store/slice/authSlice";
 import { getCategories } from "../../store/api/categoryApi";
 import type { RootState } from "../../store/store";
 import type { Category } from "../../store/interface/categoryInterface";
+import type { LucideIcon } from "lucide-react";
 import {
   Home,
   Grid3x3,
@@ -17,7 +18,6 @@ import {
   Heart,
   User,
   Package,
-  HelpCircle,
   LogOut,
   ChevronDown,
   ChevronUp,
@@ -30,6 +30,21 @@ import {
   Users,
   MessageSquare,
 } from "lucide-react";
+
+type SidebarSubItem = {
+  key: string;
+  href: string;
+  label: string;
+};
+
+type SidebarItem = {
+  key: string;
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  hasSubmenu?: boolean;
+  subItems?: SidebarSubItem[];
+};
 
 export default function Sidebar() {
   const { t, language } = useLanguage();
@@ -81,6 +96,24 @@ export default function Sidebar() {
 
   const isStudent = user?.role === "student";
   const isInstructor = user?.role === "instructor";
+  // Inquiry visibility:
+  // - Student menu: always show (routes to /inquiry)
+  // - Instructor menu: show only when backend enables it via user.inquiry === true (routes to /inquiry_teacher)
+  const canInquiryInstructor = !!user?.inquiry;
+
+  const studentInquiryMenuItem: SidebarItem = {
+    key: "inquiry",
+    href: "/inquiry",
+    icon: MessageSquare,
+    label: language === "ar" ? "الاستشارات" : "Inquiry",
+  };
+
+  const instructorInquiryMenuItem: SidebarItem = {
+    key: "inquiry",
+    href: "/inquiry_teacher",
+    icon: MessageSquare,
+    label: language === "ar" ? "الاستشارات" : "Inquiry",
+  };
 
   // Generate category subItems from API data
   const categorySubItems = categories.map((category) => {
@@ -100,7 +133,7 @@ export default function Sidebar() {
   });
 
   // Student menu items
-  const studentMenuItems = [
+  const studentMenuItems: SidebarItem[] = [
     {
       key: "home",
       href: "/courses",
@@ -159,23 +192,18 @@ export default function Sidebar() {
       icon: Search,
       label: language === "ar" ? "الأبحاث" : "Researches",
     },
-    {
-      key: "inquiry",
-      href: "/inquiry",
-      icon: MessageSquare,
-      label: language === "ar" ? "الاستشارات" : "Inquiry",
-    },
+    studentInquiryMenuItem,
     {
       key: "profile",
       href: "/profile",
       icon: User,
       label: t("sidebar.profile"),
     },
-
+   
   ];
 
   // Instructor menu items
-  const instructorMenuItems = [
+  const instructorMenuItems: SidebarItem[] = [
     {
       key: "courses",
       href: "",
@@ -227,12 +255,7 @@ export default function Sidebar() {
         { key: "createAdvertisement", href: "/advertisements/create", label: t("sidebar.createAdvertisement") },
       ],
     },
-    {
-      key: "inquiry",
-      href: "/inquiry",
-      icon: MessageSquare,
-      label: language === "ar" ? "الاستشارات" : "Inquiry",
-    },
+    ...(canInquiryInstructor ? [instructorInquiryMenuItem] : []),
     {
       key: "profile",
       href: "/profile",
@@ -266,7 +289,7 @@ export default function Sidebar() {
               const Icon = item.icon;
               const isActive = pathname === item.href || (item.href === "/courses" && pathname?.startsWith("/courses"));
               const isExpanded = expandedCategories.includes(item.key);
-              const hasActiveSubItem = item.subItems?.some((subItem) => pathname === subItem.href);
+              const hasActiveSubItem = item.subItems?.some((subItem: SidebarSubItem) => pathname === subItem.href);
 
               return (
                 <li key={item.key}>
@@ -296,7 +319,7 @@ export default function Sidebar() {
                       </button>
                       {isExpanded && item.subItems && (
                         <ul className={`mt-1 space-y-1 ${isRTL ? "pr-4" : "pl-4"}`}>
-                          {item.subItems.map((subItem) => {
+                          {item.subItems.map((subItem: SidebarSubItem) => {
                             const isSubActive = pathname === subItem.href;
                             return (
                               <li key={subItem.key}>
