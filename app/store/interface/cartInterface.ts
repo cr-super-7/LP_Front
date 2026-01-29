@@ -1,5 +1,7 @@
 // Cart Interfaces
 
+import type { PrivateLesson } from "./privateLessonInterface";
+
 export interface CartItem {
   courseId: string;
   course?: {
@@ -21,6 +23,9 @@ export interface CartItem {
     totalLessons?: number;
     [key: string]: unknown;
   };
+  // When the cart item is a private lesson, backend returns privateLesson data
+  privateLessonId?: string;
+  privateLesson?: PrivateLesson;
   price: number;
 }
 
@@ -34,7 +39,14 @@ export interface Cart {
 }
 
 export interface AddToCartRequest {
-  courseId: string;
+  /**
+   * Add course to cart
+   */
+  courseId?: string;
+  /**
+   * Add private lesson to cart
+   */
+  privateLessonId?: string;
 }
 
 export interface CartResponse {

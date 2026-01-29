@@ -109,7 +109,8 @@ export default function PrivateLessonDetailsContent({ lesson }: PrivateLessonDet
 
     setIsAddingToCart(true);
     try {
-      await addToCart({ courseId: lesson._id }, dispatch);
+      // Cart API supports private lessons via privateLessonId
+      await addToCart({ privateLessonId: lesson._id }, dispatch);
       toast.success(language === "ar" ? "تمت الإضافة إلى السلة" : "Added to cart");
     } catch {
       toast.error(language === "ar" ? "حدث خطأ" : "Something went wrong");

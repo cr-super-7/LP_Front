@@ -4,6 +4,7 @@ import type {
   Cart,
   AddToCartRequest,
 } from "../interface/cartInterface";
+import type { PrivateLesson } from "../interface/privateLessonInterface";
 import {
   setCartLoading,
   setCartError,
@@ -30,14 +31,20 @@ interface CartApiResponse {
   cartItems?: Array<{
     _id: string;
     user: string;
-    course: {
+    course?: {
       _id: string;
       title: { ar: string; en: string };
       price: number;
       currency: string;
       thumbnail?: string;
+      teacher?: string | { _id: string; email: string; [key: string]: unknown };
       [key: string]: unknown;
     };
+    privateLesson?: PrivateLesson;
+    // Some backends might return ids directly
+    courseId?: string;
+    privateLessonId?: string;
+    price?: number;
     createdAt?: string;
   }>;
   cart?: Cart;
@@ -47,9 +54,42 @@ interface CartApiResponse {
   updatedAt?: string;
 }
 
+const mapCartItems = (cartItems: NonNullable<CartApiResponse["cartItems"]>) => {
+  return cartItems.map((item) => {
+    // Course cart item
+    if (item.course?._id) {
+      return {
+        courseId: item.course._id,
+        course: item.course,
+        price: item.course.price || 0,
+      };
+    }
+
+    // Private lesson cart item
+    if (item.privateLesson?._id) {
+      const pl = item.privateLesson;
+      const derivedPrice =
+        pl.oneLessonPrice ?? pl.packagePrice ?? pl.price ?? item.price ?? 0;
+      return {
+        courseId: pl._id, // used as unique id across the cart UI
+        privateLessonId: pl._id,
+        privateLesson: pl,
+        price: derivedPrice,
+      };
+    }
+
+    // Fallback (unknown shape) - keep id to avoid crashes
+    const fallbackId = item.courseId || item.privateLessonId || item._id || "";
+    return {
+      courseId: fallbackId,
+      price: item.price || 0,
+    };
+  });
+};
+
 /**
- * Add course to cart
- * 
+ * Add item to cart (course or private lesson)
+ *
  * @param cartData - Cart item data
  * @param dispatch - Redux dispatch
  * @returns Updated cart
@@ -66,11 +106,7 @@ const addToCart = async (
     // API response might have cartItems or cart
     let cart: Cart;
     if (data.cartItems && Array.isArray(data.cartItems)) {
-      const items = data.cartItems.map((item) => ({
-        courseId: item.course?._id || "",
-        course: item.course,
-        price: item.course?.price || 0,
-      }));
+      const items = mapCartItems(data.cartItems);
 
       const total = items.reduce((sum: number, item) => sum + item.price, 0);
 
@@ -91,7 +127,7 @@ const addToCart = async (
   
     return cart;
   } catch (error: unknown) {
-    let errorMessage = "Failed to add course to cart";
+    let errorMessage = "Failed to add item to cart";
     const err = error as ErrorResponse;
     if (err.response?.data?.message) {
       errorMessage = err.response.data.message;
@@ -123,11 +159,7 @@ const getCart = async (dispatch: AppDispatch): Promise<Cart> => {
     // Convert to Cart interface format
     let cart: Cart;
     if (data.cartItems && Array.isArray(data.cartItems)) {
-      const items = data.cartItems.map((item) => ({
-        courseId: item.course?._id || "",
-        course: item.course,
-        price: item.course?.price || 0,
-      }));
+      const items = mapCartItems(data.cartItems);
 
       const total = items.reduce((sum: number, item) => sum + item.price, 0);
 
@@ -173,9 +205,9 @@ const getCart = async (dispatch: AppDispatch): Promise<Cart> => {
 };
 
 /**
- * Remove course from cart
+ * Remove item from cart (course/private lesson)
  * 
- * @param courseId - Course ID to remove
+ * @param courseId - Item ID to remove
  * @param dispatch - Redux dispatch
  */
 const removeFromCart = async (
@@ -191,9 +223,9 @@ const removeFromCart = async (
     dispatch(removeCartItem(courseId));
     dispatch(setCartLoading(false));
     
-    toast.success(data.message || "Course removed from cart");
+    toast.success(data.message || "Item removed from cart");
   } catch (error: unknown) {
-    let errorMessage = "Failed to remove course from cart";
+    let errorMessage = "Failed to remove item from cart";
     const err = error as ErrorResponse;
     if (err.response?.data?.message) {
       errorMessage = err.response.data.message;

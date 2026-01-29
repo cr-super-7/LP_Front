@@ -200,8 +200,8 @@ export default function CartContent() {
     if (selectedItems.size === 0) {
       toast.error(
         language === "ar"
-          ? "يرجى اختيار دورة واحدة على الأقل"
-          : "Please select at least one course"
+          ? "يرجى اختيار عنصر واحد على الأقل"
+          : "Please select at least one item"
       );
       return;
     }
@@ -210,8 +210,18 @@ export default function CartContent() {
     const itemsToCheckout = Array.from(selectedItems);
     
     try {
+      const hasPrivateLessons = selectedCartItems.some((item) => !!item.privateLesson);
+      if (hasPrivateLessons) {
+        toast.error(
+          language === "ar"
+            ? "لا يمكن إتمام شراء الدروس الخصوصية من السلة حالياً"
+            : "Private lessons can't be checked out from the cart yet"
+        );
+        return;
+      }
+
       // New API format: courseIds array and optional discount
-      const courseIds = selectedCartItems.map((item) => item.courseId);
+      const courseIds = selectedCartItems.filter((item) => !!item.course).map((item) => item.courseId);
 
       await createOrder({ courseIds, discount: discount || 0 }, dispatch);
 
@@ -246,7 +256,7 @@ export default function CartContent() {
     } finally {
       setIsCheckingOut(false);
     }
-  }, [selectedItems, selectedCartItems, language, dispatch, router, reloadCart]);
+  }, [selectedItems, selectedCartItems, language, dispatch, router, reloadCart, discount]);
 
   if (isLoading) {
     return (
@@ -388,10 +398,28 @@ export default function CartContent() {
             <div className="space-y-4">
               {cart.items && Array.isArray(cart.items) && cart.items.map((item) => {
                 const course = item.course;
-                if (!course) return null;
+                const privateLesson = item.privateLesson;
+                if (!course && !privateLesson) return null;
 
-                const courseTitle =
-                  language === "ar" ? course.title.ar : course.title.en;
+                const title = course
+                  ? (language === "ar" ? course.title.ar : course.title.en)
+                  : language === "ar"
+                  ? privateLesson!.lessonName.ar
+                  : privateLesson!.lessonName.en;
+
+                const subtitle = course
+                  ? typeof course.teacher === "object" && course.teacher?.email
+                    ? course.teacher.email
+                    : null
+                  : language === "ar"
+                  ? privateLesson!.instructorName.ar
+                  : privateLesson!.instructorName.en;
+
+                const imageUrl = course
+                  ? course.thumbnail || "/images/courses/course-placeholder.jpg"
+                  : privateLesson!.instructorImage || "/home/privet_lessons.png";
+
+                const currency = course?.currency || privateLesson?.currency || "SAR";
                 const isSelected = selectedItems.has(item.courseId);
 
                 return (
@@ -413,33 +441,33 @@ export default function CartContent() {
                       className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
 
-                    {/* Course Image */}
+                    {/* Item Image */}
                     <div className="relative h-24 w-32 rounded-lg overflow-hidden shrink-0">
                       <Image
-                        src={course.thumbnail || "/images/courses/course-placeholder.jpg"}
-                        alt={courseTitle}
+                        src={imageUrl}
+                        alt={title}
                         fill
                         className="object-cover"
                         unoptimized
                       />
                     </div>
 
-                    {/* Course Details */}
+                    {/* Item Details */}
                     <div className="flex-1 min-w-0">
                       <h3
                         className={`text-lg font-semibold mb-1 line-clamp-1 ${
                           theme === "dark" ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {courseTitle}
+                        {title}
                       </h3>
-                      {typeof course.teacher === "object" && course.teacher?.email && (
+                      {subtitle && (
                         <p
                           className={`text-sm mb-2 ${
                             theme === "dark" ? "text-blue-200" : "text-gray-600"
                           }`}
                         >
-                          {course.teacher.email}
+                          {subtitle}
                         </p>
                       )}
                       <div
@@ -447,19 +475,19 @@ export default function CartContent() {
                           theme === "dark" ? "text-blue-300" : "text-gray-500"
                         }`}
                       >
-                        {course.totalLessons && (
+                        {course?.totalLessons && (
                           <span>
                             {course.totalLessons}{" "}
                             {language === "ar" ? "درس" : "Lessons"}
                           </span>
                         )}
-                        {course.durationHours && (
+                        {course?.durationHours && (
                           <span>
                             {course.durationHours}{" "}
                             {language === "ar" ? "ساعة" : "h"}
                           </span>
                         )}
-                        {course.level && (
+                        {course?.level && (
                           <span className="px-2 py-1 rounded bg-blue-600/20 text-blue-300">
                             {course.level === "beginner"
                               ? language === "ar"
@@ -474,6 +502,24 @@ export default function CartContent() {
                               : "Advanced"}
                           </span>
                         )}
+                        {privateLesson?.lessonLevel && (
+                          <span className="px-2 py-1 rounded bg-blue-600/20 text-blue-300">
+                            {privateLesson.lessonLevel === "beginner"
+                              ? language === "ar"
+                                ? "مبتدئ"
+                                : "Beginner"
+                              : privateLesson.lessonLevel === "intermediate"
+                              ? language === "ar"
+                                ? "متوسط"
+                                : "Intermediate"
+                              : language === "ar"
+                              ? "متقدم"
+                              : "Advanced"}
+                          </span>
+                        )}
+                        <span className={`px-2 py-1 rounded ${theme === "dark" ? "bg-blue-950 text-blue-200" : "bg-blue-50 text-blue-700"}`}>
+                          {course ? (language === "ar" ? "دورة" : "Course") : (language === "ar" ? "درس خصوصي" : "Private lesson")}
+                        </span>
                       </div>
                     </div>
 
@@ -495,7 +541,7 @@ export default function CartContent() {
                             theme === "dark" ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          {item.price} {course.currency}
+                          {item.price} {currency}
                         </p>
                       </div>
                     </div>
@@ -583,7 +629,7 @@ export default function CartContent() {
                   }`}
                 >
                   {subtotal.toFixed(2)}{" "}
-                  {cart.items[0]?.course?.currency || "SAR"}
+                  {cart.items[0]?.course?.currency || cart.items[0]?.privateLesson?.currency || "SAR"}
                 </span>
               </div>
               {discount > 0 && (
@@ -601,7 +647,7 @@ export default function CartContent() {
                     }`}
                   >
                     -{discount.toFixed(2)}{" "}
-                    {cart.items[0]?.course?.currency || "SAR"}
+                    {cart.items[0]?.course?.currency || cart.items[0]?.privateLesson?.currency || "SAR"}
                   </span>
                 </div>
               )}
@@ -628,7 +674,7 @@ export default function CartContent() {
                   theme === "dark" ? "text-white" : "text-blue-950"
                 }`}
               >
-                {total.toFixed(2)} {cart.items[0]?.course?.currency || "SAR"}
+                {total.toFixed(2)} {cart.items[0]?.course?.currency || cart.items[0]?.privateLesson?.currency || "SAR"}
               </p>
             </div>
 
