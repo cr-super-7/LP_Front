@@ -118,7 +118,7 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
       toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 
@@ -151,7 +151,7 @@ export default function PrivateLessonDetailsContent({ lesson, viewer = "auto" }:
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.push("/auth/login");
+      router.push("/login");
       return;
     }
 

@@ -117,33 +117,9 @@ export default function BookingChatPanel({
 
     setIsSending(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      const socket = getBookingChatSocketManager();
-      if (token) socket.connect(token);
-
-      if (socket.isConnected()) {
-        socket.sendMessage({ bookingId, message: text, messageType: "text" });
-        // Optimistic local append (server will also broadcast)
-        mergeByIdAsc([
-          {
-            _id: `temp-${Date.now()}`,
-            booking: bookingId,
-            message: text,
-            messageType: "text",
-            fileUrl: null,
-            sender: {
-              _id: currentUserId || "me",
-              email: (authUser as { email?: string } | null)?.email || "You",
-              role: (authUser as { role?: string } | null)?.role || "student",
-            },
-            createdAt: new Date().toISOString(),
-          },
-        ]);
-      } else {
-        // REST fallback
-        const msg = await sendBookingChatMessageRest(bookingId, { message: text });
-        mergeByIdAsc([msg]);
-      }
+      // Send via REST only to avoid duplicate messages (socket will broadcast the same message).
+      const msg = await sendBookingChatMessageRest(bookingId, { message: text });
+      mergeByIdAsc([msg]);
 
       setInput("");
     } catch (e: unknown) {

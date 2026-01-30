@@ -31,7 +31,7 @@ export default function AppointmentDetailsPage() {
     if (!bookingId) return;
     if (!isAuthenticated) {
       toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
     if (!isInstructor) {

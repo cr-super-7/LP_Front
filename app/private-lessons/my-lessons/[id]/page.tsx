@@ -34,7 +34,7 @@ export default function InstructorPrivateLessonDetailPage() {
 
     if (!isAuthenticated) {
       toast.error(language === "ar" ? "يرجى تسجيل الدخول أولاً" : "Please login first");
-      router.replace("/auth/login");
+      router.replace("/login");
       return;
     }
 
