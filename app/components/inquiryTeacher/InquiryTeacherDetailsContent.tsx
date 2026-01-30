@@ -7,7 +7,8 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { RootState } from "../../store/store";
 import { getConsultationById } from "../../store/api/consultationApi";
-import { ArrowLeft, Calendar, Clock, Hash, MessageSquare, Phone, User } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Hash, MessageSquare, Phone, User, ExternalLink } from "lucide-react";
+import ConsultationChatPanel from "../consultations/shared/ConsultationChatPanel";
 
 export default function InquiryTeacherDetailsContent() {
   const { theme } = useTheme();
@@ -97,6 +98,9 @@ export default function InquiryTeacherDetailsContent() {
     typeof currentConsultation.student === "string"
       ? currentConsultation.student
       : currentConsultation.student.email || currentConsultation.student._id;
+
+  const meetLink = currentConsultation.meetLink;
+  const canOpenMeetLink = typeof meetLink === "string" && meetLink.startsWith("http");
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -210,7 +214,34 @@ export default function InquiryTeacherDetailsContent() {
               {language === "ar" ? "المدة:" : "Duration:"} {formatDuration(currentConsultation.duration)}
             </span>
           </div>
+
+          {meetLink && (
+            <div className="flex items-center gap-2 md:col-span-2">
+              <ExternalLink className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
+              <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                {language === "ar" ? "رابط الاجتماع:" : "Meeting link:"}{" "}
+                {canOpenMeetLink ? (
+                  <a
+                    href={meetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${theme === "dark" ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-700"} underline break-all`}
+                  >
+                    {meetLink}
+                  </a>
+                ) : (
+                  <span className={`${theme === "dark" ? "text-white" : "text-gray-900"} break-all`}>{meetLink}</span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
+
+        {currentConsultation.type === "chat" && (
+          <div className="mt-6">
+            <ConsultationChatPanel consultationId={currentConsultation._id} />
+          </div>
+        )}
 
         {currentConsultation.notes && (
           <div

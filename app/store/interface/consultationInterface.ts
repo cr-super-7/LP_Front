@@ -35,6 +35,7 @@ export interface Consultation {
   price?: number;
   currency?: string;
   paymentStatus?: string;
+  meetLink?: string | null;
   notes?: string | null;
   cancelledBy?: string | null;
   cancellationReason?: string;

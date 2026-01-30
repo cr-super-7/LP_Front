@@ -591,10 +591,19 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                     return (
                       <div
                         key={consultation._id}
-                        className={`rounded-2xl border p-5 ${
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => router.push(`/consultations_student/${consultation._id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            router.push(`/consultations_student/${consultation._id}`);
+                          }
+                        }}
+                        className={`rounded-2xl border p-5 cursor-pointer transition-colors ${
                           theme === "dark"
-                            ? "bg-blue-900/40 border-blue-800 text-blue-100"
-                            : "bg-white border-gray-200 text-gray-700"
+                            ? "bg-blue-900/40 border-blue-800 text-blue-100 hover:bg-blue-900/55"
+                            : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                         }`}
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -637,7 +646,10 @@ export default function StudentProfile({ user: propUser, onUpdate }: StudentProf
                             {/* Student-only: delete consultation from profile */}
                             <button
                               type="button"
-                              onClick={() => handleDeleteClick(consultation._id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(consultation._id);
+                              }}
                               className={`p-2 rounded-lg transition-colors ${
                                 theme === "dark"
                                   ? "bg-red-600/20 hover:bg-red-600/30 text-red-300"
