@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   addNewNotification,
@@ -19,6 +20,7 @@ export const useNotificationSocket = () => {
   const dispatch = useAppDispatch();
   const { language } = useLanguage();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const pathname = usePathname();
   const socketManagerRef = useRef<NotificationSocketManager | null>(null);
   const cleanupRef = useRef<(() => void)[]>([]);
 
@@ -54,15 +56,20 @@ export const useNotificationSocket = () => {
         // Add notification to Redux store
         dispatch(addNewNotification(notification));
 
-        // Show toast notification
-        const title =
-          language === "ar" ? notification.title.ar : notification.title.en;
-        const message =
-          language === "ar" ? notification.message.ar : notification.message.en;
+        // Show toast notification (disabled for professor inquiry routes)
+        const shouldMuteToast =
+          typeof pathname === "string" && pathname.startsWith("/inquiry_teacher");
 
-        toast.success(`${title}\n${message}`, {
-          duration: 5000,
-        });
+        if (!shouldMuteToast) {
+          const title =
+            language === "ar" ? notification.title.ar : notification.title.en;
+          const message =
+            language === "ar" ? notification.message.ar : notification.message.en;
+
+          toast.success(`${title}\n${message}`, {
+            duration: 5000,
+          });
+        }
       }
     );
     cleanupFunctions.push(unsubscribeNotification);
@@ -106,7 +113,7 @@ export const useNotificationSocket = () => {
       // and only disconnect when all components are unmounted
       // For now, we'll keep it connected as long as user is authenticated
     };
-  }, [isAuthenticated, dispatch, language]);
+  }, [isAuthenticated, dispatch, language, pathname]);
 
   // Function to mark notification as read via socket
   const markAsRead = (notificationId: string) => {

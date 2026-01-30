@@ -194,26 +194,32 @@ export default function InquiryTeacherDetailsContent() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
-            <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
-              {language === "ar" ? "بدأت:" : "Started:"} {formatDateTime(currentConsultation.startedAt)}
-            </span>
-          </div>
+          {currentConsultation.startedAt && (
+            <div className="flex items-center gap-2">
+              <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
+              <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                {language === "ar" ? "بدأت:" : "Started:"} {formatDateTime(currentConsultation.startedAt)}
+              </span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
-            <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
-              {language === "ar" ? "انتهت:" : "Ended:"} {formatDateTime(currentConsultation.endedAt)}
-            </span>
-          </div>
+          {currentConsultation.endedAt && (
+            <div className="flex items-center gap-2">
+              <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
+              <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                {language === "ar" ? "انتهت:" : "Ended:"} {formatDateTime(currentConsultation.endedAt)}
+              </span>
+            </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
-            <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
-              {language === "ar" ? "المدة:" : "Duration:"} {formatDuration(currentConsultation.duration)}
-            </span>
-          </div>
+          {!!currentConsultation.duration && currentConsultation.duration > 0 && (
+            <div className="flex items-center gap-2">
+              <Clock className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} size={18} />
+              <span className={`${theme === "dark" ? "text-gray-200" : "text-gray-700"}`}>
+                {language === "ar" ? "المدة:" : "Duration:"} {formatDuration(currentConsultation.duration)}
+              </span>
+            </div>
+          )}
 
           {meetLink && (
             <div className="flex items-center gap-2 md:col-span-2">
